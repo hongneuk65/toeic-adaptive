@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --tape-cream: rgba(255, 248, 220, 0.85);
+  --tape-mint: rgba(200, 230, 210, 0.75);
+  --tape-pink: rgba(255, 220, 220, 0.75);
+}
+
+body {
+  margin: 0;
+  /* Thống nhất 1 font Patrick Hand cho toàn bộ giao diện */
+  font-family: 'Patrick Hand', cursive, sans-serif;
+  color: #2c2c2c;
+  background:
+    repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(0,0,0,0.015) 50px, rgba(0,0,0,0.015) 51px),
+    repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(0,0,0,0.015) 50px, rgba(0,0,0,0.015) 51px),
+    linear-gradient(135deg, #faf8f5 0%, #f0ebe3 100%);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Các chi tiết thủ công Paper Craft */
+.staple {
+  position: absolute;
+  width: 14px;
+  height: 4px;
+  background: linear-gradient(to bottom, #c0c0c0 0%, #888888 50%, #aaaaaa 100%);
+  border-radius: 1px;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.3);
+}
+
+.tape {
+  position: absolute;
+  height: 22px;
+  background: var(--tape-cream);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(255,255,255,0.4);
+  z-index: 10;
+}
+.tape::before, .tape::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+}
+.tape::before { left: 0; }
+.tape::after { right: 0; }
+
+.tape-mint { background: var(--tape-mint); }
+.tape-pink { background: var(--tape-pink); }
+
+/* Hiệu ứng lật giấy 3D cho Flashcard */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.transform-style-preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}

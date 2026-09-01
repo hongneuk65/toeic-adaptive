@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  examAttempts ExamAttempt[]
+  folders   FlashcardFolder[]
+  flashcards Flashcard[]
+}
+
+model Skill {
+  id        Int             @id @default(autoincrement())
+  code      String          @unique // Ví dụ: P1_PHOTO_OBJECT, P5_TENSE,...
+  name      String
+  part      Int             // Part 1 -> 7 (7 gồm 7A Single, 7B Multiple)
+  category  String          // Ngữ pháp, Từ vựng, Suy luận, Ý chính,...
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  questions QuestionSkill[]
+  theoryLessons TheoryLesson[]
+
+  @@index([part])
+}
+
+model Question {
+  id              Int             @id @default(autoincrement())
+  part            Int             // 1 đến 7
+  passage         String?         // Đoạn văn đọc (dành cho Part 6, 7)
+  audioUrl        String?         // Link file âm thanh (dành cho Part 1-4)
+  imageUrl        String?         // Link ảnh (Part 1 hoặc biểu đồ Part 3, 4, 7)
+  content         String          // Nội dung câu hỏi
+  optionA         String
+  optionB         String
+  optionC         String
+  optionD         String
+  correctAnswer   String          // "A", "B", "C", hoặc "D"
+  explanation     String?         // Lời giải thích đáp án
+  difficulty      Difficulty      @default(MEDIUM)
+  itemDifficulty  Float           // δ_j (Equated Delta khởi tạo theo Part)
+  totalAttempts   Int             @default(0)
+  totalCorrect    Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  skills          QuestionSkill[]
+  examAnswers     ExamAnswer[]
+
+  @@index([part])
+  @@index([difficulty])
+}
+
+// Bảng trung gian hiện thực hóa quan hệ nhiều-nhiều (Q-matrix)
+model QuestionSkill {
+  questionId Int
+  skillId    Int
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  skill      Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, skillId])
+  @@index([skillId])
+  @@index([questionId])
+}
+
+model Flashcard {
+  id        Int              @id @default(autoincrement())
+  userId    Int?
+  user      User?            @relation(fields: [userId], references: [id])
+  folderId  Int?
+  folder    FlashcardFolder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  word      String
+  phonetic  String?
+  meaning   String
+  example   String?
+  topic     String?
+  createdAt DateTime         @default(now())
+
+  @@index([folderId])
+}
+
+model TheoryLesson {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String   // Nội dung bài học lý thuyết dạng markdown/text
+  part      Int      // 1 đến 7
+  skillId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@index([part])
+  @@index([skillId])
+}
+
+enum ExamType {
+  FULL    // 200 câu (100 Listening, 100 Reading)
+  MINI    // 100 câu rút gọn
+  PART_5  // 30 câu chuyên sâu ngữ pháp/từ vựng
+}
+
+model ExamAttempt {
+  id             Int          @id @default(autoincrement())
+  userId         Int
+  examType       ExamType
+  startedAt      DateTime     @default(now())
+  submittedAt    DateTime?
+  listeningScore Int?
+  readingScore   Int?
+  totalScore     Int?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers        ExamAnswer[]
+
+  @@index([userId])
+}
+
+model ExamAnswer {
+  id             Int         @id @default(autoincrement())
+  attemptId      Int
+  questionId     Int
+  selectedAnswer String      // "A", "B", "C", hoặc "D"
+  isCorrect      Boolean
+  createdAt      DateTime    @default(now())
+
+  attempt        ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question       Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  // Ngăn chặn trùng lặp câu trả lời trong cùng 1 lần thi ở mức database
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+}
+
+model FlashcardFolder {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+  flashcards  Flashcard[]
+
+  @@index([userId])
+}
