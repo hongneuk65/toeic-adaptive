@@ -1,29 +1,33 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../lib/api';
-
-interface ExamQuestion {
-  id: number;
-  part: number;
-  passage?: string;
-  audioUrl?: string;
-  imageUrl?: string;
-  content: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-}
+import { api, getErrorMessage } from '../lib/api';
+import { useAsyncResource } from '../hooks/useAsyncResource';
+import { clearExamStorage, readAnswers, remainingSeconds, saveAnswers } from '../lib/exam-session';
+import type { ExamQuestion, ExamSession } from '../types/exam';
 
 export const ExamRoomPage: React.FC = () => {
   const { attemptId } = useParams<{ attemptId: string }>();
+  const load = useCallback((signal: AbortSignal) => api<ExamSession>(`/exam/${attemptId}`, { signal }), [attemptId]);
+  const { data, loading, error, reload } = useAsyncResource(load);
+  if (loading) return <p className="p-12 text-center">Đang chuẩn bị đề thi...</p>;
+  if (!data) return <p role="alert">{error} <button onClick={reload}>Thử lại</button></p>;
+  return <ExamRoom key={data.attemptId} exam={data} />;
+};
+
+const ExamRoom: React.FC<{ exam: ExamSession }> = ({ exam }) => {
+  const { attemptId, questions } = exam;
   const navigate = useNavigate();
 
-  const [questions, setQuestions] = useState<ExamQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [answers, setAnswers] = useState(() => readAnswers(attemptId, questions.map((q) => q.id)));
+  const [timeLeft, setTimeLeft] = useState(() => remainingSeconds(exam));
   const [submitting, setSubmitting] = useState(false);
+  const [storageUnavailable, setStorageUnavailable] = useState(false);
+  const submittingRef = useRef(false);
+  const autoSubmitted = useRef(false);
+  const pendingSubmit = useRef<AbortController | null>(null);
+
+  useEffect(() => () => pendingSubmit.current?.abort(), []);
 
   // Trạng thái bật/tắt bảng danh sách câu hỏi Dropdown
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
@@ -40,37 +44,6 @@ export const ExamRoomPage: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const raw = sessionStorage.getItem(`exam_${attemptId}`);
-    if (!raw) {
-      alert('Không tìm thấy dữ liệu đề thi. Vui lòng chọn lại đề.');
-      navigate('/exam');
-      return;
-    }
-
-    const data = JSON.parse(raw);
-    setQuestions(data.questions || []);
-
-    const minutes = data.examType === 'FULL' ? 120 : data.examType === 'MINI' ? 60 : 20;
-    setTimeLeft(minutes * 60);
-  }, [attemptId]);
-
-  // Đếm ngược thời gian
-  useEffect(() => {
-    if (timeLeft <= 0) return;
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft]);
-
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -82,20 +55,26 @@ export const ExamRoomPage: React.FC = () => {
   };
 
   const handleSelect = (questionId: number, opt: string) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: opt }));
+    if (timeLeft <= 0 || submittingRef.current) return;
+    const next = { ...answers, [questionId]: opt };
+    setAnswers(next);
+    setStorageUnavailable(!saveAnswers(attemptId, next));
   };
 
-  const handleSubmit = async () => {
-    if (submitting) return;
+  const handleSubmit = useCallback(async (automatic = false) => {
+    if (submittingRef.current) return;
 
     const answeredCount = Object.keys(answers).length;
-    if (answeredCount < questions.length) {
+    if (!automatic && timeLeft > 0 && answeredCount < questions.length) {
       const confirmSubmit = window.confirm(
         `Bạn mới hoàn thành ${answeredCount}/${questions.length} câu. Bạn có chắc chắn muốn nộp bài?`,
       );
       if (!confirmSubmit) return;
     }
 
+    submittingRef.current = true;
+    const controller = new AbortController();
+    pendingSubmit.current = controller;
     setSubmitting(true);
     try {
       const answerList = Object.entries(answers).map(([qId, selectedAnswer]) => ({
@@ -105,19 +84,38 @@ export const ExamRoomPage: React.FC = () => {
 
       await api('/exam/submit', {
         method: 'POST',
+        signal: controller.signal,
         data: {
           attemptId: Number(attemptId),
           answers: answerList,
         },
       });
 
-      sessionStorage.removeItem(`exam_${attemptId}`);
+      if (controller.signal.aborted) return;
+      clearExamStorage(attemptId);
       navigate(`/exam/${attemptId}/review`);
-    } catch (err: any) {
-      alert(err.message || 'Lỗi nộp bài thi');
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      alert(getErrorMessage(err, 'Lỗi nộp bài thi. Vui lòng bấm nộp bài để thử lại.'));
+      submittingRef.current = false;
       setSubmitting(false);
+    } finally {
+      if (pendingSubmit.current === controller) pendingSubmit.current = null;
     }
-  };
+  }, [answers, attemptId, navigate, questions.length, timeLeft]);
+
+  useEffect(() => {
+    const tick = () => {
+      const remaining = remainingSeconds(exam);
+      setTimeLeft(remaining);
+      if (remaining === 0 && !autoSubmitted.current) {
+        autoSubmitted.current = true;
+        void handleSubmit(true);
+      }
+    };
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [exam, handleSubmit]);
 
   const currentQ = questions[currentIndex];
   const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
@@ -128,6 +126,11 @@ export const ExamRoomPage: React.FC = () => {
 
   return (
     <div className="w-full min-h-[calc(100vh-5rem)] flex flex-col space-y-3 pb-6">
+      {storageUnavailable && (
+        <p role="alert" className="p-3 bg-amber-50 text-amber-900 border border-amber-200 rounded">
+          Không thể lưu đáp án trên trình duyệt. Bạn vẫn có thể nộp bài, nhưng không nên tải lại hoặc đóng trang này.
+        </p>
+      )}
       
       {/* 1. THANH ĐIỀU HÀNH PHÒNG THI TRÀN VIỀN */}
       <div className="w-full bg-white px-6 py-3 border-b border-slate-200 shadow-sm flex justify-between items-center relative z-20">
@@ -165,7 +168,7 @@ export const ExamRoomPage: React.FC = () => {
             }`}
           >
             <span>BẢNG CÂU HỎI ({answeredCount}/{questions.length})</span>
-            <span className="text-[10px]">{isPaletteOpen ? '▲' : '▼'}</span>
+            <span className="text-[10px]">{isPaletteOpen ? 'Thu gọn' : 'Mở rộng'}</span>
           </button>
 
           {/* Hộp Dropdown hiện ra chứa danh sách câu 1 - 200 */}
@@ -230,7 +233,7 @@ export const ExamRoomPage: React.FC = () => {
 
           {/* Nút nộp bài thi */}
           <button
-            onClick={handleSubmit}
+              onClick={() => void handleSubmit()}
             disabled={submitting}
             className="px-6 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider rounded transition disabled:opacity-50"
           >
@@ -346,14 +349,14 @@ export const ExamRoomPage: React.FC = () => {
               disabled={currentIndex === 0}
               className="flex-1 py-3 border border-slate-300 text-slate-700 text-xs font-bold rounded uppercase hover:bg-slate-50 disabled:opacity-30 transition"
             >
-              ← CÂU TRƯỚC
+              CÂU TRƯỚC
             </button>
             <button
               onClick={() => setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1))}
               disabled={currentIndex === questions.length - 1}
               className="flex-1 py-3 border border-slate-300 text-slate-700 text-xs font-bold rounded uppercase hover:bg-slate-50 disabled:opacity-30 transition"
             >
-              CÂU TIẾP THEO →
+              CÂU TIẾP THEO
             </button>
           </div>
 

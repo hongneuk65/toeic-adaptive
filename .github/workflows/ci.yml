@@ -1,0 +1,22 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - run: npm run setup
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/toeic
+      - run: npm run check
+      - run: docker compose --env-file .env.example config --quiet
+      - run: docker compose --env-file .env.example build

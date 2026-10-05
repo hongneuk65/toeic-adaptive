@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/coverage
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.agents
+.codex
+ETS audio
+audio YBM
+DE_THI.txt
+doc.md
+*.tsbuildinfo

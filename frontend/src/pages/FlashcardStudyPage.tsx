@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api, getErrorMessage } from '../lib/api';
+import { useAsyncResource } from '../hooks/useAsyncResource';
 
 interface Flashcard {
   id: number;
@@ -21,12 +22,27 @@ interface FolderDetail {
 
 export const FlashcardStudyPage: React.FC = () => {
   const { topic: folderId } = useParams<{ topic: string }>();
+  return <FlashcardStudy key={folderId} folderId={folderId} />;
+};
+
+const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
   const navigate = useNavigate();
 
-  const [cards, setCards] = useState<Flashcard[]>([]);
-  const [folder, setFolder] = useState<FolderDetail | null>(null);
+  const load = useCallback(async (signal: AbortSignal) => {
+    const [folder, cards] = await Promise.all([
+      api<FolderDetail>(`/flashcards/folders/${folderId}`, { signal }),
+      api<Flashcard[]>(`/flashcards/folders/${folderId}/cards`, { signal }),
+    ]);
+    return { folder, cards };
+  }, [folderId]);
+  const { data, loading, error, reload: loadData } = useAsyncResource(load);
+  const folder = data?.folder;
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  const filtered = useMemo(() => {
+    const query = search.toLowerCase().trim();
+    return (data?.cards ?? []).filter((card) =>
+      card.word.toLowerCase().includes(query) || card.meaning.toLowerCase().includes(query));
+  }, [data, search]);
 
   // Quản lý trạng thái lật thẻ cho từng thẻ
   const [flippedIds, setFlippedIds] = useState<Record<number, boolean>>({});
@@ -42,39 +58,6 @@ export const FlashcardStudyPage: React.FC = () => {
   const [newMeaning, setNewMeaning] = useState('');
   const [newExample, setNewExample] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  // 1. Tải thông tin Folder và danh sách thẻ từ
-  const loadData = () => {
-    if (!folderId) return;
-    setLoading(true);
-
-    // Lấy chi tiết Folder
-    api(`/flashcards/folders/${folderId}`)
-      .then((res: any) => {
-        const data = res?.data || res;
-        setFolder(data);
-      })
-      .catch((err) => console.error('Lỗi tải folder:', err));
-
-    // Lấy danh sách từ trong Folder
-    api(`/flashcards/folders/${folderId}/cards`)
-      .then((res: any) => {
-        const raw = res?.data || res;
-        const list = Array.isArray(raw) ? raw : raw?.items || [];
-        setCards(list);
-      })
-      .catch((err) => {
-        console.error('Lỗi tải thẻ từ:', err);
-        setCards([]);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    loadData();
-    setFlippedIds({});
-    setFocusIndex(0);
-  }, [folderId]);
 
   // Đổi chế độ: Tự động lật về mặt chính
   const handleSwitchViewMode = (mode: 'grid' | 'focus') => {
@@ -141,24 +124,16 @@ export const FlashcardStudyPage: React.FC = () => {
       setNewExample('');
       setIsModalOpen(false);
       loadData();
-    } catch (err: any) {
-      alert(err.response?.data?.message || err.message || 'Lỗi khi thêm từ');
+    } catch (err) {
+      alert(getErrorMessage(err, 'Lỗi khi thêm từ'));
     } finally {
       setSubmitting(false);
     }
   };
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return cards;
-    const q = search.toLowerCase().trim();
-    return cards.filter(
-      (c) =>
-        c.word.toLowerCase().includes(q) || c.meaning.toLowerCase().includes(q)
-    );
-  }, [cards, search]);
-
   return (
     <div className="w-full space-y-6">
+      {error && <p role="alert" className="text-red-700">{error} <button onClick={loadData}>Thử lại</button></p>}
       
       {/* CSS 3D chuẩn xác */}
       <style>{`
@@ -213,7 +188,7 @@ export const FlashcardStudyPage: React.FC = () => {
             onClick={() => navigate('/flashcards')}
             className="px-4 py-2 bg-paper-cream hover:bg-paper-kraft-light/50 border border-paper-kraft text-ink-dark font-hand text-lg font-bold rounded-sm transition"
           >
-            ← TRỞ VỀ TỦ FOLDER
+            TRỞ VỀ TỦ FOLDER
           </button>
           <div>
             <div className="flex items-center gap-2">
@@ -242,7 +217,7 @@ export const FlashcardStudyPage: React.FC = () => {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setFocusIndex(0); setFlippedIds({}); }}
             placeholder="Tìm kiếm từ vựng..."
             className="px-4 py-2 bg-paper-cream border border-paper-kraft font-body text-xs text-ink-dark rounded-sm focus:outline-none focus:border-slate-900 w-full sm:w-56"
           />
@@ -374,7 +349,7 @@ export const FlashcardStudyPage: React.FC = () => {
         </div>
       ) : (
         /* Chế độ Focus */
-        <div className="max-w-xl mx-auto space-y-4">
+        <div className="w-full space-y-4">
           {(() => {
             const card = filtered[focusIndex] || filtered[0];
             const isFlipped = !!flippedIds[card.id];
@@ -393,7 +368,7 @@ export const FlashcardStudyPage: React.FC = () => {
                       <span className="font-mono text-xs font-bold text-ink-light uppercase mb-2">
                         THƯ MỤC: {folder?.name}
                       </span>
-                      <h2 className="font-display text-5xl md:text-6xl font-bold text-ink-dark break-words max-w-full px-4">
+                      <h2 className="w-full px-4 font-display text-5xl md:text-6xl font-bold text-ink-dark break-words">
                         {card.word}
                       </h2>
                       {card.phonetic && (
@@ -422,7 +397,7 @@ export const FlashcardStudyPage: React.FC = () => {
                       <span className="font-mono text-xs font-bold text-accent-sage uppercase block mb-1">
                         GIẢI THÍCH CHI TIẾT
                       </span>
-                      <p className="font-hand text-3xl md:text-4xl font-bold text-ink-dark break-words max-w-full px-4">
+                      <p className="w-full px-4 font-hand text-3xl md:text-4xl font-bold text-ink-dark break-words">
                         {card.meaning}
                       </p>
                       {card.example && (
@@ -450,7 +425,7 @@ export const FlashcardStudyPage: React.FC = () => {
                     disabled={focusIndex === 0}
                     className="px-5 py-1.5 bg-paper-cream border border-paper-kraft font-hand text-lg font-bold text-ink-dark rounded disabled:opacity-30 transition hover:bg-paper-kraft-light/40"
                   >
-                    ← THẺ TRƯỚC
+                    THẺ TRƯỚC
                   </button>
                   <span className="font-hand text-xl font-bold text-ink-dark">
                     {focusIndex + 1} / {filtered.length}
@@ -460,7 +435,7 @@ export const FlashcardStudyPage: React.FC = () => {
                     disabled={focusIndex === filtered.length - 1}
                     className="px-5 py-1.5 bg-paper-cream border border-paper-kraft font-hand text-lg font-bold text-ink-dark rounded disabled:opacity-30 transition hover:bg-paper-kraft-light/40"
                   >
-                    THẺ KẾ TIẾP →
+                    THẺ KẾ TIẾP
                   </button>
                 </div>
               </>
@@ -471,7 +446,7 @@ export const FlashcardStudyPage: React.FC = () => {
 
       {/* 3. Modal thêm từ */}
       {isModalOpen && folder?.isOwner && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="modal-backdrop fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="w-full max-w-lg bg-paper-white border-2 border-paper-kraft shadow-paper-heavy rounded-sm p-8 relative">
             <div className="staple top-3 left-6" />
             <div className="tape tape-mint w-24 top-[-10px] right-10" />

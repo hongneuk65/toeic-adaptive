@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { api } from '../lib/api';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { api, getErrorMessage } from '../lib/api';
+import { useAsyncResource } from '../hooks/useAsyncResource';
+import { PageHeader } from '../components/ui/PageHeader';
 
 interface LessonSummary {
     id: number;
@@ -40,52 +42,53 @@ interface QuizResult {
 
 export const TheoryPage: React.FC = () => {
     const [selectedPart, setSelectedPart] = useState(5);
-    const [lessons, setLessons] = useState<LessonSummary[]>([]);
-    const [currentLesson, setCurrentLesson] = useState<LessonDetail | null>(null);
+    const [selection, setSelection] = useState<{ part: number; id: number }>();
+    const loadList = useCallback((signal: AbortSignal) =>
+        api<LessonSummary[]>(`/theory/part/${selectedPart}`, { signal }), [selectedPart]);
+    const list = useAsyncResource(loadList);
+    const lessons = list.data ?? [];
+    const lessonId = selection?.part === selectedPart ? selection.id : lessons[0]?.id;
+    const load = useCallback(async (signal: AbortSignal) => {
+        if (!lessonId) return null;
+        const [detail, quiz] = await Promise.all([
+            api<LessonDetail>(`/theory/${lessonId}`, { signal }),
+            api<Question[]>(`/theory/${lessonId}/quiz`, { signal }),
+        ]);
+        return { detail, quiz };
+    }, [lessonId]);
+    const resource = useAsyncResource(load);
+    const currentLesson = resource.data?.detail;
+    const quizQuestions = resource.data?.quiz ?? [];
+    const loading = list.loading || resource.loading;
+    const error = list.error || resource.error;
 
     // Trạng thái mini-quiz
-    const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
     const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
     const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        api<LessonSummary[]>(`/theory/part/${selectedPart}`).then((data) => {
-            setLessons(data);
-            if (data.length > 0) {
-                loadLesson(data[0].id);
-            } else {
-                setCurrentLesson(null);
-                setQuizQuestions([]);
-            }
-        });
-    }, [selectedPart]);
-
-    const loadLesson = async (id: number) => {
-        setLoading(true);
+    const generation = useRef(0);
+    useEffect(() => () => { generation.current++; }, []);
+    const busy = useRef(false);
+    const [submitting, setSubmitting] = useState(false);
+    const resetQuiz = () => {
+        generation.current++;
+        busy.current = false;
+        setSubmitting(false);
         setQuizResult(null);
         setUserAnswers({});
-        try {
-            const [detail, quiz] = await Promise.all([
-                api<LessonDetail>(`/theory/${id}`),
-                api<Question[]>(`/theory/${id}/quiz`),
-            ]);
-            setCurrentLesson(detail);
-            setQuizQuestions(quiz);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
+    };
+    const loadLesson = (id: number) => {
+        if (id === lessonId) return;
+        resetQuiz();
+        setSelection({ part: selectedPart, id });
     };
 
     const handleSelectOption = (questionId: number, option: string) => {
-        if (quizResult) return;
+        if (quizResult || busy.current) return;
         setUserAnswers((prev) => ({ ...prev, [questionId]: option }));
     };
 
     const handleSubmitQuiz = async () => {
-        if (!currentLesson) return;
+        if (!currentLesson || busy.current || quizResult || !quizQuestions.length) return;
         const answers = Object.entries(userAnswers).map(([qId, ans]) => ({
             questionId: Number(qId),
             selectedAnswer: ans,
@@ -96,26 +99,44 @@ export const TheoryPage: React.FC = () => {
             return;
         }
 
+        const requestGeneration = generation.current;
+        busy.current = true;
+        setSubmitting(true);
         try {
             const result = await api<QuizResult>(`/theory/${currentLesson.id}/quiz/submit`, {
                 method: 'POST',
                 data: { answers },
             });
-            setQuizResult(result);
-        } catch (err: any) {
-            alert(err.message || 'Lỗi khi nộp bài');
+            if (generation.current === requestGeneration) setQuizResult(result);
+        } catch (err) {
+            if (generation.current === requestGeneration) alert(getErrorMessage(err, 'Lỗi khi nộp bài'));
+        } finally {
+            if (generation.current === requestGeneration) {
+                busy.current = false;
+                setSubmitting(false);
+            }
         }
     };
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6">
+        <div className="w-full space-y-4">
+            <PageHeader
+                eyebrow="Ôn tập theo từng Part TOEIC"
+                title="Lý thuyết & luyện tập"
+                description="Đọc bài học, làm mini-quiz và củng cố kỹ năng theo tiến độ cá nhân."
+            />
+            {error && <p role="alert" className="text-red-700">{error} <button onClick={() => { list.reload(); resource.reload(); }}>Thử lại</button></p>}
             {/* Thanh chọn Part 1 -> 7 (Phong cách Paper Tabs) */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-paper-kraft-light">
+            <div className="flex items-center gap-1 overflow-x-auto border-b border-paper-kraft-light pb-1">
                 {[1, 2, 3, 4, 5, 6, 7].map((partNumber) => (
                     <button
                         key={partNumber}
-                        onClick={() => setSelectedPart(partNumber)}
-                        className={`px-5 py-2 font-hand text-xl font-bold rounded-t-sm transition ${selectedPart === partNumber
+                        onClick={() => {
+                            if (partNumber === selectedPart) return;
+                            resetQuiz();
+                            setSelectedPart(partNumber);
+                        }}
+                        className={`rounded-t-sm px-4 py-2 text-sm font-bold transition ${selectedPart === partNumber
                                 ? 'bg-paper-white text-accent-coral border-t-2 border-accent-coral shadow-paper-subtle'
                                 : 'bg-paper-cream text-ink-medium hover:bg-paper-kraft-light/30'
                             }`}
@@ -125,7 +146,7 @@ export const TheoryPage: React.FC = () => {
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                 {/* Cột danh mục bài học (Sổ tay thư mục) */}
                 <div className="bg-paper-white p-4 border border-paper-kraft-light/60 shadow-paper-subtle rounded-sm h-fit space-y-2">
                     <h2 className="font-hand text-lg font-bold text-ink-medium uppercase tracking-wider border-b border-paper-kraft-light pb-2">
@@ -263,6 +284,7 @@ export const TheoryPage: React.FC = () => {
                                     {!quizResult && (
                                         <button
                                             onClick={handleSubmitQuiz}
+                                            disabled={submitting}
                                             className="w-full py-3 bg-blue-700 hover:bg-blue-800 text-white font-body text-base font-bold rounded shadow transition"
                                         >
                                             Nộp bài Mini-quiz

@@ -2,23 +2,126 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .form-label { @apply mb-2 block text-sm font-medium text-ink-dark; }
+  .form-input {
+    @apply block w-full rounded-sm border-0 border-b border-paper-kraft bg-paper-cream/50 px-3 py-3 text-sm text-ink-dark placeholder:text-ink-pencil focus:border-accent-navy focus:outline-none focus:ring-2 focus:ring-accent-navy/10;
+  }
+  .primary-button {
+    @apply inline-flex min-h-11 items-center justify-center rounded-md bg-accent-navy px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-navy/90 disabled:opacity-50;
+  }
+}
+
+/* Quiet surfaces replace the original paper ornaments across learning screens. */
+.tape, .staple, .pencil-line { display: none; }
+.app-content { width: 100%; max-width: 1200px; margin-inline: auto; }
+.section-disclosure { border: 1px solid #d8cfbe; border-radius: 5px; background: #fffdf7; }
+.section-disclosure > summary {
+  padding: 18px 20px;
+  color: #303d37;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.section-disclosure[open] > summary { border-bottom: 1px solid #e7dfd0; margin-bottom: 16px; }
+.section-disclosure > :not(summary) { margin: 16px 20px 20px; }
+
+@layer base {
+  button, a, input, textarea, select {
+    transition-property: color, background-color, border-color, box-shadow, opacity;
+    transition-duration: 160ms;
+    transition-timing-function: ease-out;
+  }
+  button:disabled { cursor: not-allowed; }
+  :focus-visible {
+    outline: 2px solid #34516b;
+    outline-offset: 3px;
+  }
+  button:not(:disabled):active { opacity: 0.85; }
+}
+
+/* Opacity-only page motion keeps fixed dialogs anchored to the viewport. */
+.page-enter { animation: surface-fade 180ms ease-out; }
+.modal-backdrop { animation: surface-fade 160ms ease-out; }
+.modal-backdrop > div:first-child { animation: panel-enter 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+.tutor-enter { animation: drawer-enter 240ms cubic-bezier(0.22, 1, 0.36, 1); }
+.message-enter { animation: surface-fade 180ms ease-out; }
+.interactive-card {
+  transition: transform 180ms ease-out, box-shadow 180ms ease-out, border-color 180ms ease-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  .interactive-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px -12px rgb(44 44 44 / 30%);
+  }
+}
+.skeleton-block {
+  background: linear-gradient(100deg, #ece7df 25%, #f7f4ef 45%, #ece7df 65%);
+  background-size: 250% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  border-radius: 6px;
+}
+@keyframes surface-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes panel-enter {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes drawer-enter {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes skeleton-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+  .interactive-card:hover { transform: none; }
+}
+
 :root {
   --tape-cream: rgba(255, 248, 220, 0.85);
   --tape-mint: rgba(200, 230, 210, 0.75);
   --tape-pink: rgba(255, 220, 220, 0.75);
 }
 
+html {
+  font-size: 100%;
+}
+
 body {
   margin: 0;
-  /* Thống nhất 1 font Patrick Hand cho toàn bộ giao diện */
-  font-family: 'Patrick Hand', cursive, sans-serif;
-  color: #2c2c2c;
-  background:
-    repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(0,0,0,0.015) 50px, rgba(0,0,0,0.015) 51px),
-    repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(0,0,0,0.015) 50px, rgba(0,0,0,0.015) 51px),
-    linear-gradient(135deg, #faf8f5 0%, #f0ebe3 100%);
+  font-family: Arial, Helvetica, sans-serif;
+  color: #303d37;
+  background: #f0ece3;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Sử dụng Arial thống nhất cho toàn bộ giao diện, kể cả các lớp font cũ. */
+body,
+button,
+input,
+textarea,
+select,
+.font-sans,
+.font-mono,
+.font-hand,
+.font-display,
+.font-body,
+.font-exam {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 /* Các chi tiết thủ công Paper Craft */
@@ -66,3 +169,107 @@ body {
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
+
+/* A quiet desk and paper surface, with accents kept outside reading areas. */
+body, .study-desk {
+  background-color: #f0ece3;
+  background-image: radial-gradient(rgba(102, 84, 52, 0.055) 0.6px, transparent 0.6px);
+  background-size: 4px 4px;
+}
+.notebook-title, .notebook-heading h1 {
+  font-family: Arial, Helvetica, sans-serif !important;
+  letter-spacing: -0.035em;
+}
+.study-stamp {
+  border: 1px solid #53695d;
+  border-radius: 4px;
+  color: #304f46;
+  background: #e9ede1;
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+.notebook-sheet {
+  position: relative;
+  border: 1px solid #d8cfbe;
+  border-radius: 4px 12px 4px 4px;
+  background: #fffdf7;
+  box-shadow: 4px 5px 0 -1px #fbf8f0, 4px 5px 0 0 #d8cfbe, 0 14px 32px -18px rgba(77, 63, 40, 0.28);
+}
+.notebook-sheet::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 22px;
+  border-left: 1px solid rgba(166, 83, 60, 0.19);
+  pointer-events: none;
+}
+.notebook-tab {
+  padding: 4px 10px;
+  border: 1px solid #ccd2bd;
+  border-radius: 2px;
+  color: #53604a;
+  background: #e9ede1;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+}
+.notebook-heading { border-bottom: 1px solid #d8cfbe; padding-bottom: 20px; }
+.paper-card {
+  position: relative;
+  border-radius: 4px;
+  background-color: #fffdf7;
+  box-shadow: 0 2px 0 #e3dccd;
+}
+.paper-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 24px;
+  width: 38px;
+  height: 4px;
+  background: #a8b69a;
+}
+.study-note {
+  border: 1px solid #d9d0af;
+  border-radius: 3px;
+  background-color: #f6f0da;
+  background-image: repeating-linear-gradient(transparent 0 31px, rgba(141, 121, 68, 0.06) 31px 32px);
+  box-shadow: 0 3px 0 #e7dfc7;
+}
+.study-nav[aria-current='page'] { box-shadow: inset 0 -2px #a6533c; }
+
+.ai-markdown { overflow-wrap: anywhere; line-height: 1.75; }
+.ai-markdown > :first-child { margin-top: 0; }
+.ai-markdown > :last-child { margin-bottom: 0; }
+.ai-markdown p { margin: .65em 0; }
+.ai-markdown h1, .ai-markdown h2, .ai-markdown h3,
+.ai-markdown h4, .ai-markdown h5, .ai-markdown h6 { font-weight: 700; line-height: 1.4; margin: 1.25em 0 .5em; }
+.ai-markdown h1 { font-size: 1.4em; }
+.ai-markdown h2 { font-size: 1.2em; }
+.ai-markdown h3 { font-size: 1.08em; }
+.ai-markdown ul, .ai-markdown ol { padding-left: 1.5em; margin: .65em 0; }
+.ai-markdown ul { list-style: disc; }
+.ai-markdown ol { list-style: decimal; }
+.ai-markdown li { padding-left: .2em; margin: .25em 0; }
+.ai-markdown li > p { margin: .25em 0; }
+.ai-markdown a { color: #53604a; text-decoration: underline; text-underline-offset: 3px; }
+.ai-markdown blockquote { border-left: 3px solid #a8b69a; padding-left: 1em; margin: 1em 0; color: #625c50; }
+.ai-markdown code { font-size: .85em; border-radius: 3px; background: #eee8dc; padding: .15em .35em; }
+.ai-markdown pre { overflow-x: auto; padding: 1em; margin: 1em 0; border: 1px solid #d8cfbe; border-radius: 5px; background: #f5f0e6; }
+.ai-markdown pre code { padding: 0; background: transparent; }
+.ai-markdown table { width: 100%; border-collapse: collapse; font-size: .9em; margin: .75em 0; }
+.ai-markdown th, .ai-markdown td { border: 1px solid #d8cfbe; padding: .5em .75em; text-align: left; }
+.ai-markdown th { background: #eee8dc; }
+.ai-markdown hr { border-color: #d8cfbe; margin: 1em 0; }
+.ai-writing-cursor { display: inline-block; width: 7px; height: 15px; background: #53604a; border-radius: 2px; animation: ai-pulse 1s ease-in-out infinite; }
+.ai-thinking span { animation: ai-pulse 1s ease-in-out infinite; }
+@keyframes ai-pulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .ai-writing-cursor, .ai-thinking span { animation: none; } }
+
+.app-content.app-content-wide { max-width: none; }
+
+/* Disclosures retain keyboard access without decorative arrow markers. */
+summary { list-style: none; }
+summary::-webkit-details-marker { display: none; }
+.section-disclosure > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.section-disclosure > summary::after { content: 'Xem'; font-size: 12px; font-weight: 400; color: #61675c; }
+.section-disclosure[open] > summary::after { content: 'Thu gọn'; }

@@ -1,13 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface AuthContextType {
-  token: string | null;
-  isAuthenticated: boolean;
-  login: (token: string) => void;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import React, { useState } from 'react';
+import { AuthContext } from './useAuth';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('accessToken'));
@@ -27,12 +19,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth phải được sử dụng bên trong AuthProvider');
-  }
-  return context;
 };

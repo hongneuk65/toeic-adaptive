@@ -26,48 +26,59 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  examAttempts ExamAttempt[]
-  folders   FlashcardFolder[]
-  flashcards Flashcard[]
+  ability Float @default(0.0)
+
+  examAttempts          ExamAttempt[]
+  folders               FlashcardFolder[]
+  flashcards            Flashcard[]
+  studentSkillHistories StudentSkillHistory[]
+  userSkillMasteries    UserSkillMastery[]
+  aiChatMessages        AiChatMessage[]
 }
 
 model Skill {
-  id        Int             @id @default(autoincrement())
-  code      String          @unique // Ví dụ: P1_PHOTO_OBJECT, P5_TENSE,...
+  id        Int      @id @default(autoincrement())
+  code      String   @unique // Ví dụ: P1_PHOTO_OBJECT, P5_TENSE,...
   name      String
-  part      Int             // Part 1 -> 7 (7 gồm 7A Single, 7B Multiple)
-  category  String          // Ngữ pháp, Từ vựng, Suy luận, Ý chính,...
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  part      Int // Part 1 -> 7 (7 gồm 7A Single, 7B Multiple)
+  category  String // Ngữ pháp, Từ vựng, Suy luận, Ý chính,...
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  questions QuestionSkill[]
-  theoryLessons TheoryLesson[]
+  easiness Float @default(0.0)
+
+  questions             QuestionSkill[]
+  theoryLessons         TheoryLesson[]
+  das3hWeights          Das3hWeights?
+  studentSkillHistories StudentSkillHistory[]
+  userSkillMasteries    UserSkillMastery[]
 
   @@index([part])
 }
 
 model Question {
-  id              Int             @id @default(autoincrement())
-  part            Int             // 1 đến 7
-  passage         String?         // Đoạn văn đọc (dành cho Part 6, 7)
-  audioUrl        String?         // Link file âm thanh (dành cho Part 1-4)
-  imageUrl        String?         // Link ảnh (Part 1 hoặc biểu đồ Part 3, 4, 7)
-  content         String          // Nội dung câu hỏi
-  optionA         String
-  optionB         String
-  optionC         String
-  optionD         String
-  correctAnswer   String          // "A", "B", "C", hoặc "D"
-  explanation     String?         // Lời giải thích đáp án
-  difficulty      Difficulty      @default(MEDIUM)
-  itemDifficulty  Float           // δ_j (Equated Delta khởi tạo theo Part)
-  totalAttempts   Int             @default(0)
-  totalCorrect    Int             @default(0)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id             Int        @id @default(autoincrement())
+  part           Int // 1 đến 7
+  passage        String? // Đoạn văn đọc (dành cho Part 6, 7)
+  audioUrl       String? // Link file âm thanh (dành cho Part 1-4)
+  imageUrl       String? // Link ảnh (Part 1 hoặc biểu đồ Part 3, 4, 7)
+  content        String // Nội dung câu hỏi
+  optionA        String
+  optionB        String
+  optionC        String
+  optionD        String
+  correctAnswer  String // "A", "B", "C", hoặc "D"
+  explanation    String? // Lời giải thích đáp án
+  difficulty     Difficulty @default(MEDIUM)
+  itemDifficulty Float // δ_j (Equated Delta khởi tạo theo Part)
+  totalAttempts  Int        @default(0)
+  totalCorrect   Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
-  skills          QuestionSkill[]
-  examAnswers     ExamAnswer[]
+  skills                QuestionSkill[]
+  examAnswers           ExamAnswer[]
+  studentSkillHistories StudentSkillHistory[]
 
   @@index([part])
   @@index([difficulty])
@@ -104,52 +115,53 @@ model Flashcard {
 model TheoryLesson {
   id        Int      @id @default(autoincrement())
   title     String
-  content   String   // Nội dung bài học lý thuyết dạng markdown/text
-  part      Int      // 1 đến 7
+  content   String // Nội dung bài học lý thuyết dạng markdown/text
+  part      Int // 1 đến 7
   skillId   Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   @@index([part])
   @@index([skillId])
 }
 
 enum ExamType {
-  FULL    // 200 câu (100 Listening, 100 Reading)
-  MINI    // 100 câu rút gọn
-  PART_5  // 30 câu chuyên sâu ngữ pháp/từ vựng
+  FULL // 200 câu (100 Listening, 100 Reading)
+  MINI // 100 câu rút gọn
+  PART_5 // 30 câu chuyên sâu ngữ pháp/từ vựng
 }
 
 model ExamAttempt {
-  id             Int          @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   userId         Int
   examType       ExamType
-  startedAt      DateTime     @default(now())
+  startedAt      DateTime  @default(now())
   submittedAt    DateTime?
+  questionIds    Int[]    @default([])
   listeningScore Int?
   readingScore   Int?
   totalScore     Int?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  answers        ExamAnswer[]
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers ExamAnswer[]
 
   @@index([userId])
 }
 
 model ExamAnswer {
-  id             Int         @id @default(autoincrement())
+  id             Int      @id @default(autoincrement())
   attemptId      Int
   questionId     Int
-  selectedAnswer String      // "A", "B", "C", hoặc "D"
+  selectedAnswer String // "A", "B", "C", hoặc "D"
   isCorrect      Boolean
-  createdAt      DateTime    @default(now())
+  createdAt      DateTime @default(now())
 
-  attempt        ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  question       Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  attempt  ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   // Ngăn chặn trùng lặp câu trả lời trong cùng 1 lần thi ở mức database
   @@unique([attemptId, questionId])
@@ -167,4 +179,79 @@ model FlashcardFolder {
   flashcards  Flashcard[]
 
   @@index([userId])
+}
+
+model Das3hWeights {
+  id        Int      @id @default(autoincrement())
+  skillId   Int?     @unique
+  skill     Skill?   @relation(fields: [skillId], references: [id])
+  theta     Float[] // 10 trọng số cho 5 cửa sổ thời gian [c1, f1, c2, f2, ..., c5, f5]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 2. Lịch sử vết làm bài theo từng skill
+model StudentSkillHistory {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillId    Int
+  skill      Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  isCorrect  Boolean
+  questionId Int
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([userId, skillId, createdAt])
+}
+
+// 3. Bảng tổng hợp trình độ kỹ năng hiện tại của học sinh
+model UserSkillMastery {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillId       Int
+  skill         Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  masteryScore  Float    @default(0.5) // Giá trị xác suất [0.0, 1.0]
+  lastPracticed DateTime @default(now())
+  practiceCount Int      @default(0)
+
+  @@unique([userId, skillId])
+  @@index([userId])
+}
+
+
+model KnowledgeChunk {
+  id          Int      @id @default(autoincrement())
+  part        Int
+  skillCode   String?
+  category    String
+  title       String
+  content     String
+  keywords    String[]
+  lessonId    Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([part])
+  @@index([skillCode])
+  @@index([category])
+}
+
+model AiChatMessage {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String
+  content     String
+  contextData String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// A queue retry must not apply the same learning event twice.
+model ProcessedMasteryJob {
+  id          String   @id
+  processedAt DateTime @default(now())
 }

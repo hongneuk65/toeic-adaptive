@@ -7,11 +7,11 @@ import {
   UseGuards,
   Req,
   ParseIntPipe,
-  UnauthorizedException,
   Delete,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FlashcardService } from './flashcard.service';
+import { getOptionalUserId, getUserId } from '../common/user-id';
 
 @Controller('flashcards')
 export class FlashcardController {
@@ -28,7 +28,7 @@ export class FlashcardController {
         const payload = JSON.parse(
           Buffer.from(token.split('.')[1], 'base64').toString(),
         );
-        userId = payload.userId || payload.sub || payload.id;
+        userId = getOptionalUserId(payload);
       } catch {}
     }
     return this.flashcardService.getFolders(userId ? Number(userId) : undefined);
@@ -41,11 +41,7 @@ export class FlashcardController {
     @Req() req: any,
     @Body() body: { name: string; description?: string },
   ) {
-    const userId = req.user?.userId || req.user?.sub || req.user?.id;
-    if (!userId) {
-      throw new UnauthorizedException('Không tìm thấy thông tin định danh.');
-    }
-    return this.flashcardService.createFolder(Number(userId), body);
+    return this.flashcardService.createFolder(getUserId(req, 'Không tìm thấy thông tin định danh.'), body);
   }
 
   // 3. Chi tiết 1 Folder
@@ -62,7 +58,7 @@ export class FlashcardController {
         const payload = JSON.parse(
           Buffer.from(token.split('.')[1], 'base64').toString(),
         );
-        userId = payload.userId || payload.sub || payload.id;
+        userId = getOptionalUserId(payload);
       } catch {}
     }
     return this.flashcardService.getFolderDetail(id, userId ? Number(userId) : undefined);
@@ -82,11 +78,7 @@ export class FlashcardController {
     @Param('id', ParseIntPipe) id: number,
     @Body() body: any,
   ) {
-    const userId = req.user?.userId || req.user?.sub || req.user?.id;
-    if (!userId) {
-      throw new UnauthorizedException('Không tìm thấy thông tin định danh.');
-    }
-    return this.flashcardService.addCardToFolder(Number(userId), id, body);
+    return this.flashcardService.addCardToFolder(getUserId(req, 'Không tìm thấy thông tin định danh.'), id, body);
   }
 
    @Delete('folders/:id')
@@ -95,11 +87,9 @@ export class FlashcardController {
     @Req() req: any,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    // Lấy userId theo đúng quy ước dự án
-    const userId = req.user?.userId || req.user?.sub || req.user?.id;
-    if (!userId) {
-      throw new UnauthorizedException('Không xác định được danh tính người dùng.');
-    }
-    return this.flashcardService.deleteFolder(Number(userId), id);
+    return this.flashcardService.deleteFolder(
+      getUserId(req, 'Không xác định được danh tính người dùng.'),
+      id,
+    );
   }
 }

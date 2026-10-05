@@ -5,8 +5,15 @@ import { AdminModule } from './admin/admin.module';
 import { FlashcardModule } from './flashcard/flashcard.module';
 import { TheoryModule } from './theory/theory.module';
 import { ExamModule } from './exam/exam.module';
+import { MasteryModule } from './mastery/mastery.module';
+import { Das3hModule } from './das3h/das3h.module';
+import { RagModule } from './rag/rag.module';
+import { BullModule } from '@nestjs/bullmq';
+import { MasteryQueueModule } from './queue/mastery-queue.module';
+import { HealthController } from './health/health.controller';
 
 @Module({
+  controllers: [HealthController],
   imports: [
     PrismaModule,
     AuthModule,
@@ -14,6 +21,16 @@ import { ExamModule } from './exam/exam.module';
     FlashcardModule,
     TheoryModule,
     ExamModule,
+    MasteryModule,
+    Das3hModule,
+    RagModule,
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: Number(process.env.REDIS_PORT) || 6379,
+      },
+    }),
+    MasteryQueueModule,
   ],
 })
 export class AppModule {}

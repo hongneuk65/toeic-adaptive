@@ -1,76 +1,33 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { PageHeader } from '../components/ui/PageHeader';
 
-export const DashboardPage: React.FC = () => {
-    const navigate = useNavigate();
+const activities = [
+  { path: '/flashcards', label: 'Từ vựng', description: 'Ôn từ theo chủ đề với flashcard và phát âm.', symbol: 'Aa' },
+  { path: '/theory', label: 'Lý thuyết', description: 'Củng cố kiến thức và kiểm tra qua bài quiz.', symbol: '01' },
+  { path: '/exam', label: 'Thi thử', description: 'Luyện đề đầy đủ hoặc tập trung vào Part 5.', symbol: '07' },
+];
 
-    return (
-        <div className="w-full space-y-8">
-            {/* Tấm bìa chính mở rộng toàn màn hình */}
-            <div className="w-full bg-paper-white p-8 border-2 border-paper-kraft shadow-paper-medium rounded-sm relative">
-                <div className="staple top-3 left-6" />
-                <div className="staple top-3 right-6" />
-
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                    <div>
-                        <span className="font-mono text-xs font-bold text-accent-coral tracking-widest uppercase bg-paper-cream px-2 py-0.5 border border-paper-kraft">
-                            NHẬT KÝ THEO DÕI NĂNG LỰC
-                        </span>
-                        <h1 className="font-display text-4xl lg:text-5xl font-bold text-ink-dark mt-2">
-                            Bảng Tiến Trình Học Tập Thích Ứng
-                        </h1>
-                        <p className="font-body text-ink-medium text-sm mt-1">
-                            Phân tích dữ liệu học tập cá nhân hóa dựa trên thuật toán chẩn đoán kỹ năng TOEIC.
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => navigate('/exam')}
-                            className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-body text-sm font-bold rounded shadow transition"
-                        >
-                            VÀO THI THỬ NGAY
-                        </button>
-                        <button
-                            onClick={() => navigate('/flashcards')}
-                            className="px-5 py-2.5 bg-paper-cream hover:bg-paper-kraft-light/50 border border-paper-kraft text-ink-dark font-body text-sm font-bold rounded transition"
-                        >
-                            ÔN TẬP TỪ VỰNG
-                        </button>
-                    </div>
-                </div>
-
-                {/* 4 Thẻ thống kê dạng phiếu kẹp hồ sơ trải rộng 4 cột */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mt-8">
-                    <div className="bg-paper-cream p-5 border-2 border-paper-kraft rounded-sm shadow-paper-subtle relative">
-                        <div className="tape tape-mint w-16 top-[-8px] left-4" />
-                        <span className="font-mono text-xs text-ink-light tracking-wider uppercase block">TỪ VỰNG ĐÃ LƯU</span>
-                        <p className="font-display text-5xl font-bold text-accent-navy mt-2">210</p>
-                        <p className="font-body text-xs text-ink-pencil mt-1">Phân bổ trong 5 chủ đề</p>
-                    </div>
-
-                    <div className="bg-paper-cream p-5 border-2 border-paper-kraft rounded-sm shadow-paper-subtle relative">
-                        <div className="tape tape-pink w-16 top-[-8px] left-4" />
-                        <span className="font-mono text-xs text-ink-light tracking-wider uppercase block">BÀI LÝ THUYẾT</span>
-                        <p className="font-display text-5xl font-bold text-accent-sage mt-2">7/7</p>
-                        <p className="font-body text-xs text-ink-pencil mt-1">Bao quát đủ các Part</p>
-                    </div>
-
-                    <div className="bg-paper-cream p-5 border-2 border-paper-kraft rounded-sm shadow-paper-subtle relative">
-                        <div className="tape w-16 top-[-8px] left-4" />
-                        <span className="font-mono text-xs text-ink-light tracking-wider uppercase block">LƯỢT THI THỬ</span>
-                        <p className="font-display text-5xl font-bold text-accent-coral mt-2">03</p>
-                        <p className="font-body text-xs text-ink-pencil mt-1">Đã hoàn thành và chấm điểm</p>
-                    </div>
-
-                    <div className="bg-paper-cream p-5 border-2 border-paper-kraft rounded-sm shadow-paper-subtle relative">
-                        <div className="tape tape-mint w-16 top-[-8px] left-4" />
-                        <span className="font-mono text-xs text-ink-light tracking-wider uppercase block">ĐIỂM DỰ KIẾN</span>
-                        <p className="font-display text-5xl font-bold text-ink-dark mt-2">685</p>
-                        <p className="font-body text-xs text-ink-pencil mt-1">Ước tính theo thang điểm ETS</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
+export const DashboardPage = () => (
+  <div className="space-y-8">
+    <PageHeader title="Hôm nay bạn muốn học gì?" description="Chọn một hoạt động để tiếp tục luyện TOEIC theo nhịp của bạn." />
+    <section className="study-note flex flex-col justify-between gap-6 p-6 sm:p-8 md:flex-row md:items-center">
+      <div className="max-w-xl">
+        <p className="mb-3 text-xs font-semibold tracking-wide text-accent-coral">GHI CHÚ HỌC TẬP</p>
+        <h2 className="text-xl font-semibold tracking-tight text-ink-dark sm:text-2xl">Bắt đầu từ kỹ năng cần cải thiện</h2>
+        <p className="mt-3 text-sm leading-6 text-ink-medium">Xem gợi ý từ lịch sử làm bài và chọn bài luyện phù hợp với trình độ hiện tại.</p>
+      </div>
+      <Link to="/recommendations" className="primary-button shrink-0">Xem gợi ý học tập</Link>
+    </section>
+    <section aria-label="Hoạt động học tập" className="grid gap-4 md:grid-cols-3">
+      {activities.map((activity) => (
+        <Link key={activity.path} to={activity.path} className="paper-card interactive-card group border border-paper-kraft p-6">
+          <span className="mb-6 flex h-11 w-11 items-center justify-center rounded-xl bg-paper-cream text-sm font-semibold text-accent-navy">{activity.symbol}</span>
+          <h2 className="text-lg font-semibold text-ink-dark">{activity.label}</h2>
+          <p className="mt-2 min-h-12 text-sm leading-6 text-ink-medium">{activity.description}</p>
+          <span className="mt-6 inline-block text-sm font-medium text-accent-coral">Bắt đầu</span>
+        </Link>
+      ))}
+    </section>
+    <p className="text-sm text-ink-light">Sau mỗi bài luyện, vào Gợi ý để xem kỹ năng và lựa chọn bước học tiếp theo.</p>
+  </div>
+);

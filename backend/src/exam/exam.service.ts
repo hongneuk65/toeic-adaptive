@@ -1,182 +1,139 @@
-import {
-    BadRequestException,
-    ForbiddenException,
-    Injectable,
-    NotFoundException,
-} from '@nestjs/common';
-import { ExamType } from '@prisma/client';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ExamAttempt, ExamType } from '@prisma/client';
+import { questionSelect } from '../common/question-select';
 import { PrismaService } from '../prisma/prisma.service';
+import { MasteryQueueService } from '../queue/mastery-queue.service';
 import { StartExamDto } from './dto/start-exam.dto';
 import { SubmitExamDto } from './dto/submit-exam.dto';
 
+const EXAM_COUNTS: Record<ExamType, number[]> = {
+  FULL: [6, 25, 39, 30, 30, 16, 54],
+  MINI: [3, 12, 20, 15, 15, 8, 27],
+  PART_5: [0, 0, 0, 0, 30, 0, 0],
+};
+
 @Injectable()
 export class ExamService {
-    constructor(private prisma: PrismaService) { }
+  private readonly logger = new Logger(ExamService.name);
 
-    // 1. Khởi tạo bài thi và lấy danh sách câu hỏi (KHÔNG trả correctAnswer)
-    async startExam(userId: number, dto: StartExamDto) {
-        let questionsQuery: any = {};
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly masteryQueueService: MasteryQueueService,
+  ) {}
 
-        if (dto.examType === ExamType.PART_5) {
-            questionsQuery = { where: { part: 5 }, take: 30 };
-        } else if (dto.examType === ExamType.MINI) {
-            questionsQuery = { take: 100 };
-        } else {
-            // FULL exam: 200 câu
-            questionsQuery = { take: 200 };
-        }
+  async startExam(userId: number, dto: StartExamDto) {
+    const questions = await this.selectQuestions(dto.examType);
+    const attempt = await this.prisma.examAttempt.create({
+      data: { userId, examType: dto.examType, questionIds: questions.map((q) => q.id) },
+    });
+    return this.toExamResponse(attempt, questions);
+  }
 
-        // Lấy câu hỏi đề thi (ẩn hoàn toàn correctAnswer và explanation)
-        const questions = await this.prisma.question.findMany({
-            ...questionsQuery,
-            orderBy: [{ part: 'asc' }, { id: 'asc' }],
-            select: {
-                id: true,
-                part: true,
-                passage: true,
-                audioUrl: true,
-                imageUrl: true,
-                content: true,
-                optionA: true,
-                optionB: true,
-                optionC: true,
-                optionD: true,
-            },
-        });
+  private async selectQuestions(examType: ExamType) {
+    const groups = await Promise.all(EXAM_COUNTS[examType].map(async (count, index) => {
+      if (!count) return [];
+      const questions = await this.prisma.question.findMany({
+        where: { part: index + 1 }, take: count, orderBy: { id: 'asc' }, select: questionSelect,
+      });
+      if (questions.length !== count) {
+        throw new BadRequestException(`Part ${index + 1} cần đủ ${count} câu hỏi để tạo đề`);
+      }
+      return questions;
+    }));
+    return groups.flat();
+  }
 
-        if (questions.length === 0) {
-            throw new BadRequestException('Ngân hàng đề chưa có đủ câu hỏi cho bài thi này');
-        }
-
-        // Tạo lượt thi (attempt)
-        const attempt = await this.prisma.examAttempt.create({
-            data: {
-                userId,
-                examType: dto.examType,
-            },
-        });
-
-        return {
-            attemptId: attempt.id,
-            examType: attempt.examType,
-            startedAt: attempt.startedAt,
-            totalQuestions: questions.length,
-            questions,
-        };
+  async getExam(userId: number, attemptId: number) {
+    const attempt = await this.getOwnedAttempt(userId, attemptId);
+    this.assertOpen(attempt);
+    const questions = await this.prisma.question.findMany({
+      where: { id: { in: attempt.questionIds } }, select: questionSelect,
+    });
+    const byId = new Map(questions.map((q) => [q.id, q]));
+    if (questions.length !== attempt.questionIds.length) {
+      throw new BadRequestException('Câu hỏi trong đề đã thay đổi. Vui lòng tạo lượt thi mới.');
     }
+    return this.toExamResponse(attempt, attempt.questionIds.map((id) => byId.get(id)!));
+  }
 
-    // 2. Chấm điểm bài thi sử dụng $transaction và createMany
-    async submitExam(userId: number, dto: SubmitExamDto) {
-        const attempt = await this.prisma.examAttempt.findUnique({
-            where: { id: dto.attemptId },
-        });
+  private toExamResponse(attempt: ExamAttempt, questions: unknown[]) {
+    return {
+      attemptId: attempt.id, examType: attempt.examType, startedAt: attempt.startedAt,
+      totalQuestions: questions.length, questions,
+    };
+  }
 
-        if (!attempt) {
-            throw new NotFoundException('Không tìm thấy lượt thi');
-        }
+  private async getOwnedAttempt(userId: number, id: number) {
+    const attempt = await this.prisma.examAttempt.findUnique({ where: { id } });
+    if (!attempt) throw new NotFoundException('Không tìm thấy lượt thi');
+    if (attempt.userId !== userId) throw new ForbiddenException('Bạn không có quyền truy cập bài thi này');
+    return attempt;
+  }
 
-        // Chặn người dùng nộp bài thi của người khác
-        if (attempt.userId !== userId) {
-            throw new ForbiddenException('Bạn không có quyền nộp bài thi này');
-        }
-
-        // Chặn nộp bài trùng lặp
-        if (attempt.submittedAt) {
-            throw new BadRequestException('Bài thi này đã được nộp trước đó');
-        }
-
-        const questionIds = dto.answers.map((a) => a.questionId);
-
-        // Gom toàn bộ câu hỏi vào 1 câu SELECT duy nhất
-        const questions = await this.prisma.question.findMany({
-            where: { id: { in: questionIds } },
-            select: { id: true, part: true, correctAnswer: true },
-        });
-
-        const questionMap = new Map(questions.map((q) => [q.id, q]));
-
-        let listeningCorrect = 0;
-        let readingCorrect = 0;
-
-        // Chuẩn bị dữ liệu để batch insert
-        const answerRecords = dto.answers.map((ans) => {
-            const q = questionMap.get(ans.questionId);
-            const isCorrect = q ? q.correctAnswer === ans.selectedAnswer : false;
-
-            if (q) {
-                if (q.part >= 1 && q.part <= 4) {
-                    if (isCorrect) listeningCorrect++;
-                } else {
-                    if (isCorrect) readingCorrect++;
-                }
-            }
-
-            return {
-                attemptId: attempt.id,
-                questionId: ans.questionId,
-                selectedAnswer: ans.selectedAnswer,
-                isCorrect,
-            };
-        });
-
-        // Công thức tính điểm thô tạm thời cho giai đoạn MVP (tỉ lệ chuẩn trên thang 495 mỗi kỹ năng)
-        const listeningScore = Math.round(
-            (listeningCorrect / Math.max(1, (attempt.examType === ExamType.FULL ? 100 : listeningCorrect || 1))) * 495,
-        );
-
-        const readingScore = Math.round(
-            (readingCorrect / Math.max(1, (attempt.examType === ExamType.FULL ? 100 : (attempt.examType === ExamType.PART_5 ? 30 : readingCorrect || 1)))) * 495,
-        );
-        const totalScore = listeningScore + readingScore;
-
-        // Sử dụng $transaction để đảm bảo chèn 200 dòng answers và cập nhật attempt thành công đồng thời
-        await this.prisma.$transaction([
-            this.prisma.examAnswer.createMany({
-                data: answerRecords,
-            }),
-            this.prisma.examAttempt.update({
-                where: { id: attempt.id },
-                data: {
-                    submittedAt: new Date(),
-                    listeningScore,
-                    readingScore,
-                    totalScore,
-                },
-            }),
-        ]);
-
-        return {
-            attemptId: attempt.id,
-            listeningCorrect,
-            readingCorrect,
-            totalCorrect: listeningCorrect + readingCorrect,
-            listeningScore,
-            readingScore,
-            totalScore,
-        };
+  private assertOpen(attempt: ExamAttempt) {
+    if (attempt.submittedAt) throw new BadRequestException('Bài thi này đã được nộp trước đó');
+    if (!attempt.questionIds.length) {
+      throw new BadRequestException('Lượt thi cũ chưa lưu danh sách câu hỏi. Vui lòng tạo lượt thi mới.');
     }
+  }
 
-    // 3. Xem lại bài thi (Review)
-    async getReview(userId: number, attemptId: number) {
-        const attempt = await this.prisma.examAttempt.findUnique({
-            where: { id: attemptId },
-            include: {
-                answers: {
-                    include: {
-                        question: true,
-                    },
-                },
-            },
-        });
-
-        if (!attempt) {
-            throw new NotFoundException('Không tìm thấy lượt thi');
-        }
-
-        if (attempt.userId !== userId) {
-            throw new ForbiddenException('Bạn không có quyền xem bài thi này');
-        }
-
-        return attempt;
+  async submitExam(userId: number, dto: SubmitExamDto) {
+    const attempt = await this.getOwnedAttempt(userId, dto.attemptId);
+    this.assertOpen(attempt);
+    const selected = new Map(dto.answers.map((a) => [a.questionId, a.selectedAnswer]));
+    if (selected.size !== dto.answers.length || dto.answers.some((a) => !attempt.questionIds.includes(a.questionId))) {
+      throw new BadRequestException('Danh sách đáp án bị trùng hoặc chứa câu hỏi ngoài đề');
     }
+    const questions = await this.prisma.question.findMany({
+      where: { id: { in: attempt.questionIds } },
+      select: { id: true, part: true, correctAnswer: true, skills: { select: { skillId: true } } },
+    });
+    if (questions.length !== attempt.questionIds.length) {
+      throw new BadRequestException('Một hoặc nhiều câu hỏi trong đề không còn tồn tại');
+    }
+    const byId = new Map(questions.map((q) => [q.id, q]));
+    const records = attempt.questionIds.map((questionId) => ({
+      attemptId: attempt.id, questionId, selectedAnswer: selected.get(questionId) ?? '',
+      isCorrect: selected.get(questionId) === byId.get(questionId)!.correctAnswer,
+    }));
+    const listeningCorrect = records.filter((a) => a.isCorrect && byId.get(a.questionId)!.part <= 4).length;
+    const totalCorrect = records.filter((a) => a.isCorrect).length;
+    const readingCorrect = totalCorrect - listeningCorrect;
+    const counts = EXAM_COUNTS[attempt.examType];
+    const listeningScore = this.scaleScore(listeningCorrect, counts.slice(0, 4));
+    const readingScore = this.scaleScore(readingCorrect, counts.slice(4));
+    const scores = { listeningScore, readingScore, totalScore: listeningScore + readingScore };
+
+    await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.examAttempt.updateMany({
+        where: { id: attempt.id, submittedAt: null },
+        data: { submittedAt: new Date(), ...scores },
+      });
+      if (!claimed.count) throw new BadRequestException('Bài thi này đã được nộp trước đó');
+      await tx.examAnswer.createMany({ data: records });
+    });
+    // Unanswered items appear in review, but are not observations of a skill.
+    const logs = records.filter((a) => a.selectedAnswer).map((a) => ({
+      userId, questionId: a.questionId, isCorrect: a.isCorrect,
+      skillIds: byId.get(a.questionId)!.skills.map((s) => s.skillId),
+    }));
+    await this.masteryQueueService.enqueueBulkMasteryUpdate(logs).catch((error: unknown) => {
+      this.logger.error(`Không thể xếp hàng cập nhật mastery cho bài thi ${attempt.id}`, error);
+    });
+    return { attemptId: attempt.id, listeningCorrect, readingCorrect, totalCorrect, ...scores };
+  }
+
+  private scaleScore(correct: number, counts: number[]) {
+    const total = counts.reduce((sum, count) => sum + count, 0);
+    return total ? Math.round(correct / total * 495) : 0;
+  }
+
+  async getReview(userId: number, attemptId: number) {
+    const attempt = await this.getOwnedAttempt(userId, attemptId);
+    if (!attempt.submittedAt) throw new BadRequestException('Bạn cần nộp bài trước khi xem đáp án');
+    const answers = await this.prisma.examAnswer.findMany({
+      where: { attemptId }, include: { question: true }, orderBy: { id: 'asc' },
+    });
+    return { ...attempt, answers };
+  }
 }

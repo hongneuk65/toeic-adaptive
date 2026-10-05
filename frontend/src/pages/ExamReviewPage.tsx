@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
+import { useAsyncResource } from '../hooks/useAsyncResource';
+import { RagExplanationModal } from '../components/rag/RagExplanationModal';
+import { AiTutorDrawer } from '../components/rag/AiTutorDrawer';
+import { AiTutorFloatingButton } from '../components/rag/AiTutorFloatingButton';
 
 interface ReviewResponse {
     id: number;
@@ -33,23 +37,22 @@ export const ExamReviewPage: React.FC = () => {
     const { attemptId } = useParams<{ attemptId: string }>();
     const navigate = useNavigate();
 
-    const [review, setReview] = useState<ReviewResponse | null>(null);
+    const load = useCallback((signal: AbortSignal) =>
+        api<ReviewResponse>(`/exam/${attemptId}/review`, { signal }), [attemptId]);
+    const { data: review, loading, error, reload } = useAsyncResource(load);
     const [filterPart, setFilterPart] = useState<number | 'ALL'>('ALL');
-    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        api<ReviewResponse>(`/exam/${attemptId}/review`)
-            .then((data) => setReview(data))
-            .catch((err) => alert(err.message || 'Lỗi tải kết quả'))
-            .finally(() => setLoading(false));
-    }, [attemptId]);
+    // Trợ lý AI RAG
+    const [ragModalQuestion, setRagModalQuestion] = useState<{ id: number; selectedAnswer: string } | null>(null);
+    const [tutorDrawerOpen, setTutorDrawerOpen] = useState(false);
+    const [tutorContext, setTutorContext] = useState<{ questionId?: number; skillCode?: string }>({});
 
     if (loading) {
         return <div className="p-8 text-center text-slate-500">Đang tổng hợp kết quả...</div>;
     }
 
     if (!review) {
-        return <div className="p-8 text-center text-slate-500">Không tìm thấy dữ liệu bài thi.</div>;
+        return <div role="alert" className="p-8 text-center text-slate-500">{error || 'Không tìm thấy dữ liệu bài thi.'} <button onClick={reload}>Thử lại</button></div>;
     }
 
     const filteredAnswers = review.answers.filter((ans) =>
@@ -57,7 +60,7 @@ export const ExamReviewPage: React.FC = () => {
     );
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="w-full space-y-6">
             {/* Bảng điểm tổng quan */}
             <div className="bg-white p-6 border border-slate-200 rounded">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-4">
@@ -121,7 +124,7 @@ export const ExamReviewPage: React.FC = () => {
                                     className={`text-xs font-bold px-2 py-0.5 rounded ${ans.isCorrect ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'
                                         }`}
                                 >
-                                    {ans.isCorrect ? 'ĐÚNG' : 'SAI'}
+                                    {!ans.selectedAnswer ? 'CHƯA TRẢ LỜI' : ans.isCorrect ? 'ĐÚNG' : 'SAI'}
                                 </span>
                             </div>
 
@@ -155,10 +158,58 @@ export const ExamReviewPage: React.FC = () => {
                                     {q.explanation}
                                 </div>
                             )}
+
+                            {/* Nút Phân tích lỗi sai RAG AI */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                                <button
+                                    onClick={() => setRagModalQuestion({ id: q.id, selectedAnswer: ans.selectedAnswer || 'CHƯA_CHỌN' })}
+                                    className="px-3 py-1.5 bg-paper-cream hover:bg-paper-kraft-light/50 border border-paper-kraft text-ink-dark rounded text-xs font-bold shadow-sm transition"
+                                >
+                                    Phân tích chi tiết AI (RAG)
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        setTutorContext({ questionId: q.id });
+                                        setTutorDrawerOpen(true);
+                                    }}
+                                    className="text-xs text-slate-600 hover:text-slate-900 font-semibold"
+                                >
+                                    Hỏi AI Tutor câu này
+                                </button>
+                            </div>
                         </div>
                     );
                 })}
             </div>
+
+            {/* Modal Giải thích RAG */}
+            {ragModalQuestion && (
+                <RagExplanationModal
+                    isOpen={!!ragModalQuestion}
+                    onClose={() => setRagModalQuestion(null)}
+                    questionId={ragModalQuestion.id}
+                    selectedAnswer={ragModalQuestion.selectedAnswer}
+                    onAskTutor={(qId, sCode) => {
+                        setTutorContext({ questionId: qId, skillCode: sCode });
+                        setTutorDrawerOpen(true);
+                    }}
+                />
+            )}
+
+            {/* Drawer Trợ lý AI Hỏi đáp */}
+            <AiTutorDrawer
+                isOpen={tutorDrawerOpen}
+                onClose={() => setTutorDrawerOpen(false)}
+                initialQuestionId={tutorContext.questionId}
+                initialSkillCode={tutorContext.skillCode}
+            />
+
+            {/* Floating button mở AI Tutor */}
+            <AiTutorFloatingButton
+                isOpen={tutorDrawerOpen}
+                onClick={() => setTutorDrawerOpen(true)}
+            />
         </div>
     );
 };

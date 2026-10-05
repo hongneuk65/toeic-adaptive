@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api, getErrorMessage } from '../lib/api';
+import { useAsyncResource } from '../hooks/useAsyncResource';
 
 interface Question {
     id: number;
@@ -26,26 +27,29 @@ interface QuizResult {
 
 export const TheoryQuizPage: React.FC = () => {
     const { lessonId } = useParams<{ lessonId: string }>();
+    return <TheoryQuiz key={lessonId} lessonId={lessonId} />;
+};
+
+const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
     const navigate = useNavigate();
 
-    const [questions, setQuestions] = useState<Question[]>([]);
+    const load = useCallback((signal: AbortSignal) =>
+        api<Question[]>(`/theory/${lessonId}/quiz`, { signal }), [lessonId]);
+    const { data: questions = [], loading, error, reload } = useAsyncResource(load);
     const [answers, setAnswers] = useState<Record<number, string>>({});
     const [result, setResult] = useState<QuizResult | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        api<Question[]>(`/theory/${lessonId}/quiz`)
-            .then((data) => setQuestions(data))
-            .catch((err) => console.error(err))
-            .finally(() => setLoading(false));
-    }, [lessonId]);
+    const [submitting, setSubmitting] = useState(false);
+    const busy = useRef(false);
+    const pendingSubmit = useRef<AbortController | null>(null);
+    useEffect(() => () => pendingSubmit.current?.abort(), []);
 
     const handleSelect = (qId: number, opt: string) => {
-        if (result) return;
+        if (result || busy.current) return;
         setAnswers((prev) => ({ ...prev, [qId]: opt }));
     };
 
     const handleSubmit = async () => {
+        if (busy.current || result || !questions.length) return;
         const list = Object.entries(answers).map(([qId, selectedAnswer]) => ({
             questionId: Number(qId),
             selectedAnswer,
@@ -56,26 +60,36 @@ export const TheoryQuizPage: React.FC = () => {
             return;
         }
 
+        busy.current = true;
+        const controller = new AbortController();
+        pendingSubmit.current = controller;
+        setSubmitting(true);
         try {
             const res = await api<QuizResult>(`/theory/${lessonId}/quiz/submit`, {
                 method: 'POST',
+                signal: controller.signal,
                 data: { answers: list },
             });
-            setResult(res);
-        } catch (err: any) {
-            alert(err.message || 'Lỗi khi nộp bài');
+            if (!controller.signal.aborted) setResult(res);
+        } catch (err) {
+            if (!controller.signal.aborted) alert(getErrorMessage(err, 'Lỗi khi nộp bài'));
+        } finally {
+            busy.current = false;
+            pendingSubmit.current = null;
+            if (!controller.signal.aborted) setSubmitting(false);
         }
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="w-full space-y-6">
+            {error && <p role="alert" className="text-red-700">{error} <button onClick={reload}>Thử lại</button></p>}
             {/* Header thanh điều hướng phòng thi */}
             <div className="bg-white p-4 border border-slate-200 rounded flex justify-between items-center shadow-sm">
                 <button
                     onClick={() => navigate('/theory')}
                     className="font-hand text-lg font-bold text-slate-700 hover:text-accent-coral transition"
                 >
-                    ← Quay lại đọc lý thuyết
+                    Quay lại đọc lý thuyết
                 </button>
                 <h1 className="font-body font-bold text-lg text-slate-800">
                     Mini-quiz Luyện Tập Củng Cố
@@ -144,6 +158,7 @@ export const TheoryQuizPage: React.FC = () => {
                     {!result && (
                         <button
                             onClick={handleSubmit}
+                            disabled={submitting}
                             className="w-full py-3.5 bg-blue-700 hover:bg-blue-800 text-white font-body text-base font-bold rounded shadow transition"
                         >
                             Nộp bài Mini-quiz

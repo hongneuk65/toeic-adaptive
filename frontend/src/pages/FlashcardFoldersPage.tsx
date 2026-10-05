@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api, getErrorMessage } from '../lib/api';
+import { useAsyncResource } from '../hooks/useAsyncResource';
+import { PageHeader } from '../components/ui/PageHeader';
+import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 
 interface FolderItem {
   id: number | string;
@@ -15,8 +18,8 @@ interface FolderItem {
 export const FlashcardFoldersPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const [folders, setFolders] = useState<FolderItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const load = useCallback((signal: AbortSignal) => api<FolderItem[]>('/flashcards/folders', { signal }), []);
+  const { data: folders = [], loading, error, reload: loadFolders } = useAsyncResource(load);
   const [search, setSearch] = useState('');
 
   // Modal tạo Folder mới
@@ -24,27 +27,6 @@ export const FlashcardFoldersPage: React.FC = () => {
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderDesc, setNewFolderDesc] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  // 1. Tải danh sách thư mục từ backend
-  const loadFolders = () => {
-    setLoading(true);
-    api('/flashcards/folders')
-      .then((res: any) => {
-        // Unwrap dữ liệu an toàn dù backend trả về dạng nào
-        const raw = res?.data !== undefined ? res.data : res;
-        const list = Array.isArray(raw) ? raw : (raw?.items || []);
-        setFolders(list);
-      })
-      .catch((err) => {
-        console.error('Lỗi khi tải danh sách thư mục:', err);
-        setFolders([]);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    loadFolders();
-  }, []);
 
   // 2. Xử lý tạo thư mục mới
   const handleCreateFolder = async (e: React.FormEvent) => {
@@ -68,9 +50,9 @@ export const FlashcardFoldersPage: React.FC = () => {
       setNewFolderDesc('');
       setIsModalOpen(false);
       loadFolders();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Lỗi khi tạo thư mục:', err);
-      alert(err.response?.data?.message || err.message || 'Không thể tạo thư mục mới.');
+      alert(getErrorMessage(err, 'Không thể tạo thư mục mới.'));
     } finally {
       setSubmitting(false);
     }
@@ -93,9 +75,9 @@ export const FlashcardFoldersPage: React.FC = () => {
 
       alert(`Đã xóa thành công thư mục "${folderName}".`);
       loadFolders();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Lỗi khi xóa thư mục:', err);
-      alert(err.response?.data?.message || err.message || 'Không thể xóa thư mục này.');
+      alert(getErrorMessage(err, 'Không thể xóa thư mục này.'));
     }
   };
 
@@ -112,51 +94,39 @@ export const FlashcardFoldersPage: React.FC = () => {
   }, [folders, search]);
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-4">
+      {error && <p role="alert" className="text-red-700">{error} <button onClick={loadFolders}>Thử lại</button></p>}
       
       {/* 1. THANH TIÊU ĐỀ & CÔNG CỤ TỦ TÀI LIỆU */}
-      <div className="w-full bg-paper-white p-6 md:p-8 border-2 border-paper-kraft shadow-paper-subtle rounded-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative">
-        <div className="staple top-3 left-6" />
-        <div className="tape tape-mint w-28 top-[-10px] right-8" />
-
-        <div>
-          <span className="font-mono text-xs font-bold text-accent-coral uppercase tracking-wider block mb-1">
-            HỆ THỐNG GHI NHỚ TỪ VỰNG TOEIC
-          </span>
-          <h1 className="font-display text-4xl md:text-5xl font-bold text-ink-dark">
-            Tủ Thư Mục Flashcard
-          </h1>
-          <p className="font-hand text-lg text-ink-medium mt-1">
-            Chọn một thư mục chuyên đề để bắt đầu lật thẻ và luyện nghe phát âm
-          </p>
-        </div>
-
-        {/* Cụm công cụ tìm kiếm và nút tạo thư mục */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+      <PageHeader
+        eyebrow="Hệ thống ghi nhớ từ vựng TOEIC"
+        title="Thư mục từ vựng"
+        description="Chọn một thư mục chuyên đề để bắt đầu lật thẻ và luyện nghe phát âm."
+        actions={
+          <>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo tên hoặc mã folder..."
-            className="px-4 py-2.5 bg-paper-cream border-2 border-paper-kraft font-body text-xs text-ink-dark rounded-sm focus:outline-none focus:border-slate-900 w-full sm:w-64"
+            placeholder="Tìm thư mục..."
+            className="w-full rounded border border-paper-kraft bg-paper-cream px-3 py-2 text-xs text-ink-dark focus:outline-none focus:border-slate-900 sm:w-56"
           />
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-6 py-2.5 bg-accent-coral hover:bg-[#c9664c] text-white font-hand text-lg font-bold rounded-sm shadow-paper-subtle transition uppercase cursor-pointer"
+            className="rounded bg-accent-coral px-4 py-2 text-sm font-bold text-white shadow-paper-subtle transition hover:bg-blue-700"
           >
-            + TẠO FOLDER MỚI
+            + Tạo thư mục
           </button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* 2. DANH SÁCH CÁC THƯ MỤC DẠNG HỒ SƠ GIẤY */}
-      {loading ? (
-        <div className="w-full bg-paper-white p-16 border-2 border-paper-kraft text-center font-hand text-2xl text-ink-light">
-          Đang mở tủ và lấy danh sách thư mục...
-        </div>
+      {loading && folders.length === 0 ? (
+        <LoadingSkeleton label="Đang tải thư mục từ vựng..." />
       ) : filteredFolders.length === 0 ? (
-        <div className="w-full bg-paper-white p-16 text-center border-2 border-dashed border-paper-kraft rounded-sm space-y-3">
+        <div className="w-full space-y-3 rounded-lg border border-dashed border-paper-kraft bg-paper-white p-10 text-center">
           <p className="font-hand text-2xl text-ink-medium">
             Chưa tìm thấy thư mục từ vựng nào phù hợp.
           </p>
@@ -168,12 +138,12 @@ export const FlashcardFoldersPage: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredFolders.map((folder) => (
             <div
               key={folder.id}
               onClick={() => navigate(`/flashcards/${folder.id}`)}
-              className="relative bg-paper-white border-2 border-paper-kraft p-6 rounded-sm shadow-paper-subtle hover:shadow-paper-medium hover:-translate-y-1 transition duration-200 cursor-pointer select-none flex flex-col justify-between min-h-[220px]"
+              className="relative flex min-h-[220px] cursor-pointer select-none flex-col justify-between rounded-lg border border-paper-kraft/70 bg-paper-white p-4 shadow-paper-subtle transition duration-200 hover:-translate-y-1 hover:shadow-paper-medium"
             >
               {/* Trang trí ghim bấm */}
               <div className="staple top-2 left-3" />
@@ -230,8 +200,8 @@ export const FlashcardFoldersPage: React.FC = () => {
 
       {/* 3. MODAL TẠO THƯ MỤC MỚI */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-md bg-paper-white border-2 border-paper-kraft shadow-paper-heavy rounded-sm p-8 relative">
+        <div className="modal-backdrop fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="w-full max-w-md bg-paper-white border border-paper-kraft shadow-paper-light rounded-xl p-8 relative">
             <div className="staple top-3 left-6" />
             <div className="tape tape-mint w-24 top-[-10px] right-8" />
 
@@ -264,7 +234,7 @@ export const FlashcardFoldersPage: React.FC = () => {
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="Ví dụ: Hợp đồng thương mại, Part 5 nâng cao..."
-                  className="w-full px-3 py-2 bg-paper-cream border-2 border-paper-kraft text-ink-dark font-body text-sm rounded-sm focus:outline-none focus:border-slate-900"
+                  className="w-full px-3 py-2 bg-paper-cream border border-paper-kraft text-ink-dark font-body text-sm rounded-lg focus:outline-none focus:border-slate-900"
                 />
               </div>
 
@@ -277,7 +247,7 @@ export const FlashcardFoldersPage: React.FC = () => {
                   value={newFolderDesc}
                   onChange={(e) => setNewFolderDesc(e.target.value)}
                   placeholder="Ghi chú về nhóm từ vựng trong thư mục này..."
-                  className="w-full px-3 py-2 bg-paper-cream border-2 border-paper-kraft text-ink-dark font-body text-sm rounded-sm focus:outline-none focus:border-slate-900 resize-none"
+                  className="w-full px-3 py-2 bg-paper-cream border border-paper-kraft text-ink-dark font-body text-sm rounded-lg focus:outline-none focus:border-slate-900 resize-none"
                 />
               </div>
 

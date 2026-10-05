@@ -27,7 +27,7 @@ export class FlashcardService {
 
       return folders.map((f, idx) => {
         // Lấy username từ email (ví dụ: test3@gmail.com -> test3)
-        const author = f.user?.email ? f.user.email.split('@') : 'Hệ thống';
+        const author = f.user?.email ? f.user.email.split('@')[0] : 'Hệ thống';
 
         const isOwner = Boolean(
           currentUserId && f.userId && Number(f.userId) === Number(currentUserId),
@@ -79,7 +79,7 @@ export class FlashcardService {
       throw new NotFoundException('Thư mục không tồn tại');
     }
 
-    const author = folder.user?.email ? folder.user.email.split('@') : 'Hệ thống';
+    const author = folder.user?.email ? folder.user.email.split('@')[0] : 'Hệ thống';
 
     return {
       id: folder.id,

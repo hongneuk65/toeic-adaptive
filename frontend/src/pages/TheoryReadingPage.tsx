@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AiMarkdown } from '../components/rag/AiMarkdown';
 import { api } from '../lib/api';
+import { useAsyncResource } from '../hooks/useAsyncResource';
 
 interface LessonSummary {
   id: number;
@@ -18,32 +20,26 @@ interface LessonDetail {
 
 export const TheoryReadingPage: React.FC = () => {
   const [part, setPart] = useState(5);
-  const [lessons, setLessons] = useState<LessonSummary[]>([]);
-  const [currentLesson, setCurrentLesson] = useState<LessonDetail | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [selection, setSelection] = useState<{ part: number; id: number }>();
+  const loadList = useCallback((signal: AbortSignal) =>
+    api<LessonSummary[]>(`/theory/part/${part}`, { signal }), [part]);
+  const list = useAsyncResource(loadList);
+  const lessons = list.data ?? [];
+  const lessonId = selection?.part === part ? selection.id : lessons[0]?.id;
+  const loadDetail = useCallback(async (signal: AbortSignal) =>
+    lessonId ? api<LessonDetail>(`/theory/${lessonId}`, { signal }) : null, [lessonId]);
+  const detail = useAsyncResource(loadDetail);
+  const currentLesson = detail.data;
+  const loading = list.loading || detail.loading;
+  const error = list.error || detail.error;
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    api<LessonSummary[]>(`/theory/part/${part}`).then((data) => {
-      setLessons(data);
-      if (data.length > 0) {
-        loadLesson(data[0].id);
-      } else {
-        setCurrentLesson(null);
-      }
-    });
-  }, [part]);
-
-  const loadLesson = (id: number) => {
-    setLoading(true);
-    api<LessonDetail>(`/theory/${id}`)
-      .then((data) => setCurrentLesson(data))
-      .finally(() => setLoading(false));
-  };
+  const loadLesson = (id: number) => setSelection({ part, id });
 
   return (
     <div className="w-full space-y-6">
+      {error && <p role="alert" className="text-red-700">{error} <button onClick={() => { list.reload(); detail.reload(); }}>Thử lại</button></p>}
       {/* 1. THANH TAB CHỌN PART 1 -> 7 (DẠNG THẺ GIẤY TẬP KẸP SỔ TRÀN VIỀN) */}
       <div className="w-full flex gap-2 border-b-2 border-paper-kraft overflow-x-auto pb-1">
         {[1, 2, 3, 4, 5, 6, 7].map((p) => (
@@ -65,7 +61,7 @@ export const TheoryReadingPage: React.FC = () => {
       <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* CỘT TRÁI (3/12): MỤC LỤC SỔ TAY BÀI GIẢNG */}
-        <div className="lg:col-span-3 bg-paper-white p-5 border-2 border-paper-kraft shadow-paper-subtle rounded-sm space-y-4">
+        <div className="lg:col-span-3 bg-paper-white p-5 border border-paper-kraft shadow-paper-subtle rounded-lg space-y-4">
           <div className="flex justify-between items-center border-b border-paper-kraft pb-2">
             <span className="font-mono text-xs font-bold text-ink-light uppercase">
               MỤC LỤC PART {part}
@@ -85,7 +81,7 @@ export const TheoryReadingPage: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => loadLesson(item.id)}
-                  className={`w-full text-left p-3 rounded-sm font-body text-xs transition flex items-start gap-2.5 ${
+                  className={`w-full text-left p-3 rounded-lg font-body text-sm transition flex items-start gap-2.5 ${
                     currentLesson?.id === item.id
                       ? 'bg-paper-cream border-l-4 border-slate-900 font-bold text-ink-dark shadow-sm'
                       : 'text-ink-medium hover:bg-paper-cream/60 hover:text-ink-dark'
@@ -104,12 +100,12 @@ export const TheoryReadingPage: React.FC = () => {
         {/* CỘT PHẢI (9/12): TRANG GIẤY TẬP ĐỌC LÝ THUYẾT (NOTEBOOK LINED PAPER) */}
         <div className="lg:col-span-9">
           {loading ? (
-            <div className="w-full bg-paper-white p-16 border-2 border-paper-kraft text-center font-hand text-xl text-ink-light">
+            <div className="w-full bg-paper-white p-16 border border-paper-kraft text-center font-hand text-xl text-ink-light">
               Đang lật mở trang bài giảng...
             </div>
           ) : currentLesson ? (
             /* KHỐI TRANG GIẤY SỔ TAY CHÍNH */
-            <div className="relative w-full bg-white border-2 border-paper-kraft shadow-paper-heavy rounded-sm p-8 sm:p-12 min-h-[650px] flex flex-col justify-between overflow-hidden">
+            <div className="relative w-full bg-white border border-paper-kraft shadow-paper-light rounded-xl p-8 sm:p-12 min-h-[650px] flex flex-col justify-between overflow-hidden">
               
               {/* Hai ghim bấm kim loại kẹp đỉnh trang giấy */}
               <div className="staple top-3 left-10" />
@@ -124,7 +120,7 @@ export const TheoryReadingPage: React.FC = () => {
                 {/* Header trang giấy: Mã skill đóng dấu mộc */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-dashed border-paper-kraft pb-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold px-2.5 py-0.5 bg-paper-cream border border-paper-kraft text-slate-800 rounded-sm">
+                    <span className="font-mono text-xs font-bold px-2.5 py-0.5 bg-paper-cream border border-paper-kraft text-slate-800 rounded-lg">
                       {currentLesson.skill.code}
                     </span>
                     <span className="font-mono text-xs font-semibold text-ink-light uppercase">
@@ -138,13 +134,13 @@ export const TheoryReadingPage: React.FC = () => {
                 </div>
 
                 {/* Tiêu đề bài học */}
-                <h1 className="font-hand text-3xl sm:text-4xl font-bold text-ink-dark tracking-wide pt-2">
+                <h1 className="font-hand text-2xl sm:text-3xl font-semibold text-ink-dark tracking-tight pt-2">
                   {currentLesson.title}
                 </h1>
 
                 {/* Nội dung bài học: Phông tiêu chuẩn Nunito thẳng hàng, giãn dòng thoáng như viết trên dòng kẻ tập */}
-                <div className="font-body text-slate-800 text-base leading-loose whitespace-pre-line pt-2 text-justify">
-                  {currentLesson.content}
+                <div className="font-body text-slate-800 text-base leading-relaxed pt-2">
+                  <AiMarkdown content={currentLesson.content} />
                 </div>
 
               </div>
@@ -159,13 +155,13 @@ export const TheoryReadingPage: React.FC = () => {
                   onClick={() => navigate(`/theory/${currentLesson.id}/quiz`)}
                   className="w-full sm:w-auto px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white font-body text-xs font-bold uppercase tracking-wider rounded shadow transition"
                 >
-                  LÀM BÀI QUIZ CỦNG CỐ (5 CÂU) →
+                  LÀM BÀI QUIZ CỦNG CỐ (5 CÂU)
                 </button>
               </div>
 
             </div>
           ) : (
-            <div className="w-full bg-paper-white p-16 border-2 border-paper-kraft text-center font-hand text-xl text-ink-medium">
+            <div className="w-full bg-paper-white p-16 border border-paper-kraft text-center font-hand text-xl text-ink-medium">
               Vui lòng chọn bài học từ danh sách mục lục bên trái.
             </div>
           )}

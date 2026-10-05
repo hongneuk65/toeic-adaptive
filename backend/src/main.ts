@@ -1,3 +1,4 @@
+import './config/environment';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
@@ -7,16 +8,18 @@ async function bootstrap() {
 
   // Bật CORS cho phép Frontend truy cập
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
   });
 
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
+      transform: true,
     }),
   );
 
-  await app.listen(3000);
+  app.enableShutdownHooks();
+  await app.listen(Number(process.env.PORT) || 3000);
 }
 bootstrap();

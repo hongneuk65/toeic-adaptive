@@ -1,12 +1,13 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TheoryService } from './theory.service';
 import { SubmitQuizDto } from './dto/submit-quiz.dto';
+import { getOptionalUserId } from '../common/user-id';
 
 @Controller('theory')
 @UseGuards(AuthGuard('jwt'))
 export class TheoryController {
-  constructor(private theoryService: TheoryService) {}
+  constructor(private readonly theoryService: TheoryService) { }
 
   @Get('part/:part')
   getLessonsByPart(@Param('part', ParseIntPipe) part: number) {
@@ -27,7 +28,9 @@ export class TheoryController {
   submitQuiz(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: SubmitQuizDto,
+    @Req() req: any, // Ngày 18: Lấy thông tin user đăng nhập
   ) {
-    return this.theoryService.submitQuiz(id, dto);
+    const userId = getOptionalUserId(req.user);
+    return this.theoryService.submitQuiz(id, dto, userId);
   }
 }
