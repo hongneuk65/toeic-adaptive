@@ -12,3 +12,6 @@ audio YBM
 DE_THI.txt
 doc.md
 *.tsbuildinfo
+**/.venv-listening
+**/__pycache__
+backend/storage

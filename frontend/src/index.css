@@ -266,6 +266,8 @@ body, .study-desk {
 @media (prefers-reduced-motion: reduce) { .ai-writing-cursor, .ai-thinking span { animation: none; } }
 
 .app-content.app-content-wide { max-width: none; }
+.listening-youtube { aspect-ratio: 16 / 9; min-height: 200px; width: 100%; }
+.listening-youtube iframe { width: 100%; height: 100%; min-height: 200px; }
 
 /* Disclosures retain keyboard access without decorative arrow markers. */
 summary { list-style: none; }

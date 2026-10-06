@@ -1,0 +1,22 @@
+[
+  {
+    "start": 0.8,
+    "end": 3.429,
+    "text": "The meeting will begin at nine oclock."
+  },
+  {
+    "start": 4.229,
+    "end": 7.008,
+    "text": "Please bring a copy of the schedule."
+  },
+  {
+    "start": 7.808,
+    "end": 11.052,
+    "text": "Our new office is next to the train station."
+  },
+  {
+    "start": 11.852,
+    "end": 15.176,
+    "text": "The manager has asked everyone to arrive early."
+  }
+]

@@ -16,12 +16,14 @@ import { ExamRoomPage } from './pages/ExamRoomPage';
 import { ExamReviewPage } from './pages/ExamReviewPage';
 import { AiTutorFloatingButton } from './components/rag/AiTutorFloatingButton';
 import { AiTutorDrawer } from './components/rag/AiTutorDrawer';
+import { ListeningPage } from './pages/ListeningPage';
 
 const navItems = [
   { label: 'Trang chủ', path: '/dashboard' },
   { label: 'Gợi ý', path: '/recommendations' },
   { label: 'Flashcard', path: '/flashcards' },
   { label: 'Lý thuyết', path: '/theory' },
+  { label: 'Listening', path: '/listening' },
   { label: 'Thi thử', path: '/exam' },
 ];
 
@@ -104,6 +106,7 @@ const AppLayout: React.FC = () => {
         <Routes>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/recommendations" element={<RecommendationsPage />} />
+          <Route path="/listening" element={<ListeningPage />} />
           <Route path="/flashcards" element={<FlashcardFoldersPage />} />
           <Route path="/flashcards/:topic" element={<FlashcardStudyPage />} />
           <Route path="/theory" element={<TheoryReadingPage />} />

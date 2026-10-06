@@ -34,6 +34,9 @@ model User {
   studentSkillHistories StudentSkillHistory[]
   userSkillMasteries    UserSkillMastery[]
   aiChatMessages        AiChatMessage[]
+  listeningSources      ListeningSource[]
+  listeningSessions     ListeningSession[]
+  listeningReports      ListeningReport[]
 }
 
 model Skill {
@@ -254,4 +257,108 @@ model AiChatMessage {
 model ProcessedMasteryJob {
   id          String   @id
   processedAt DateTime @default(now())
+}
+
+model ListeningSource {
+  id Int @id @default(autoincrement())
+  ownerId Int?
+  owner User? @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title String
+  kind String
+  url String
+  videoId String?
+  published Boolean @default(false)
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  transcripts ListeningTranscript[]
+  sessions ListeningSession[]
+  reports ListeningReport[]
+  @@index([ownerId, published])
+}
+
+model ListeningTranscript {
+  id Int @id @default(autoincrement())
+  sourceId Int
+  segmentStart Float?
+  segmentEnd Float?
+  source ListeningSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  cacheKey String? @unique
+  language String @default("en")
+  version String
+  provider String
+  status String @default("PENDING")
+  error String?
+  attempts Int @default(0)
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  units ListeningUnit[]
+  sessions ListeningSession[]
+  @@index([sourceId, createdAt])
+}
+
+model ListeningUnit {
+  id Int @id @default(autoincrement())
+  transcriptId Int
+  transcript ListeningTranscript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  position Int
+  start Float
+  end Float
+  text String
+  answers ListeningAnswer[]
+  @@unique([transcriptId, position])
+}
+
+model ListeningSession {
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceId Int
+  source ListeningSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  transcriptId Int?
+  transcript ListeningTranscript? @relation(fields: [transcriptId], references: [id])
+  start Float
+  end Float
+  currentIndex Int @default(0)
+  mode String @default("CLOZE")
+  difficulty String @default("MEDIUM")
+  favorite Boolean @default(false)
+  updatedAt DateTime @updatedAt
+  answers ListeningAnswer[]
+  @@index([userId, updatedAt])
+}
+
+model ListeningAnswer {
+  id Int @id @default(autoincrement())
+  sessionId Int
+  session ListeningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  unitId Int
+  unit ListeningUnit @relation(fields: [unitId], references: [id])
+  mode String
+  difficulty String
+  submitted String
+  score Float
+  feedback Json
+  createdAt DateTime @default(now())
+  @@index([sessionId, unitId])
+}
+
+model ListeningReport {
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceId Int
+  source ListeningSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  reason String
+  resolved Boolean @default(false)
+  createdAt DateTime @default(now())
+}
+
+model ListeningSettings {
+  id Int @id @default(1)
+  maxSegmentSeconds Int @default(300)
+  defaultSegmentSeconds Int @default(180)
+  transcriptTtlHours Int @default(24)
+  requestsPerHour Int @default(10)
+  maxSubtitleBytes Int @default(200000)
+  maxRecordingSeconds Int @default(60)
 }

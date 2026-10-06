@@ -11,6 +11,7 @@ import { RagModule } from './rag/rag.module';
 import { BullModule } from '@nestjs/bullmq';
 import { MasteryQueueModule } from './queue/mastery-queue.module';
 import { HealthController } from './health/health.controller';
+import { ListeningModule } from './listening/listening.module';
 
 @Module({
   controllers: [HealthController],
@@ -24,6 +25,7 @@ import { HealthController } from './health/health.controller';
     MasteryModule,
     Das3hModule,
     RagModule,
+    ListeningModule,
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST || 'localhost',

@@ -2,6 +2,8 @@
 
 Ứng dụng luyện TOEIC: thi thử, lý thuyết, flashcard, theo dõi kỹ năng DAS3H và gia sư AI/RAG.
 
+Listening theo từng đoạn audio/video/YouTube tại `/listening`; xem [hướng dẫn Listening](docs/listening.md). Chạy `npm run seed:listening --prefix backend` để có audio demo ổn định. Kết quả Listening lưu riêng, không cập nhật DAS3H.
+
 ## Cấu trúc
 
 ```text

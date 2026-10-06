@@ -1,0 +1,2 @@
+ALTER TABLE "ListeningTranscript" ADD COLUMN "segmentStart" DOUBLE PRECISION,
+ADD COLUMN "segmentEnd" DOUBLE PRECISION;

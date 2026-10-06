@@ -53,3 +53,12 @@ export async function apiStream(endpoint: string, data: unknown, signal?: AbortS
 
   return response;
 }
+
+export async function apiUpload<T>(endpoint: string, file: File, fields: Record<string, string> = {}): Promise<T> {
+  const headers = new Headers(); const token = localStorage.getItem('accessToken');
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const body = new FormData(); body.append('file', file);
+  for (const [key, value] of Object.entries(fields)) body.append(key, value);
+  const response = await fetch(`${BASE_URL}${endpoint}`, { method: 'POST', headers, body });
+  await checkResponse(response); return response.json();
+}
