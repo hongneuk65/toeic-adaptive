@@ -9,6 +9,9 @@ interface Flashcard {
   phonetic?: string;
   meaning: string;
   example?: string;
+  notes?: string;
+  topic?: string;
+  sourceVersionId?: number;
 }
 
 interface FolderDetail {
@@ -29,11 +32,12 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
   const navigate = useNavigate();
 
   const load = useCallback(async (signal: AbortSignal) => {
-    const [folder, cards] = await Promise.all([
+    const [folder, cards, reviews] = await Promise.all([
       api<FolderDetail>(`/flashcards/folders/${folderId}`, { signal }),
       api<Flashcard[]>(`/flashcards/folders/${folderId}/cards`, { signal }),
+      api<{ cardId: number; known: boolean; reviewCount: number }[]>(`/flashcards/folders/${folderId}/reviews`, { signal }),
     ]);
-    return { folder, cards };
+    return { folder, cards, reviews };
   }, [folderId]);
   const { data, loading, error, reload: loadData } = useAsyncResource(load);
   const folder = data?.folder;
@@ -78,6 +82,22 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
       setFlippedIds({});
       setFocusIndex((prev) => prev + 1);
     }
+  };
+
+  const reviewCard = async (id: number, known: boolean) => {
+    try {
+      await api(`/flashcards/cards/${id}/review`, { method: 'PATCH', data: { known } });
+      loadData();
+    } catch (cause) { alert(getErrorMessage(cause)); }
+  };
+  const reviewControls = (card: Flashcard) => {
+    const review = data?.reviews.find(item => item.cardId === card.id);
+    return <div className="text-xs space-y-2" onClick={event => event.stopPropagation()}>
+      {card.sourceVersionId && <p className="text-ink-medium">Nguồn: {card.topic || 'Reading'} · bản {card.sourceVersionId}</p>}
+      {card.notes && <p className="text-ink-medium">{card.notes}</p>}
+      <p>{review?.known ? 'Đã nhớ' : 'Cần ôn'} · {review?.reviewCount || 0} lượt ôn của bạn</p>
+      <div className="flex gap-2 justify-center"><button className="px-2 py-1 border rounded" onClick={() => void reviewCard(card.id, false)}>Cần ôn</button><button className="px-2 py-1 border rounded" onClick={() => void reviewCard(card.id, true)}>Đã nhớ</button></div>
+    </div>;
   };
 
   const toggleFlip = (id: number) => {
@@ -337,6 +357,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
                       )}
                     </div>
 
+                    {reviewControls(card)}
                     <p className="font-hand text-[11px] text-ink-pencil text-center mt-2">
                       (Chạm để lật lại mặt trước)
                     </p>
@@ -411,6 +432,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
                         </div>
                       )}
 
+                      {reviewControls(card)}
                       <p className="font-hand text-sm text-ink-pencil mt-4">
                         (Chạm để quay lại mặt từ tiếng Anh)
                       </p>

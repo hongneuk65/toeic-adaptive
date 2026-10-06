@@ -12,6 +12,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { MasteryQueueModule } from './queue/mastery-queue.module';
 import { HealthController } from './health/health.controller';
 import { ListeningModule } from './listening/listening.module';
+import { ReadingModule } from './reading/reading.module';
 
 @Module({
   controllers: [HealthController],
@@ -26,6 +27,7 @@ import { ListeningModule } from './listening/listening.module';
     Das3hModule,
     RagModule,
     ListeningModule,
+    ReadingModule,
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST || 'localhost',

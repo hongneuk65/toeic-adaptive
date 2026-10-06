@@ -1,0 +1,2752 @@
+[
+  {
+    "key": "reading-demo-01",
+    "title": "Training room change",
+    "text": "Subject: Training room change\n\nThe customer-service training has moved to Room 204. The session begins at 10 a.m. on Tuesday. Please confirm your attendance so that the coordinator can prepare the correct number of handouts. Anyone unable to attend should request the recording from the coordinator.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Văn phòng",
+    "kind": "EMAIL",
+    "difficulty": "EASY",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "The customer-service training has moved to Room 204",
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "A plan to close the company"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “The customer-service training has moved to Room 204.” hỗ trợ lựa chọn “The customer-service training has moved to Room 204”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 31,
+            "end": 83,
+            "text": "The customer-service training has moved to Room 204."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When will the training begin?",
+        "options": [
+          "At 9 a.m. on Tuesday",
+          "At 10 a.m. on Tuesday",
+          "At 10 a.m. on Monday",
+          "At noon on Wednesday"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “The session begins at 10 a.m. on Tuesday.” hỗ trợ lựa chọn “At 10 a.m. on Tuesday”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 84,
+            "end": 125,
+            "text": "The session begins at 10 a.m. on Tuesday."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to confirm your attendance?",
+        "options": [
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "the coordinator can prepare the correct number of handouts",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Please confirm your attendance so that the coordinator can prepare the correct number of handouts.” hỗ trợ lựa chọn “the coordinator can prepare the correct number of handouts”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 126,
+            "end": 224,
+            "text": "Please confirm your attendance so that the coordinator can prepare the correct number of handouts."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What should an employee who misses the session do?",
+        "options": [
+          "Ignore the instructions in this message",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "Request the recording"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Anyone unable to attend should request the recording from the coordinator.” hỗ trợ lựa chọn “Request the recording”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 225,
+            "end": 299,
+            "text": "Anyone unable to attend should request the recording from the coordinator."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “confirm your attendance” in this text?",
+        "options": [
+          "say that you will be there",
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "complete the opposite action"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “confirm your attendance” hỗ trợ lựa chọn “say that you will be there”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 133,
+            "end": 156,
+            "text": "confirm your attendance"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-02",
+    "title": "Printer maintenance",
+    "text": "Printer maintenance\n\nThe second-floor printer will be unavailable during scheduled maintenance. Maintenance will take place from 8 a.m. to noon on Friday. Please use the first-floor printer so that urgent documents can still be printed. Large print jobs should be submitted before Thursday evening to avoid delays.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Văn phòng",
+    "kind": "NOTICE",
+    "difficulty": "MEDIUM",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Results of a customer satisfaction survey",
+          "The second-floor printer will be unavailable during scheduled maintenance",
+          "A plan to close the company",
+          "A change to staff salaries"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “The second-floor printer will be unavailable during scheduled maintenance.” hỗ trợ lựa chọn “The second-floor printer will be unavailable during scheduled maintenance”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 21,
+            "end": 95,
+            "text": "The second-floor printer will be unavailable during scheduled maintenance."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When will the printer be unavailable?",
+        "options": [
+          "From noon to 4 p.m. on Friday",
+          "From 8 a.m. to noon on Thursday",
+          "From 8 a.m. to noon on Friday",
+          "All day on Monday"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Maintenance will take place from 8 a.m. to noon on Friday.” hỗ trợ lựa chọn “From 8 a.m. to noon on Friday”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 96,
+            "end": 154,
+            "text": "Maintenance will take place from 8 a.m. to noon on Friday."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to use the first-floor printer?",
+        "options": [
+          "To cancel the entire arrangement",
+          "To collect information for an unrelated advertisement",
+          "To avoid paying all outstanding bills",
+          "urgent documents can still be printed"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Please use the first-floor printer so that urgent documents can still be printed.” hỗ trợ lựa chọn “urgent documents can still be printed”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 155,
+            "end": 236,
+            "text": "Please use the first-floor printer so that urgent documents can still be printed."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What is suggested for employees with large print jobs?",
+        "options": [
+          "Submit them before Thursday evening",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "Ignore the instructions in this message"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Large print jobs should be submitted before Thursday evening to avoid delays.” hỗ trợ lựa chọn “Submit them before Thursday evening”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 237,
+            "end": 314,
+            "text": "Large print jobs should be submitted before Thursday evening to avoid delays."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “unavailable” in this text?",
+        "options": [
+          "check an unrelated document",
+          "not ready for use",
+          "complete the opposite action",
+          "cancel the arrangement entirely"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “unavailable” hỗ trợ lựa chọn “not ready for use”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 54,
+            "end": 65,
+            "text": "unavailable"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-03",
+    "title": "Office supply orders",
+    "text": "Office supply orders\n\nOur department is combining this month's office supply orders. Requests must reach Nina by Wednesday at 3 p.m.. Please list the quantities you need so that Nina can calculate the combined order accurately. Requests received after the deadline will be included in next month's order.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Văn phòng",
+    "kind": "MESSAGE",
+    "difficulty": "HARD",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "Our department is combining this month's office supply orders",
+          "A plan to close the company"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Our department is combining this month's office supply orders.” hỗ trợ lựa chọn “Our department is combining this month's office supply orders”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 22,
+            "end": 84,
+            "text": "Our department is combining this month's office supply orders."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "Who should receive the requests?",
+        "options": [
+          "The supplier",
+          "The receptionist",
+          "The training coordinator",
+          "Nina"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Requests must reach Nina by Wednesday at 3 p.m..” hỗ trợ lựa chọn “Nina”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 85,
+            "end": 133,
+            "text": "Requests must reach Nina by Wednesday at 3 p.m.."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to list the quantities you need?",
+        "options": [
+          "Nina can calculate the combined order accurately",
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Please list the quantities you need so that Nina can calculate the combined order accurately.” hỗ trợ lựa chọn “Nina can calculate the combined order accurately”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 134,
+            "end": 227,
+            "text": "Please list the quantities you need so that Nina can calculate the combined order accurately."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What happens to a late request?",
+        "options": [
+          "Ignore the instructions in this message",
+          "It goes into next month's order",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Requests received after the deadline will be included in next month's order.” hỗ trợ lựa chọn “It goes into next month's order”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 228,
+            "end": 304,
+            "text": "Requests received after the deadline will be included in next month's order."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “combined order” in this text?",
+        "options": [
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "an order that brings several requests together",
+          "complete the opposite action"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “combined order” hỗ trợ lựa chọn “an order that brings several requests together”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 201,
+            "end": 215,
+            "text": "combined order"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-04",
+    "title": "New employee orientation",
+    "text": "Subject: New employee orientation\n\nNew employees are invited to an orientation covering workplace procedures. The orientation is in the main hall on April 12. Please bring your identification so that the security team can issue a building pass. Employees who already have a building pass should bring it instead.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Nhân sự",
+    "kind": "EMAIL",
+    "difficulty": "EASY",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Results of a customer satisfaction survey",
+          "A plan to close the company",
+          "A change to staff salaries",
+          "New employees are invited to an orientation covering workplace procedures"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “New employees are invited to an orientation covering workplace procedures.” hỗ trợ lựa chọn “New employees are invited to an orientation covering workplace procedures”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 35,
+            "end": 109,
+            "text": "New employees are invited to an orientation covering workplace procedures."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "Where will the orientation be held?",
+        "options": [
+          "In the main hall",
+          "In the conference room",
+          "At the reception desk",
+          "In the cafeteria"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “The orientation is in the main hall on April 12.” hỗ trợ lựa chọn “In the main hall”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 110,
+            "end": 158,
+            "text": "The orientation is in the main hall on April 12."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to bring your identification?",
+        "options": [
+          "To cancel the entire arrangement",
+          "the security team can issue a building pass",
+          "To collect information for an unrelated advertisement",
+          "To avoid paying all outstanding bills"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Please bring your identification so that the security team can issue a building pass.” hỗ trợ lựa chọn “the security team can issue a building pass”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 159,
+            "end": 244,
+            "text": "Please bring your identification so that the security team can issue a building pass."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What should someone with an existing pass bring?",
+        "options": [
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "Their current building pass",
+          "Ignore the instructions in this message"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Employees who already have a building pass should bring it instead.” hỗ trợ lựa chọn “Their current building pass”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 245,
+            "end": 312,
+            "text": "Employees who already have a building pass should bring it instead."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “issue a building pass” in this text?",
+        "options": [
+          "check an unrelated document",
+          "complete the opposite action",
+          "cancel the arrangement entirely",
+          "provide an access card"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “issue a building pass” hỗ trợ lựa chọn “provide an access card”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 222,
+            "end": 243,
+            "text": "issue a building pass"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-05",
+    "title": "Volunteer mentors",
+    "text": "Volunteer mentors\n\nThe company is seeking experienced staff to mentor new employees. Mentors will meet their partners for thirty minutes each week. Please describe your area of expertise so that new employees can be matched with a suitable mentor. Applicants need at least one year of service with the company.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Nhân sự",
+    "kind": "NOTICE",
+    "difficulty": "MEDIUM",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "The company is seeking experienced staff to mentor new employees",
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "A plan to close the company"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “The company is seeking experienced staff to mentor new employees.” hỗ trợ lựa chọn “The company is seeking experienced staff to mentor new employees”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 19,
+            "end": 84,
+            "text": "The company is seeking experienced staff to mentor new employees."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "How long is each weekly meeting?",
+        "options": [
+          "Fifteen minutes",
+          "Thirty minutes",
+          "One hour",
+          "Two hours"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Mentors will meet their partners for thirty minutes each week.” hỗ trợ lựa chọn “Thirty minutes”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 85,
+            "end": 147,
+            "text": "Mentors will meet their partners for thirty minutes each week."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to describe your area of expertise?",
+        "options": [
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "new employees can be matched with a suitable mentor",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Please describe your area of expertise so that new employees can be matched with a suitable mentor.” hỗ trợ lựa chọn “new employees can be matched with a suitable mentor”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 148,
+            "end": 247,
+            "text": "Please describe your area of expertise so that new employees can be matched with a suitable mentor."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "Who is eligible to apply?",
+        "options": [
+          "Ignore the instructions in this message",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "Staff who have worked here for at least one year"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Applicants need at least one year of service with the company.” hỗ trợ lựa chọn “Staff who have worked here for at least one year”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 248,
+            "end": 310,
+            "text": "Applicants need at least one year of service with the company."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “area of expertise” in this text?",
+        "options": [
+          "a subject someone knows well",
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "complete the opposite action"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “area of expertise” hỗ trợ lựa chọn “a subject someone knows well”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 169,
+            "end": 186,
+            "text": "area of expertise"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-06",
+    "title": "Flexible work pilot",
+    "text": "Flexible work pilot\n\nThe operations team is testing a flexible starting-time policy. The pilot will run for six weeks beginning in May. Please record your starting time so that the team can evaluate the new policy. All participants must still attend the daily meeting at 10 a.m..\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Nhân sự",
+    "kind": "ARTICLE",
+    "difficulty": "HARD",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Results of a customer satisfaction survey",
+          "The operations team is testing a flexible starting-time policy",
+          "A plan to close the company",
+          "A change to staff salaries"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “The operations team is testing a flexible starting-time policy.” hỗ trợ lựa chọn “The operations team is testing a flexible starting-time policy”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 21,
+            "end": 84,
+            "text": "The operations team is testing a flexible starting-time policy."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "How long will the pilot last?",
+        "options": [
+          "Three weeks",
+          "Eight weeks",
+          "Six weeks",
+          "Six months"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “The pilot will run for six weeks beginning in May.” hỗ trợ lựa chọn “Six weeks”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 85,
+            "end": 135,
+            "text": "The pilot will run for six weeks beginning in May."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to record your starting time?",
+        "options": [
+          "To cancel the entire arrangement",
+          "To collect information for an unrelated advertisement",
+          "To avoid paying all outstanding bills",
+          "the team can evaluate the new policy"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Please record your starting time so that the team can evaluate the new policy.” hỗ trợ lựa chọn “the team can evaluate the new policy”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 136,
+            "end": 214,
+            "text": "Please record your starting time so that the team can evaluate the new policy."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What remains compulsory during the pilot?",
+        "options": [
+          "The daily 10 a.m. meeting",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "Ignore the instructions in this message"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “All participants must still attend the daily meeting at 10 a.m..” hỗ trợ lựa chọn “The daily 10 a.m. meeting”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 215,
+            "end": 279,
+            "text": "All participants must still attend the daily meeting at 10 a.m.."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “evaluate the new policy” in this text?",
+        "options": [
+          "check an unrelated document",
+          "judge how well the new rule works",
+          "complete the opposite action",
+          "cancel the arrangement entirely"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “evaluate the new policy” hỗ trợ lựa chọn “judge how well the new rule works”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 190,
+            "end": 213,
+            "text": "evaluate the new policy"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-07",
+    "title": "Conference shuttle",
+    "text": "Conference shuttle\n\nA shuttle service will connect the hotel with the conference center. The first shuttle leaves the hotel at 7:30 a.m.. Please reserve a seat so that the transport desk can assign enough vehicles. Passengers with large equipment should notify the desk one day in advance.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Du lịch",
+    "kind": "NOTICE",
+    "difficulty": "EASY",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "A shuttle service will connect the hotel with the conference center",
+          "A plan to close the company"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “A shuttle service will connect the hotel with the conference center.” hỗ trợ lựa chọn “A shuttle service will connect the hotel with the conference center”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 20,
+            "end": 88,
+            "text": "A shuttle service will connect the hotel with the conference center."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When does the first shuttle leave?",
+        "options": [
+          "At 7 a.m.",
+          "At 8:30 a.m.",
+          "At 9 a.m.",
+          "At 7:30 a.m."
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “The first shuttle leaves the hotel at 7:30 a.m..” hỗ trợ lựa chọn “At 7:30 a.m.”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 89,
+            "end": 137,
+            "text": "The first shuttle leaves the hotel at 7:30 a.m.."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to reserve a seat?",
+        "options": [
+          "the transport desk can assign enough vehicles",
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Please reserve a seat so that the transport desk can assign enough vehicles.” hỗ trợ lựa chọn “the transport desk can assign enough vehicles”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 138,
+            "end": 214,
+            "text": "Please reserve a seat so that the transport desk can assign enough vehicles."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What should a passenger with large equipment do?",
+        "options": [
+          "Ignore the instructions in this message",
+          "Notify the desk a day before travelling",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Passengers with large equipment should notify the desk one day in advance.” hỗ trợ lựa chọn “Notify the desk a day before travelling”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 215,
+            "end": 289,
+            "text": "Passengers with large equipment should notify the desk one day in advance."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “reserve a seat” in this text?",
+        "options": [
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "book a place",
+          "complete the opposite action"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “reserve a seat” hỗ trợ lựa chọn “book a place”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 145,
+            "end": 159,
+            "text": "reserve a seat"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-08",
+    "title": "Hotel breakfast",
+    "text": "Hotel breakfast\n\nHarbor Hotel is offering a weekday room package that includes breakfast. Breakfast is served between 6:30 and 9:30 a.m.. Please mention the weekday package when booking so that the reservation team can apply the correct rate. Weekend stays are not included in this offer.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Du lịch",
+    "kind": "ADVERTISEMENT",
+    "difficulty": "MEDIUM",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Results of a customer satisfaction survey",
+          "A plan to close the company",
+          "A change to staff salaries",
+          "Harbor Hotel is offering a weekday room package that includes breakfast"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Harbor Hotel is offering a weekday room package that includes breakfast.” hỗ trợ lựa chọn “Harbor Hotel is offering a weekday room package that includes breakfast”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 17,
+            "end": 89,
+            "text": "Harbor Hotel is offering a weekday room package that includes breakfast."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When does breakfast service end?",
+        "options": [
+          "At 9:30 a.m.",
+          "At 9 a.m.",
+          "At 10:30 a.m.",
+          "At noon"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Breakfast is served between 6:30 and 9:30 a.m..” hỗ trợ lựa chọn “At 9:30 a.m.”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 90,
+            "end": 137,
+            "text": "Breakfast is served between 6:30 and 9:30 a.m.."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to mention the weekday package when booking?",
+        "options": [
+          "To cancel the entire arrangement",
+          "the reservation team can apply the correct rate",
+          "To collect information for an unrelated advertisement",
+          "To avoid paying all outstanding bills"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Please mention the weekday package when booking so that the reservation team can apply the correct rate.” hỗ trợ lựa chọn “the reservation team can apply the correct rate”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 138,
+            "end": 242,
+            "text": "Please mention the weekday package when booking so that the reservation team can apply the correct rate."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "Which booking is outside the offer?",
+        "options": [
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "A weekend stay",
+          "Ignore the instructions in this message"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Weekend stays are not included in this offer.” hỗ trợ lựa chọn “A weekend stay”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 243,
+            "end": 288,
+            "text": "Weekend stays are not included in this offer."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “apply the correct rate” in this text?",
+        "options": [
+          "check an unrelated document",
+          "complete the opposite action",
+          "cancel the arrangement entirely",
+          "charge the appropriate price"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “apply the correct rate” hỗ trợ lựa chọn “charge the appropriate price”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 219,
+            "end": 241,
+            "text": "apply the correct rate"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-09",
+    "title": "Rail ticket collection",
+    "text": "Subject: Rail ticket collection\n\nYour rail tickets are ready for collection at the travel desk. The desk closes at 5 p.m. today. Please bring the booking reference so that the clerk can locate your tickets quickly. If you cannot collect the tickets today, ask the desk to arrange electronic delivery.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Du lịch",
+    "kind": "EMAIL",
+    "difficulty": "HARD",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Your rail tickets are ready for collection at the travel desk",
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "A plan to close the company"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Your rail tickets are ready for collection at the travel desk.” hỗ trợ lựa chọn “Your rail tickets are ready for collection at the travel desk”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 33,
+            "end": 95,
+            "text": "Your rail tickets are ready for collection at the travel desk."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When does the travel desk close?",
+        "options": [
+          "At noon today",
+          "At 5 p.m. today",
+          "At 5 p.m. tomorrow",
+          "At 6 p.m. today"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “The desk closes at 5 p.m. today.” hỗ trợ lựa chọn “At 5 p.m. today”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 96,
+            "end": 128,
+            "text": "The desk closes at 5 p.m. today."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to bring the booking reference?",
+        "options": [
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "the clerk can locate your tickets quickly",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Please bring the booking reference so that the clerk can locate your tickets quickly.” hỗ trợ lựa chọn “the clerk can locate your tickets quickly”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 129,
+            "end": 214,
+            "text": "Please bring the booking reference so that the clerk can locate your tickets quickly."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What can someone unable to collect today request?",
+        "options": [
+          "Ignore the instructions in this message",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "Electronic delivery"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “If you cannot collect the tickets today, ask the desk to arrange electronic delivery.” hỗ trợ lựa chọn “Electronic delivery”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 215,
+            "end": 300,
+            "text": "If you cannot collect the tickets today, ask the desk to arrange electronic delivery."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “booking reference” in this text?",
+        "options": [
+          "a code identifying the reservation",
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "complete the opposite action"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “booking reference” hỗ trợ lựa chọn “a code identifying the reservation”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 146,
+            "end": 163,
+            "text": "booking reference"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-10",
+    "title": "Visitor parking",
+    "text": "Visitor parking\n\nVisitor parking is moving to the north entrance during building repairs. The new arrangement begins on June 3. Please give visitors the updated directions so that they can reach reception without crossing the repair area. Staff parking spaces remain at the south entrance.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Văn phòng",
+    "kind": "NOTICE",
+    "difficulty": "EASY",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Results of a customer satisfaction survey",
+          "Visitor parking is moving to the north entrance during building repairs",
+          "A plan to close the company",
+          "A change to staff salaries"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Visitor parking is moving to the north entrance during building repairs.” hỗ trợ lựa chọn “Visitor parking is moving to the north entrance during building repairs”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 17,
+            "end": 89,
+            "text": "Visitor parking is moving to the north entrance during building repairs."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When does the new arrangement start?",
+        "options": [
+          "On June 1",
+          "On June 10",
+          "On June 3",
+          "On July 3"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “The new arrangement begins on June 3.” hỗ trợ lựa chọn “On June 3”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 90,
+            "end": 127,
+            "text": "The new arrangement begins on June 3."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to give visitors the updated directions?",
+        "options": [
+          "To cancel the entire arrangement",
+          "To collect information for an unrelated advertisement",
+          "To avoid paying all outstanding bills",
+          "they can reach reception without crossing the repair area"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Please give visitors the updated directions so that they can reach reception without crossing the repair area.” hỗ trợ lựa chọn “they can reach reception without crossing the repair area”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 128,
+            "end": 238,
+            "text": "Please give visitors the updated directions so that they can reach reception without crossing the repair area."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "Which group should continue using the south entrance?",
+        "options": [
+          "Staff members",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "Ignore the instructions in this message"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Staff parking spaces remain at the south entrance.” hỗ trợ lựa chọn “Staff members”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 239,
+            "end": 289,
+            "text": "Staff parking spaces remain at the south entrance."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “updated directions” in this text?",
+        "options": [
+          "check an unrelated document",
+          "revised instructions for getting somewhere",
+          "complete the opposite action",
+          "cancel the arrangement entirely"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “updated directions” hỗ trợ lựa chọn “revised instructions for getting somewhere”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 153,
+            "end": 171,
+            "text": "updated directions"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-11",
+    "title": "Inventory count",
+    "text": "Inventory count\n\nThe warehouse will conduct its annual inventory count this weekend. Normal shipments will resume on Monday. Please send urgent orders before Friday noon so that the warehouse can dispatch them before the count begins. Orders arriving after noon will wait until the count is finished.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Mua sắm",
+    "kind": "MESSAGE",
+    "difficulty": "MEDIUM",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "The warehouse will conduct its annual inventory count this weekend",
+          "A plan to close the company"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “The warehouse will conduct its annual inventory count this weekend.” hỗ trợ lựa chọn “The warehouse will conduct its annual inventory count this weekend”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 17,
+            "end": 84,
+            "text": "The warehouse will conduct its annual inventory count this weekend."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When will normal shipments resume?",
+        "options": [
+          "On Friday",
+          "On Tuesday",
+          "On Wednesday",
+          "On Monday"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Normal shipments will resume on Monday.” hỗ trợ lựa chọn “On Monday”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 85,
+            "end": 124,
+            "text": "Normal shipments will resume on Monday."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to send urgent orders before friday noon?",
+        "options": [
+          "the warehouse can dispatch them before the count begins",
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Please send urgent orders before Friday noon so that the warehouse can dispatch them before the count begins.” hỗ trợ lựa chọn “the warehouse can dispatch them before the count begins”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 125,
+            "end": 234,
+            "text": "Please send urgent orders before Friday noon so that the warehouse can dispatch them before the count begins."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What should a customer expect for an order sent Friday afternoon?",
+        "options": [
+          "Ignore the instructions in this message",
+          "Dispatch after the count is finished",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Orders arriving after noon will wait until the count is finished.” hỗ trợ lựa chọn “Dispatch after the count is finished”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 235,
+            "end": 300,
+            "text": "Orders arriving after noon will wait until the count is finished."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “dispatch them” in this text?",
+        "options": [
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "send them out",
+          "complete the opposite action"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “dispatch them” hỗ trợ lựa chọn “send them out”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 196,
+            "end": 209,
+            "text": "dispatch them"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-12",
+    "title": "Supplier samples",
+    "text": "Subject: Supplier samples\n\nWe are requesting fabric samples before selecting a supplier for the new uniforms. Samples must arrive by August 15. Please label each sample with its product code so that our buyers can compare the samples with your price list. A quotation without samples will not be considered at this stage.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Mua sắm",
+    "kind": "EMAIL",
+    "difficulty": "HARD",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Results of a customer satisfaction survey",
+          "A plan to close the company",
+          "A change to staff salaries",
+          "We are requesting fabric samples before selecting a supplier for the new uniforms"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “We are requesting fabric samples before selecting a supplier for the new uniforms.” hỗ trợ lựa chọn “We are requesting fabric samples before selecting a supplier for the new uniforms”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 27,
+            "end": 109,
+            "text": "We are requesting fabric samples before selecting a supplier for the new uniforms."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "What is the sample deadline?",
+        "options": [
+          "August 15",
+          "August 1",
+          "August 20",
+          "September 15"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Samples must arrive by August 15.” hỗ trợ lựa chọn “August 15”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 110,
+            "end": 143,
+            "text": "Samples must arrive by August 15."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to label each sample with its product code?",
+        "options": [
+          "To cancel the entire arrangement",
+          "our buyers can compare the samples with your price list",
+          "To collect information for an unrelated advertisement",
+          "To avoid paying all outstanding bills"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Please label each sample with its product code so that our buyers can compare the samples with your price list.” hỗ trợ lựa chọn “our buyers can compare the samples with your price list”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 144,
+            "end": 255,
+            "text": "Please label each sample with its product code so that our buyers can compare the samples with your price list."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "Which submission will not be considered?",
+        "options": [
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "A quotation with no samples",
+          "Ignore the instructions in this message"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “A quotation without samples will not be considered at this stage.” hỗ trợ lựa chọn “A quotation with no samples”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 256,
+            "end": 321,
+            "text": "A quotation without samples will not be considered at this stage."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “quotation” in this text?",
+        "options": [
+          "check an unrelated document",
+          "complete the opposite action",
+          "cancel the arrangement entirely",
+          "a statement of the proposed price"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “quotation” hỗ trợ lựa chọn “a statement of the proposed price”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 258,
+            "end": 267,
+            "text": "quotation"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-13",
+    "title": "Return policy update",
+    "text": "Return policy update\n\nThe shop has updated its return procedure for unused products. Customers have fourteen days from purchase to request a return. Please keep your receipt so that staff can verify the purchase date. Products showing signs of use are excluded from this procedure.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Mua sắm",
+    "kind": "NOTICE",
+    "difficulty": "EASY",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "The shop has updated its return procedure for unused products",
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "A plan to close the company"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “The shop has updated its return procedure for unused products.” hỗ trợ lựa chọn “The shop has updated its return procedure for unused products”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 22,
+            "end": 84,
+            "text": "The shop has updated its return procedure for unused products."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "How long is the return request period?",
+        "options": [
+          "Seven days from purchase",
+          "Fourteen days from purchase",
+          "Thirty days from purchase",
+          "Fourteen days from delivery"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Customers have fourteen days from purchase to request a return.” hỗ trợ lựa chọn “Fourteen days from purchase”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 85,
+            "end": 148,
+            "text": "Customers have fourteen days from purchase to request a return."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to keep your receipt?",
+        "options": [
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "staff can verify the purchase date",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Please keep your receipt so that staff can verify the purchase date.” hỗ trợ lựa chọn “staff can verify the purchase date”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 149,
+            "end": 217,
+            "text": "Please keep your receipt so that staff can verify the purchase date."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "Which product is excluded?",
+        "options": [
+          "Ignore the instructions in this message",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "A product that has been used"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Products showing signs of use are excluded from this procedure.” hỗ trợ lựa chọn “A product that has been used”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 218,
+            "end": 281,
+            "text": "Products showing signs of use are excluded from this procedure."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “verify the purchase date” in this text?",
+        "options": [
+          "check when the purchase happened",
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "complete the opposite action"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “verify the purchase date” hỗ trợ lựa chọn “check when the purchase happened”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 192,
+            "end": 216,
+            "text": "verify the purchase date"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-14",
+    "title": "Store opening offer",
+    "text": "Store opening offer\n\nBright Desk is celebrating its new branch with a discount on office chairs. The discount is twenty percent through Sunday. Please show this advertisement at checkout so that the cashier can apply the opening discount. The offer is available only at the new branch.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Mua sắm",
+    "kind": "ADVERTISEMENT",
+    "difficulty": "MEDIUM",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Results of a customer satisfaction survey",
+          "Bright Desk is celebrating its new branch with a discount on office chairs",
+          "A plan to close the company",
+          "A change to staff salaries"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Bright Desk is celebrating its new branch with a discount on office chairs.” hỗ trợ lựa chọn “Bright Desk is celebrating its new branch with a discount on office chairs”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 21,
+            "end": 96,
+            "text": "Bright Desk is celebrating its new branch with a discount on office chairs."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "How much is the discount?",
+        "options": [
+          "Ten percent",
+          "Fifteen percent",
+          "Twenty percent",
+          "Twenty-five percent"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “The discount is twenty percent through Sunday.” hỗ trợ lựa chọn “Twenty percent”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 97,
+            "end": 143,
+            "text": "The discount is twenty percent through Sunday."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to show this advertisement at checkout?",
+        "options": [
+          "To cancel the entire arrangement",
+          "To collect information for an unrelated advertisement",
+          "To avoid paying all outstanding bills",
+          "the cashier can apply the opening discount"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Please show this advertisement at checkout so that the cashier can apply the opening discount.” hỗ trợ lựa chọn “the cashier can apply the opening discount”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 144,
+            "end": 238,
+            "text": "Please show this advertisement at checkout so that the cashier can apply the opening discount."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "Where can the offer be used?",
+        "options": [
+          "At the new branch only",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "Ignore the instructions in this message"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “The offer is available only at the new branch.” hỗ trợ lựa chọn “At the new branch only”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 239,
+            "end": 285,
+            "text": "The offer is available only at the new branch."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “at checkout” in this text?",
+        "options": [
+          "check an unrelated document",
+          "when paying for the purchase",
+          "complete the opposite action",
+          "cancel the arrangement entirely"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “at checkout” hỗ trợ lựa chọn “when paying for the purchase”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 175,
+            "end": 186,
+            "text": "at checkout"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-15",
+    "title": "Delivery rescheduling",
+    "text": "Delivery rescheduling\n\nThe furniture delivery has been postponed because a vehicle needs repair. The replacement delivery is scheduled for Thursday morning. Please confirm that someone will be present so that the driver can hand over the items safely. If Thursday is unsuitable, contact the delivery office to choose another date.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Mua sắm",
+    "kind": "MESSAGE",
+    "difficulty": "HARD",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "The furniture delivery has been postponed because a vehicle needs repair",
+          "A plan to close the company"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “The furniture delivery has been postponed because a vehicle needs repair.” hỗ trợ lựa chọn “The furniture delivery has been postponed because a vehicle needs repair”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 23,
+            "end": 96,
+            "text": "The furniture delivery has been postponed because a vehicle needs repair."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When is the replacement delivery scheduled?",
+        "options": [
+          "Tuesday morning",
+          "Thursday afternoon",
+          "Friday morning",
+          "Thursday morning"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “The replacement delivery is scheduled for Thursday morning.” hỗ trợ lựa chọn “Thursday morning”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 97,
+            "end": 156,
+            "text": "The replacement delivery is scheduled for Thursday morning."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to confirm that someone will be present?",
+        "options": [
+          "the driver can hand over the items safely",
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Please confirm that someone will be present so that the driver can hand over the items safely.” hỗ trợ lựa chọn “the driver can hand over the items safely”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 157,
+            "end": 251,
+            "text": "Please confirm that someone will be present so that the driver can hand over the items safely."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What can a customer who is unavailable Thursday do?",
+        "options": [
+          "Ignore the instructions in this message",
+          "Contact the delivery office for another date",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “If Thursday is unsuitable, contact the delivery office to choose another date.” hỗ trợ lựa chọn “Contact the delivery office for another date”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 252,
+            "end": 330,
+            "text": "If Thursday is unsuitable, contact the delivery office to choose another date."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “postponed” in this text?",
+        "options": [
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "moved to a later time",
+          "complete the opposite action"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “postponed” hỗ trợ lựa chọn “moved to a later time”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 55,
+            "end": 64,
+            "text": "postponed"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-16",
+    "title": "Community workshop",
+    "text": "Community workshop\n\nThe library is hosting a workshop on preparing job applications. The workshop starts at 2 p.m. on Saturday. Please bring a draft resume so that the instructor can offer individual suggestions. Places are limited and advance registration is required.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Sự kiện",
+    "kind": "NOTICE",
+    "difficulty": "EASY",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Results of a customer satisfaction survey",
+          "A plan to close the company",
+          "A change to staff salaries",
+          "The library is hosting a workshop on preparing job applications"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “The library is hosting a workshop on preparing job applications.” hỗ trợ lựa chọn “The library is hosting a workshop on preparing job applications”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 20,
+            "end": 84,
+            "text": "The library is hosting a workshop on preparing job applications."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When will the workshop start?",
+        "options": [
+          "At 2 p.m. on Saturday",
+          "At 10 a.m. on Saturday",
+          "At 2 p.m. on Sunday",
+          "At 4 p.m. on Saturday"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “The workshop starts at 2 p.m. on Saturday.” hỗ trợ lựa chọn “At 2 p.m. on Saturday”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 85,
+            "end": 127,
+            "text": "The workshop starts at 2 p.m. on Saturday."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to bring a draft resume?",
+        "options": [
+          "To cancel the entire arrangement",
+          "the instructor can offer individual suggestions",
+          "To collect information for an unrelated advertisement",
+          "To avoid paying all outstanding bills"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Please bring a draft resume so that the instructor can offer individual suggestions.” hỗ trợ lựa chọn “the instructor can offer individual suggestions”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 128,
+            "end": 212,
+            "text": "Please bring a draft resume so that the instructor can offer individual suggestions."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What should someone do before attending?",
+        "options": [
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "Register in advance",
+          "Ignore the instructions in this message"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Places are limited and advance registration is required.” hỗ trợ lựa chọn “Register in advance”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 213,
+            "end": 269,
+            "text": "Places are limited and advance registration is required."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “draft resume” in this text?",
+        "options": [
+          "check an unrelated document",
+          "complete the opposite action",
+          "cancel the arrangement entirely",
+          "an initial version of a job history document"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “draft resume” hỗ trợ lựa chọn “an initial version of a job history document”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 143,
+            "end": 155,
+            "text": "draft resume"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-17",
+    "title": "Catering numbers",
+    "text": "Subject: Catering numbers\n\nThe events team is finalizing catering arrangements for the staff reception. The caterer needs the final guest count by Monday. Please report any dietary requirements so that the caterer can prepare suitable meals. Guests added after Monday may not receive a special meal.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Sự kiện",
+    "kind": "EMAIL",
+    "difficulty": "MEDIUM",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "The events team is finalizing catering arrangements for the staff reception",
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "A plan to close the company"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “The events team is finalizing catering arrangements for the staff reception.” hỗ trợ lựa chọn “The events team is finalizing catering arrangements for the staff reception”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 27,
+            "end": 103,
+            "text": "The events team is finalizing catering arrangements for the staff reception."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When is the final guest count needed?",
+        "options": [
+          "By Friday",
+          "By Monday",
+          "By Tuesday",
+          "By Wednesday"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “The caterer needs the final guest count by Monday.” hỗ trợ lựa chọn “By Monday”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 104,
+            "end": 154,
+            "text": "The caterer needs the final guest count by Monday."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to report any dietary requirements?",
+        "options": [
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "the caterer can prepare suitable meals",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Please report any dietary requirements so that the caterer can prepare suitable meals.” hỗ trợ lựa chọn “the caterer can prepare suitable meals”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 155,
+            "end": 241,
+            "text": "Please report any dietary requirements so that the caterer can prepare suitable meals."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What might happen to a guest added late?",
+        "options": [
+          "Ignore the instructions in this message",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "A special meal may not be available"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Guests added after Monday may not receive a special meal.” hỗ trợ lựa chọn “A special meal may not be available”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 242,
+            "end": 299,
+            "text": "Guests added after Monday may not receive a special meal."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “dietary requirements” in this text?",
+        "options": [
+          "needs relating to food",
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "complete the opposite action"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “dietary requirements” hỗ trợ lựa chọn “needs relating to food”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 173,
+            "end": 193,
+            "text": "dietary requirements"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-18",
+    "title": "Exhibition setup",
+    "text": "Exhibition setup\n\nExhibitors may begin setting up their displays on Wednesday. The exhibition hall opens for setup at 8 a.m.. Please use the loading entrance so that equipment deliveries do not block the visitor lobby. Vehicles must leave the loading area immediately after unloading.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Sự kiện",
+    "kind": "MESSAGE",
+    "difficulty": "HARD",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Results of a customer satisfaction survey",
+          "Exhibitors may begin setting up their displays on Wednesday",
+          "A plan to close the company",
+          "A change to staff salaries"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Exhibitors may begin setting up their displays on Wednesday.” hỗ trợ lựa chọn “Exhibitors may begin setting up their displays on Wednesday”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 18,
+            "end": 78,
+            "text": "Exhibitors may begin setting up their displays on Wednesday."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When does setup access begin?",
+        "options": [
+          "At 8 a.m. on Thursday",
+          "At noon on Wednesday",
+          "At 8 a.m. on Wednesday",
+          "At 9 a.m. on Tuesday"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “The exhibition hall opens for setup at 8 a.m..” hỗ trợ lựa chọn “At 8 a.m. on Wednesday”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 79,
+            "end": 125,
+            "text": "The exhibition hall opens for setup at 8 a.m.."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to use the loading entrance?",
+        "options": [
+          "To cancel the entire arrangement",
+          "To collect information for an unrelated advertisement",
+          "To avoid paying all outstanding bills",
+          "equipment deliveries do not block the visitor lobby"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Please use the loading entrance so that equipment deliveries do not block the visitor lobby.” hỗ trợ lựa chọn “equipment deliveries do not block the visitor lobby”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 126,
+            "end": 218,
+            "text": "Please use the loading entrance so that equipment deliveries do not block the visitor lobby."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What should a driver do after unloading?",
+        "options": [
+          "Move the vehicle out of the loading area",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "Ignore the instructions in this message"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Vehicles must leave the loading area immediately after unloading.” hỗ trợ lựa chọn “Move the vehicle out of the loading area”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 219,
+            "end": 284,
+            "text": "Vehicles must leave the loading area immediately after unloading."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “immediately after unloading” in this text?",
+        "options": [
+          "check an unrelated document",
+          "as soon as the items have been removed",
+          "complete the opposite action",
+          "cancel the arrangement entirely"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “immediately after unloading” hỗ trợ lựa chọn “as soon as the items have been removed”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 256,
+            "end": 283,
+            "text": "immediately after unloading"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-19",
+    "title": "Webinar recording",
+    "text": "Subject: Webinar recording\n\nA recording of yesterday's marketing webinar is now available to registered participants. The recording link will remain active for two weeks. Please submit your questions through the feedback form so that the speaker can address them in a follow-up session. The recording must not be shared outside the registered group.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Sự kiện",
+    "kind": "EMAIL",
+    "difficulty": "EASY",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "A recording of yesterday's marketing webinar is now available to registered participants",
+          "A plan to close the company"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “A recording of yesterday's marketing webinar is now available to registered participants.” hỗ trợ lựa chọn “A recording of yesterday's marketing webinar is now available to registered participants”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 28,
+            "end": 117,
+            "text": "A recording of yesterday's marketing webinar is now available to registered participants."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "How long will the recording link work?",
+        "options": [
+          "One week",
+          "Three weeks",
+          "One month",
+          "Two weeks"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “The recording link will remain active for two weeks.” hỗ trợ lựa chọn “Two weeks”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 118,
+            "end": 170,
+            "text": "The recording link will remain active for two weeks."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to submit your questions through the feedback form?",
+        "options": [
+          "the speaker can address them in a follow-up session",
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Please submit your questions through the feedback form so that the speaker can address them in a follow-up session.” hỗ trợ lựa chọn “the speaker can address them in a follow-up session”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 171,
+            "end": 286,
+            "text": "Please submit your questions through the feedback form so that the speaker can address them in a follow-up session."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "Who may receive the recording?",
+        "options": [
+          "Ignore the instructions in this message",
+          "Registered participants",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “The recording must not be shared outside the registered group.” hỗ trợ lựa chọn “Registered participants”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 287,
+            "end": 349,
+            "text": "The recording must not be shared outside the registered group."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “follow-up session” in this text?",
+        "options": [
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "a later meeting continuing the same topic",
+          "complete the opposite action"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “follow-up session” hỗ trợ lựa chọn “a later meeting continuing the same topic”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 268,
+            "end": 285,
+            "text": "follow-up session"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-20",
+    "title": "Festival volunteers",
+    "text": "Festival volunteers\n\nThe city festival needs volunteers to help visitors find activities. Volunteers will receive an information pack on Friday. Please choose a preferred shift so that the organizer can prepare a balanced rota. Each volunteer must attend the safety briefing before starting work.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Sự kiện",
+    "kind": "NOTICE",
+    "difficulty": "MEDIUM",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Results of a customer satisfaction survey",
+          "A plan to close the company",
+          "A change to staff salaries",
+          "The city festival needs volunteers to help visitors find activities"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “The city festival needs volunteers to help visitors find activities.” hỗ trợ lựa chọn “The city festival needs volunteers to help visitors find activities”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 21,
+            "end": 89,
+            "text": "The city festival needs volunteers to help visitors find activities."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When will volunteers receive the information pack?",
+        "options": [
+          "On Friday",
+          "On Thursday",
+          "On Saturday",
+          "On Monday"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Volunteers will receive an information pack on Friday.” hỗ trợ lựa chọn “On Friday”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 90,
+            "end": 144,
+            "text": "Volunteers will receive an information pack on Friday."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to choose a preferred shift?",
+        "options": [
+          "To cancel the entire arrangement",
+          "the organizer can prepare a balanced rota",
+          "To collect information for an unrelated advertisement",
+          "To avoid paying all outstanding bills"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Please choose a preferred shift so that the organizer can prepare a balanced rota.” hỗ trợ lựa chọn “the organizer can prepare a balanced rota”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 145,
+            "end": 227,
+            "text": "Please choose a preferred shift so that the organizer can prepare a balanced rota."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What must happen before a volunteer begins work?",
+        "options": [
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "Attendance at the safety briefing",
+          "Ignore the instructions in this message"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Each volunteer must attend the safety briefing before starting work.” hỗ trợ lựa chọn “Attendance at the safety briefing”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 228,
+            "end": 296,
+            "text": "Each volunteer must attend the safety briefing before starting work."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “preferred shift” in this text?",
+        "options": [
+          "check an unrelated document",
+          "complete the opposite action",
+          "cancel the arrangement entirely",
+          "the work period someone would rather take"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “preferred shift” hỗ trợ lựa chọn “the work period someone would rather take”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 161,
+            "end": 176,
+            "text": "preferred shift"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-21",
+    "title": "Software update",
+    "text": "Subject: Software update\n\nThe IT team will update the booking software overnight. The update will start at 9 p.m. on Thursday. Please save your work before logging out so that no unsaved changes are lost during the update. Staff needing assistance on Friday should contact the help desk.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Văn phòng",
+    "kind": "EMAIL",
+    "difficulty": "HARD",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "The IT team will update the booking software overnight",
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "A plan to close the company"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “The IT team will update the booking software overnight.” hỗ trợ lựa chọn “The IT team will update the booking software overnight”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 26,
+            "end": 81,
+            "text": "The IT team will update the booking software overnight."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When will the update start?",
+        "options": [
+          "At 8 p.m. on Thursday",
+          "At 9 p.m. on Thursday",
+          "At 9 p.m. on Friday",
+          "At 10 p.m. on Wednesday"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “The update will start at 9 p.m. on Thursday.” hỗ trợ lựa chọn “At 9 p.m. on Thursday”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 82,
+            "end": 126,
+            "text": "The update will start at 9 p.m. on Thursday."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to save your work before logging out?",
+        "options": [
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "no unsaved changes are lost during the update",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Please save your work before logging out so that no unsaved changes are lost during the update.” hỗ trợ lựa chọn “no unsaved changes are lost during the update”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 127,
+            "end": 222,
+            "text": "Please save your work before logging out so that no unsaved changes are lost during the update."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "Where should staff seek help on Friday?",
+        "options": [
+          "Ignore the instructions in this message",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "The help desk"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Staff needing assistance on Friday should contact the help desk.” hỗ trợ lựa chọn “The help desk”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 223,
+            "end": 287,
+            "text": "Staff needing assistance on Friday should contact the help desk."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “logging out” in this text?",
+        "options": [
+          "ending a signed-in session",
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "complete the opposite action"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “logging out” hỗ trợ lựa chọn “ending a signed-in session”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 156,
+            "end": 167,
+            "text": "logging out"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-22",
+    "title": "Expense receipts",
+    "text": "Expense receipts\n\nFinance is processing travel expense claims for the previous month. Claims must be submitted by the fifth day of this month. Please attach clear copies of receipts so that finance can verify the amount of each expense. Incomplete claims will be returned for correction.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Nhân sự",
+    "kind": "MESSAGE",
+    "difficulty": "EASY",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Results of a customer satisfaction survey",
+          "Finance is processing travel expense claims for the previous month",
+          "A plan to close the company",
+          "A change to staff salaries"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Finance is processing travel expense claims for the previous month.” hỗ trợ lựa chọn “Finance is processing travel expense claims for the previous month”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 18,
+            "end": 85,
+            "text": "Finance is processing travel expense claims for the previous month."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "What is the claims deadline?",
+        "options": [
+          "The first day of this month",
+          "The tenth day of this month",
+          "The fifth day of this month",
+          "The fifth day of next month"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Claims must be submitted by the fifth day of this month.” hỗ trợ lựa chọn “The fifth day of this month”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 86,
+            "end": 142,
+            "text": "Claims must be submitted by the fifth day of this month."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to attach clear copies of receipts?",
+        "options": [
+          "To cancel the entire arrangement",
+          "To collect information for an unrelated advertisement",
+          "To avoid paying all outstanding bills",
+          "finance can verify the amount of each expense"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Please attach clear copies of receipts so that finance can verify the amount of each expense.” hỗ trợ lựa chọn “finance can verify the amount of each expense”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 143,
+            "end": 236,
+            "text": "Please attach clear copies of receipts so that finance can verify the amount of each expense."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What happens to an incomplete claim?",
+        "options": [
+          "It is returned for correction",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "Ignore the instructions in this message"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Incomplete claims will be returned for correction.” hỗ trợ lựa chọn “It is returned for correction”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 237,
+            "end": 287,
+            "text": "Incomplete claims will be returned for correction."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “expense claims” in this text?",
+        "options": [
+          "check an unrelated document",
+          "requests to repay business costs",
+          "complete the opposite action",
+          "cancel the arrangement entirely"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “expense claims” hỗ trợ lựa chọn “requests to repay business costs”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 47,
+            "end": 61,
+            "text": "expense claims"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-23",
+    "title": "Airport meeting point",
+    "text": "Subject: Airport meeting point\n\nYour airport pickup has been confirmed with the transport company. The driver will wait beside the information desk in Terminal 2. Please keep your phone switched on so that the driver can contact you if the meeting point changes. If your flight is delayed, notify the transport company as soon as possible.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Du lịch",
+    "kind": "EMAIL",
+    "difficulty": "MEDIUM",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "Your airport pickup has been confirmed with the transport company",
+          "A plan to close the company"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Your airport pickup has been confirmed with the transport company.” hỗ trợ lựa chọn “Your airport pickup has been confirmed with the transport company”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 32,
+            "end": 98,
+            "text": "Your airport pickup has been confirmed with the transport company."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "Where will the driver wait?",
+        "options": [
+          "Outside Terminal 1",
+          "At the baggage claim in Terminal 2",
+          "At the taxi stand beside Terminal 3",
+          "Beside the information desk in Terminal 2"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “The driver will wait beside the information desk in Terminal 2.” hỗ trợ lựa chọn “Beside the information desk in Terminal 2”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 99,
+            "end": 162,
+            "text": "The driver will wait beside the information desk in Terminal 2."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to keep your phone switched on?",
+        "options": [
+          "the driver can contact you if the meeting point changes",
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Please keep your phone switched on so that the driver can contact you if the meeting point changes.” hỗ trợ lựa chọn “the driver can contact you if the meeting point changes”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 163,
+            "end": 262,
+            "text": "Please keep your phone switched on so that the driver can contact you if the meeting point changes."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "What should a traveller with a delayed flight do?",
+        "options": [
+          "Ignore the instructions in this message",
+          "Notify the transport company promptly",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “If your flight is delayed, notify the transport company as soon as possible.” hỗ trợ lựa chọn “Notify the transport company promptly”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 263,
+            "end": 339,
+            "text": "If your flight is delayed, notify the transport company as soon as possible."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “as soon as possible” in this text?",
+        "options": [
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "without unnecessary delay",
+          "complete the opposite action"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “as soon as possible” hỗ trợ lựa chọn “without unnecessary delay”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 319,
+            "end": 338,
+            "text": "as soon as possible"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-24",
+    "title": "Energy-saving review",
+    "text": "Energy-saving review\n\nThe facilities team is reviewing ways to reduce electricity use in the office. Lighting inspections will take place next week. Please report rooms where lights stay on after work so that the team can identify areas needing automatic controls. The review does not include changes to the office opening hours.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Văn phòng",
+    "kind": "ARTICLE",
+    "difficulty": "HARD",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Results of a customer satisfaction survey",
+          "A plan to close the company",
+          "A change to staff salaries",
+          "The facilities team is reviewing ways to reduce electricity use in the office"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “The facilities team is reviewing ways to reduce electricity use in the office.” hỗ trợ lựa chọn “The facilities team is reviewing ways to reduce electricity use in the office”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 22,
+            "end": 100,
+            "text": "The facilities team is reviewing ways to reduce electricity use in the office."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "When will lighting inspections take place?",
+        "options": [
+          "Next week",
+          "This week",
+          "Next month",
+          "In two weeks"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Lighting inspections will take place next week.” hỗ trợ lựa chọn “Next week”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 101,
+            "end": 148,
+            "text": "Lighting inspections will take place next week."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to report rooms where lights stay on after work?",
+        "options": [
+          "To cancel the entire arrangement",
+          "the team can identify areas needing automatic controls",
+          "To collect information for an unrelated advertisement",
+          "To avoid paying all outstanding bills"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Please report rooms where lights stay on after work so that the team can identify areas needing automatic controls.” hỗ trợ lựa chọn “the team can identify areas needing automatic controls”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 149,
+            "end": 264,
+            "text": "Please report rooms where lights stay on after work so that the team can identify areas needing automatic controls."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "Which change is not part of the review?",
+        "options": [
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "A change in office opening hours",
+          "Ignore the instructions in this message"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “The review does not include changes to the office opening hours.” hỗ trợ lựa chọn “A change in office opening hours”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 265,
+            "end": 329,
+            "text": "The review does not include changes to the office opening hours."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “automatic controls” in this text?",
+        "options": [
+          "check an unrelated document",
+          "complete the opposite action",
+          "cancel the arrangement entirely",
+          "devices that operate without manual action"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “automatic controls” hỗ trợ lựa chọn “devices that operate without manual action”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 245,
+            "end": 263,
+            "text": "automatic controls"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "reading-demo-25",
+    "title": "Replacement badges",
+    "text": "Replacement badges\n\nHuman Resources is replacing worn staff identification badges. Replacement requests will be accepted until September 20. Please include a recent photograph so that the new badge can display an up-to-date image. Employees with an undamaged badge do not need to request a replacement.\n\nPlease check the information carefully before responding. Questions about this arrangement should be directed to the team responsible for it. This update concerns the current arrangement; earlier instructions about the same matter should be checked against it.",
+    "topic": "Nhân sự",
+    "kind": "NOTICE",
+    "difficulty": "EASY",
+    "questions": [
+      {
+        "type": "MAIN",
+        "prompt": "What is the main topic of this text?",
+        "options": [
+          "Human Resources is replacing worn staff identification badges",
+          "A change to staff salaries",
+          "Results of a customer satisfaction survey",
+          "A plan to close the company"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “Human Resources is replacing worn staff identification badges.” hỗ trợ lựa chọn “Human Resources is replacing worn staff identification badges”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 20,
+            "end": 82,
+            "text": "Human Resources is replacing worn staff identification badges."
+          }
+        ]
+      },
+      {
+        "type": "DETAIL",
+        "prompt": "Until when are requests accepted?",
+        "options": [
+          "September 10",
+          "September 20",
+          "September 30",
+          "October 20"
+        ],
+        "answer": 1,
+        "explanation": "Thông tin trong bài: “Replacement requests will be accepted until September 20.” hỗ trợ lựa chọn “September 20”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 83,
+            "end": 140,
+            "text": "Replacement requests will be accepted until September 20."
+          }
+        ]
+      },
+      {
+        "type": "PURPOSE",
+        "prompt": "Why does the writer ask the reader to include a recent photograph?",
+        "options": [
+          "To avoid paying all outstanding bills",
+          "To cancel the entire arrangement",
+          "the new badge can display an up-to-date image",
+          "To collect information for an unrelated advertisement"
+        ],
+        "answer": 2,
+        "explanation": "Thông tin trong bài: “Please include a recent photograph so that the new badge can display an up-to-date image.” hỗ trợ lựa chọn “the new badge can display an up-to-date image”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 141,
+            "end": 230,
+            "text": "Please include a recent photograph so that the new badge can display an up-to-date image."
+          }
+        ]
+      },
+      {
+        "type": "INFERENCE",
+        "prompt": "Who does not need to submit a request?",
+        "options": [
+          "Ignore the instructions in this message",
+          "Wait until next year before responding",
+          "Assume the stated condition does not apply",
+          "An employee whose badge is undamaged"
+        ],
+        "answer": 3,
+        "explanation": "Thông tin trong bài: “Employees with an undamaged badge do not need to request a replacement.” hỗ trợ lựa chọn “An employee whose badge is undamaged”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": true,
+        "evidence": [
+          {
+            "start": 231,
+            "end": 302,
+            "text": "Employees with an undamaged badge do not need to request a replacement."
+          }
+        ]
+      },
+      {
+        "type": "PARAPHRASE",
+        "prompt": "Which expression is closest in meaning to “up-to-date image” in this text?",
+        "options": [
+          "a photograph that reflects the current appearance",
+          "cancel the arrangement entirely",
+          "check an unrelated document",
+          "complete the opposite action"
+        ],
+        "answer": 0,
+        "explanation": "Thông tin trong bài: “up-to-date image” hỗ trợ lựa chọn “a photograph that reflects the current appearance”. Các phương án còn lại không phù hợp với điều bài nêu; không cần giả định thêm.",
+        "evidenceRequired": false,
+        "evidence": [
+          {
+            "start": 213,
+            "end": 229,
+            "text": "up-to-date image"
+          }
+        ]
+      }
+    ]
+  }
+]

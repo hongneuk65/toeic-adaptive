@@ -6,6 +6,7 @@ export interface LlmGenerateOptions {
   temperature?: number;
   maxTokens?: number;
   signal?: AbortSignal;
+  allowFallback?: boolean;
 }
 
 @Injectable()
@@ -57,6 +58,7 @@ export class RagLlmService {
       }
     }
     options.signal?.throwIfAborted();
+    if (options.allowFallback === false) throw new Error('AI hiện không khả dụng hoặc hết hạn mức. Vui lòng thử lại sau.');
     yield this.generatePedagogicalFallback(options.systemPrompt, options.userPrompt);
   }
 

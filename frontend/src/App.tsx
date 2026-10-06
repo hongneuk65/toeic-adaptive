@@ -17,6 +17,7 @@ import { ExamReviewPage } from './pages/ExamReviewPage';
 import { AiTutorFloatingButton } from './components/rag/AiTutorFloatingButton';
 import { AiTutorDrawer } from './components/rag/AiTutorDrawer';
 import { ListeningPage } from './pages/ListeningPage';
+import { ReadingPage } from './pages/ReadingPage';
 
 const navItems = [
   { label: 'Trang chủ', path: '/dashboard' },
@@ -24,6 +25,7 @@ const navItems = [
   { label: 'Flashcard', path: '/flashcards' },
   { label: 'Lý thuyết', path: '/theory' },
   { label: 'Listening', path: '/listening' },
+  { label: 'Reading', path: '/reading' },
   { label: 'Thi thử', path: '/exam' },
 ];
 
@@ -107,6 +109,7 @@ const AppLayout: React.FC = () => {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/recommendations" element={<RecommendationsPage />} />
           <Route path="/listening" element={<ListeningPage />} />
+          <Route path="/reading" element={<ReadingPage />} />
           <Route path="/flashcards" element={<FlashcardFoldersPage />} />
           <Route path="/flashcards/:topic" element={<FlashcardStudyPage />} />
           <Route path="/theory" element={<TheoryReadingPage />} />
@@ -118,7 +121,7 @@ const AppLayout: React.FC = () => {
         </Routes>
       </main>
 
-      {!isExamRoom && (
+      {!isExamRoom && !location.pathname.startsWith('/reading') && (
         <>
           <AiTutorFloatingButton
             isOpen={tutorOpen}

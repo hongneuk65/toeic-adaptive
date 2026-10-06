@@ -54,3 +54,7 @@ docker compose --env-file .env.example config --quiet
 
 Xem [hướng dẫn deploy](docs/deployment.md), [kiến trúc](docs/architecture.md), [kết quả kiểm tra trước đây](docs/verification.md) và [RAG](docs/rag-performance.md).
 
+
+## Reading
+
+Module Reading có thư viện 25 bài mẫu, bài cá nhân AI, lịch sử theo phiên bản và từ vựng riêng. Sau migration, chạy `npm run seed:reading --prefix backend`. Xem [cấu hình, kiểm thử và hướng dẫn demo Reading](docs/reading.md).

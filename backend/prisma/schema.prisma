@@ -37,6 +37,11 @@ model User {
   listeningSources      ListeningSource[]
   listeningSessions     ListeningSession[]
   listeningReports      ListeningReport[]
+  readingArticles ReadingArticle[]
+  readingAttempts ReadingAttempt[]
+  readingReports ReadingReport[]
+  readingAiEvents ReadingAiEvent[]
+  flashcardReviews FlashcardReview[]
 }
 
 model Skill {
@@ -111,6 +116,10 @@ model Flashcard {
   example   String?
   topic     String?
   createdAt DateTime         @default(now())
+  readingKey String? @unique
+  sourceVersionId Int?
+  notes String?
+  reviews FlashcardReview[]
 
   @@index([folderId])
 }
@@ -177,11 +186,113 @@ model FlashcardFolder {
   name        String
   description String?
   userId      Int
+  private Boolean @default(false)
+  readingKey String? @unique
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime    @default(now())
   flashcards  Flashcard[]
 
   @@index([userId])
+}
+
+model ReadingArticle {
+  id Int @id @default(autoincrement())
+  ownerId Int?
+  owner User? @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  key String @unique
+  originalText String
+  title String
+  status String @default("CREATING")
+  error String?
+  generationAttempts Int @default(0)
+  currentVersionId Int?
+  publishedVersionId Int?
+  archived Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  versions ReadingVersion[]
+  @@index([ownerId, archived])
+}
+
+model ReadingVersion {
+  id Int @id @default(autoincrement())
+  articleId Int
+  article ReadingArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  revision Int
+  title String
+  text String
+  topic String
+  kind String
+  difficulty String
+  origin String
+  reviewed Boolean @default(false)
+  questions Json
+  createdAt DateTime @default(now())
+  attempts ReadingAttempt[]
+  reports ReadingReport[]
+  @@unique([articleId, revision])
+}
+
+model ReadingAttempt {
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versionId Int
+  version ReadingVersion @relation(fields: [versionId], references: [id])
+  tryNumber Int
+  activeKey String? @unique
+  currentIndex Int @default(0)
+  answers Json @default("{}")
+  hints String[] @default([])
+  correct Int?
+  total Int?
+  elapsedSeconds Int @default(0)
+  startedAt DateTime @default(now())
+  submittedAt DateTime?
+  updatedAt DateTime @updatedAt
+  aiEvents ReadingAiEvent[]
+  @@unique([userId, versionId, tryNumber])
+  @@index([userId, updatedAt])
+}
+
+model ReadingReport {
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versionId Int
+  version ReadingVersion @relation(fields: [versionId], references: [id])
+  questionIndex Int?
+  reason String
+  resolved Boolean @default(false)
+  createdAt DateTime @default(now())
+}
+
+model ReadingAiEvent {
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attemptId Int?
+  attempt ReadingAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  action String
+  status String
+  inputChars Int
+  outputChars Int @default(0)
+  durationMs Int @default(0)
+  error String?
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
+}
+
+model FlashcardReview {
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardId Int
+  card Flashcard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  known Boolean @default(false)
+  reviewCount Int @default(0)
+  updatedAt DateTime @updatedAt
+  @@unique([userId, cardId])
 }
 
 model Das3hWeights {

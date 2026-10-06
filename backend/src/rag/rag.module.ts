@@ -19,6 +19,6 @@ import { RagRoadmapService } from './rag-roadmap.service';
     RagChatService,
     RagRoadmapService,
   ],
-  exports: [RagService, RagRetrieverService, RagExplainerService, RagChatService, RagRoadmapService],
+  exports: [RagService, RagRetrieverService, RagExplainerService, RagChatService, RagRoadmapService, RagLlmService],
 })
 export class RagModule {}

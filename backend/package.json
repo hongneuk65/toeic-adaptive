@@ -29,7 +29,9 @@
     "seed:weights": "ts-node prisma/seed-weights.ts",
     "seed:demo": "npm run seed:skills && npm run seed:weights && npm run seed:theory && npm run seed:bulk-questions && npm run seed:knowledge",
     "seed:listening": "ts-node prisma/seed-listening.ts",
-    "test:listening:integration": "node test/listening.integration.cjs"
+    "test:listening:integration": "node test/listening.integration.cjs",
+    "seed:reading": "ts-node prisma/seed-reading.ts",
+    "test:reading:integration": "node test/reading.integration.cjs"
   },
   "dependencies": {
     "@nestjs/bull": "^12.0.0",

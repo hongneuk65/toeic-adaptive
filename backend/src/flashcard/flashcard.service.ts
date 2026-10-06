@@ -14,6 +14,7 @@ export class FlashcardService {
   async getFolders(currentUserId?: number) {
     try {
       const folders = await this.prisma.flashcardFolder.findMany({
+        where: { OR: [{ private: false }, { userId: currentUserId ?? -1 }] },
         include: {
           user: {
             select: { id: true, email: true }, // Chỉ select các field có thật trong User
@@ -75,7 +76,7 @@ export class FlashcardService {
       },
     });
 
-    if (!folder) {
+    if (!folder || (folder.private && folder.userId !== currentUserId)) {
       throw new NotFoundException('Thư mục không tồn tại');
     }
 
@@ -92,11 +93,22 @@ export class FlashcardService {
   }
 
   // 4. Lấy danh sách từ trong Folder
-  async getCardsByFolder(folderId: number) {
+  async getCardsByFolder(folderId: number, currentUserId?: number) {
+    await this.getFolderDetail(folderId, currentUserId);
     return this.prisma.flashcard.findMany({
       where: { folderId },
       orderBy: { id: 'desc' },
     });
+  }
+  async reviews(userId: number, folderId: number) {
+    await this.getFolderDetail(folderId, userId);
+    return this.prisma.flashcardReview.findMany({ where: { userId, card: { folderId } }, select: { cardId: true, known: true, reviewCount: true } });
+  }
+  async review(userId: number, cardId: number, known: boolean) {
+    const card = await this.prisma.flashcard.findUnique({ where: { id: cardId } });
+    if (!card?.folderId) throw new NotFoundException('Không tìm thấy thẻ.');
+    await this.getFolderDetail(card.folderId, userId);
+    return this.prisma.flashcardReview.upsert({ where: { userId_cardId: { userId, cardId } }, create: { userId, cardId, known, reviewCount: 1 }, update: { known, reviewCount: { increment: 1 } } });
   }
 
   // 5. Thêm từ vào Folder (Kiểm tra quyền sở hữu)
