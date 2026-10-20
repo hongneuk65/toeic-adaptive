@@ -30,7 +30,9 @@ Billing check before SSH: account is a trial,4.525969USDremaining free usage cre
 
 ### GitHub release flow
 
-Canonical source: https://github.com/hongneuk65/toeic-adaptive, branch `main`. The repository-root `railway.json` selects `deploy/railway-unified.Dockerfile`; build context must be the repository root. Pushes to the connected branch trigger Railway deployment. Enable the deployment trigger's `checkSuites` setting so Railway waits for GitHub CI. Local edits and commits alone do not update the website.
+Canonical source: https://github.com/hongneuk65/toeic-adaptive, branch `main`. The repository-root `railway.json` selects `deploy/railway-unified.Dockerfile`; build context must be the repository root. Local edits and commits alone do not update the website.
+
+Connection status (20/10/2026): GitHub source connected; commit `99d3bac` deployed successfully as `0938e79a-3ed9-47d6-b486-3061aa05b351`. Readiness, SPA routes, authenticated catalogs, trained DAS3H status and audio/image range requests passed after deployment. Automatic deployment trigger creation is blocked by Railway: "no one in the project has access to it". The account owner must connect GitHub in Railway and grant repository access. Then create the `main` deployment trigger with `checkSuites: true`, verify it exists, and test a push. Until that step is complete, automatic deployment after CI is not enabled.
 
 Before pushing, run `npm run check`. GitHub CI additionally runs database/HTTP integration checks, browser regression checks and the Compose build. Check CI and the exact Railway deployment commit before treating a release as complete.
 
