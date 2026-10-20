@@ -5,6 +5,8 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { RequestBudgetModule } from '../common/request-budget.guard';
+import { GoogleAuthService } from './google-auth.service';
+import { GoogleAuthController } from './google-auth.controller';
 
 @Module({
   imports: [
@@ -15,8 +17,8 @@ import { RequestBudgetModule } from '../common/request-budget.guard';
       signOptions: { expiresIn: '7d' },
     }),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  controllers: [AuthController, GoogleAuthController],
+  providers: [AuthService, JwtStrategy, GoogleAuthService],
   exports: [AuthService],
 })
 export class AuthModule { }

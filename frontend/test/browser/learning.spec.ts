@@ -12,6 +12,7 @@ async function fixture(page: Page, options: { lostDraft?: boolean; lostSubmit?: 
     const path = new URL(route.request().url()).pathname.replace(/^\/api/, '');
     const json = (body: unknown, status = 200) => route.fulfill({ status, json: body });
     if (path === '/auth/me') return json({ id: 1, email: 'test@example.invalid', role: 'USER' });
+    if (path === '/auth/google/config') return json({ enabled: false });
     if (path === '/exam/catalog') return json({ source: 'SANTA_EDNET', totalQuestions: 700, byPart: Array.from({ length: 7 }, (_, index) => ({ part: index + 1, count: 100 })), modes: [{ examType: 'FULL', available: true, questionCount: 200 }, { examType: 'MINI', available: true, questionCount: 100 }] });
     if (path === '/history') return json({ items: [], total: 0, pageSize: 12 });
     if (path === '/reading') return json({ articles: [1, 2, 3].map(id => ({ id, title: ['Office announcements', 'A letter to the team', 'Customer service update'][id - 1], ownerId: null, status: 'READY', error: null, generationAttempts: 0, version: { id, title: ['Office announcements', 'A letter to the team', 'Customer service update'][id - 1], topic: 'Workplace', kind: 'EMAIL', difficulty: 'EASY' } })), attempts: [], limits: { maxText: 10000, maxQuestions: 10, generations: 5, tutorCalls: 10 } });

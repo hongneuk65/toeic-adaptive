@@ -2,6 +2,7 @@ import { AuthShell } from '../components/ui/AuthShell';
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api, getErrorMessage } from '../lib/api';
+import { GoogleSignIn } from '../components/GoogleSignIn';
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -51,6 +52,7 @@ export const RegisterPage: React.FC = () => {
   return (
     <AuthShell title="Tạo tài khoản" description="Bắt đầu luyện tập và khám phá lộ trình phù hợp với bạn." footer={<>Đã có tài khoản? <Link className="font-semibold text-accent-coral hover:underline" to="/login">Đăng nhập</Link></>}>
       {error && <p role="alert" className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}
+      <GoogleSignIn />
       <form onSubmit={handleRegister} className="space-y-5">
         <div>
           <label htmlFor="register-email" className="form-label">Email</label>
