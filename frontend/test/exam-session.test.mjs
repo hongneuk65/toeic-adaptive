@@ -8,9 +8,21 @@ const source = await readFile(new URL('../src/lib/exam-session.ts', import.meta.
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 });
-const { remainingSeconds, readAnswers, saveAnswers, clearExamStorage } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
+const { remainingSeconds, readAnswers, readDraftRevision, saveAnswers, clearExamStorage } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
 const startedAt = '2026-09-21T12:00:00.000Z';
 const start = Date.parse(startedAt);
+
+test('server deadline overrides client duration estimates', () => {
+  const exam = { examType: 'FULL', startedAt, deadlineAt: '2026-09-21T12:01:00.000Z' };
+  assert.equal(remainingSeconds(exam, start), 60);
+  assert.equal(remainingSeconds(exam, start + 61_000), 0);
+});
+
+test('custom parts combine planned listening time with only selected Reading budgets', () => {
+  const exam = {examType:'CUSTOM',startedAt,selectedParts:[1,6],questions:[{part:1},{part:6}],listeningPlan:{targetSeconds:200}};
+  assert.equal(remainingSeconds(exam,start),800);
+  assert.equal(remainingSeconds({...exam,selectedParts:[7],questions:[{part:7}],listeningPlan:null},start),2700);
+});
 
 for (const [examType, seconds] of [['FULL', 7200], ['MINI', 3600], ['PART_5', 1200]]) {
   test(`${examType} uses server start time across reloads and clamps expiration`, () => {
@@ -91,7 +103,20 @@ test('attempts answer cleanup even if removing the legacy exam fails', (t) => {
     },
   });
   assert.doesNotThrow(() => clearExamStorage(42));
-  assert.deepEqual(removed, ['exam_42', 'exam_answers_42']);
+  assert.deepEqual(removed, ['exam_42', 'exam_answers_42', 'exam_draft_revision_42']);
+});
+
+test('draft revision remains isolated per attempt and is cleared with answers', (t) => {
+  const stored = new Map();
+  withStorage(t, { getItem: key => stored.get(key) ?? null, setItem: (key, value) => stored.set(key, value), removeItem: key => stored.delete(key) });
+  assert.equal(readDraftRevision(42), null);
+  assert.equal(saveAnswers(42, { 1: 'A' }, 3), true);
+  assert.equal(readDraftRevision(42), 3);
+  assert.equal(readDraftRevision(43), null);
+  stored.set('exam_draft_revision_42', '-1');
+  assert.equal(readDraftRevision(42), null);
+  clearExamStorage(42);
+  assert.equal(readDraftRevision(42), null);
 });
 
 test('storage access failures cannot turn cleanup into a submission failure', (t) => {

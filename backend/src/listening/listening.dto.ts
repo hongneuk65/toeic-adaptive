@@ -1,4 +1,12 @@
 import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class ListeningCatalogQueryDto {
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) pageSize = 24;
+  @IsOptional() @IsString() @MaxLength(200) search?: string;
+  @IsOptional() @IsIn(['AUDIO', 'VIDEO', 'YOUTUBE']) kind?: string;
+}
 
 export class SourceDto {
   @IsString() @MaxLength(200) title: string;

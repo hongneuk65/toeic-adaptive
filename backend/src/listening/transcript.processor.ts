@@ -13,7 +13,14 @@ export class TranscriptProcessor extends WorkerHost {
     await this.prisma.listeningTranscript.update({ where: { id: transcriptId }, data: { status: 'PROCESSING' } });
     try {
       let result: { cues: { start: number; end: number; text: string }[]; provider: string; segmentStart?: number; segmentEnd?: number };
-      try { result = job.data.audioPath ? await this.asr.fromUpload(job.data.audioPath, job.data.start!, job.data.end!) : await this.provider.fetch(videoId); }
+      try {
+        result = job.data.audioPath ? await this.asr.fromUpload(job.data.audioPath, job.data.start!, job.data.end!) : await this.provider.fetch(videoId);
+        // A caption track can exist but contain no usable cue in the selected segment.
+        if (!job.data.audioPath && job.data.start !== undefined && job.data.end !== undefined
+          && !result.cues.some(cue => cue.start >= job.data.start! && cue.end <= job.data.end!)) {
+          throw new AsrError('NO_SEGMENT_CAPTIONS');
+        }
+      }
       catch (captionError) {
         if (job.data.audioPath) throw captionError;
         if (!this.asr.available()) throw captionError;

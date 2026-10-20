@@ -1,7 +1,10 @@
 import { Transform } from 'class-transformer';
-import { ArrayUnique, IsArray, IsBoolean, IsIn, IsInt, IsOptional, Min } from 'class-validator';
+import { ArrayUnique, IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsUUID, Min } from 'class-validator';
 
 export class AdaptiveAnswerDto {
+  @IsUUID()
+  attemptId: string;
+
   @IsInt()
   @Min(1)
   questionId: number;

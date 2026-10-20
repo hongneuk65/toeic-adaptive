@@ -10,16 +10,17 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { ListeningService } from './listening.service';
-import { AnswerDto, ProgressDto, PublishDto, ReportDto, SegmentDto, SettingsDto, SourceDto, SubtitleDto, TranscriptRequestDto } from './listening.dto';
+import { AnswerDto, ProgressDto, PublishDto, ReportDto, SegmentDto, SettingsDto, SourceDto, SubtitleDto, TranscriptRequestDto, ListeningCatalogQueryDto } from './listening.dto';
 
 interface ListeningRequest { user: { id: number; role: Role } }
 export const mediaDirectory = () => resolve(process.env.LISTENING_MEDIA_DIR || './storage/listening');
 
 @Controller('listening')
-@UseGuards(AuthGuard('jwt'))
+@Roles(Role.USER)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class ListeningController {
   constructor(private readonly service: ListeningService) {}
-  @Get() list(@Req() req: ListeningRequest) { return this.service.list(req.user.id); }
+  @Get() list(@Req() req: ListeningRequest, @Query() query: ListeningCatalogQueryDto) { return this.service.list(req.user.id, query); }
   @Post('sources') create(@Req() req: ListeningRequest, @Body() dto: SourceDto) { return this.service.createSource(req.user.id, dto); }
   @Get('sources/:id') status(@Req() req: ListeningRequest, @Param('id', ParseIntPipe) id: number, @Query('start') start?: string, @Query('end') end?: string) {
     if ((start === undefined) !== (end === undefined) || (start !== undefined && (!Number.isFinite(Number(start)) || !Number.isFinite(Number(end)) || Number(start) < 0 || Number(end) <= Number(start) || Number(end) > 86400))) throw new BadRequestException('Đoạn không hợp lệ.');
@@ -40,6 +41,7 @@ export class ListeningController {
   @Patch('sessions/:id') progress(@Req() req: ListeningRequest, @Param('id', ParseIntPipe) id: number, @Body() dto: ProgressDto) { return this.service.progress(req.user.id, id, dto); }
   @Post('sessions/:id/answers') answer(@Req() req: ListeningRequest, @Param('id', ParseIntPipe) id: number, @Body() dto: AnswerDto) { return this.service.answer(req.user.id, id, dto); }
   @Get('sessions/:id/hint') hint(@Req() req: ListeningRequest, @Param('id', ParseIntPipe) id: number) { return this.service.hint(req.user.id, id); }
+  @Get('sessions/:id/shadowing-script') shadowingScript(@Req() req: ListeningRequest, @Param('id', ParseIntPipe) id: number) { return this.service.shadowingScript(req.user.id, id); }
 }
 
 @Controller('listening/admin')

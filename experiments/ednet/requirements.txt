@@ -1,0 +1,6 @@
+# Exact versions used by each run are recorded in artifacts/<run>/environment.json.
+numpy
+scipy
+scikit-learn
+torch
+matplotlib

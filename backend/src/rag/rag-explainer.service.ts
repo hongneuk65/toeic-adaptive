@@ -1,3 +1,6 @@
+import { Das3hService } from '../das3h/das3h.service';
+import { learnerExplanation } from '../common/learner-explanation';
+import { assertQuestionAnswersAccessible } from '../common/exam-answer-access';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RagRetrieverService, RetrievedChunk } from './rag-retriever.service';
@@ -13,6 +16,7 @@ export interface PersonalizedExplanationResult {
     skillCode: string;
     skillName: string;
     masteryScore: number;
+    evidenceStatus: 'practiced' | 'unassessed';
     levelDescription: string;
   } | null;
   explanation: string;
@@ -53,6 +57,7 @@ export class RagExplainerService {
   }): Promise<PersonalizedExplanationResult> {
     params.signal?.throwIfAborted();
     const { userId, questionId, selectedAnswer, userNote } = params;
+    await assertQuestionAnswersAccessible(this.prisma, userId, [questionId]);
 
     const question = await this.prisma.question.findUnique({
       where: { id: questionId },
@@ -74,7 +79,8 @@ export class RagExplainerService {
 
     let masteryScore = 0.5;
     params.signal?.throwIfAborted();
-    const [mastery, retrievedChunks] = await Promise.all([
+    const das3h = new Das3hService(this.prisma);
+    const [mastery, retrievedChunks, contributions, user, trainedScores] = await Promise.all([
       primarySkill ? this.prisma.userSkillMastery.findUnique({
         where: {
           userId_skillId: {
@@ -89,14 +95,21 @@ export class RagExplainerService {
         skillCode: primarySkill?.code,
         topK: 3,
       }),
+      das3h.getSkillContributions(userId, primarySkill ? [primarySkill.id] : []),
+      this.prisma.user.findUnique({ where: { id: userId }, select: { ability: true } }),
+      das3h.getTrainedSkillScores(userId, primarySkill ? [primarySkill.id] : []),
     ]);
-    if (mastery) masteryScore = mastery.masteryScore;
+    masteryScore = (primarySkill ? trainedScores.get(primarySkill.id) : undefined) ?? das3h.sigmoid((user?.ability ?? 0) + (primarySkill ? contributions.get(primarySkill.id) ?? 0 : 0));
+    const evidenceStatus = mastery?.practiceCount ? 'practiced' as const : 'unassessed' as const;
     params.signal?.throwIfAborted();
 
     let levelDescription = 'Trung cấp (Vùng phát triển ZPD)';
     let instructionTone = 'Cung cấp phân tích bẫy đề thi và quy tắc trọng tâm, phương pháp loại trừ.';
 
-    if (masteryScore < 0.45) {
+    if (evidenceStatus === 'unassessed') {
+      levelDescription = 'Chưa đủ dữ liệu đánh giá kỹ năng';
+      instructionTone = 'Chưa có đủ lịch sử luyện tập cho kỹ năng này. Giải thích rõ ràng từ quy tắc cơ bản, không khẳng định trình độ hoặc điểm yếu của học viên.';
+    } else if (masteryScore < 0.45) {
       levelDescription = 'Cơ bản / Cần củng cố gốc rễ';
       instructionTone = 'Giải thích cực kỳ cặn kẽ, phân tích từng thành phần từ loại cơ bản, dịch nghĩa tiếng Việt chi tiết câu hỏi và 4 đáp án.';
     } else if (masteryScore >= 0.7) {
@@ -110,6 +123,7 @@ export class RagExplainerService {
       selectedAnswer,
       isCorrect,
       masteryScore,
+      evidenceStatus,
       levelDescription,
       instructionTone,
       retrievedChunks,
@@ -125,6 +139,7 @@ export class RagExplainerService {
     selectedAnswer: string;
     isCorrect: boolean;
     masteryScore: number;
+    evidenceStatus: 'practiced' | 'unassessed';
     levelDescription: string;
     instructionTone: string;
     retrievedChunks: RetrievedChunk[];
@@ -132,7 +147,7 @@ export class RagExplainerService {
     signal?: AbortSignal;
     onChunk?: (chunk: string) => void;
   }): Promise<PersonalizedExplanationResult> {
-    const { question, primarySkill, selectedAnswer, isCorrect, masteryScore, levelDescription, instructionTone, retrievedChunks, userNote } = params;
+    const { question, primarySkill, selectedAnswer, isCorrect, masteryScore, evidenceStatus, levelDescription, instructionTone, retrievedChunks, userNote } = params;
 
     const knowledgeContextText = retrievedChunks
       .map((c, idx) => `[Tài liệu ${idx + 1}: ${c.title} (${c.category})]\n${c.content}`)
@@ -166,7 +181,7 @@ ${question.passage ? `- Đoạn văn: "${question.passage}"\n` : ''}
   (D) ${question.optionD}
 - Đáp án đúng: (${question.correctAnswer})
 - Đáp án học viên: ${displayAnswer}
-${question.explanation ? `- Giải thích có sẵn: "${question.explanation}"` : ''}
+${question.explanation ? `- Giải thích có sẵn: "${learnerExplanation(question.explanation)}"` : ''}
 ${userNote ? `- Thắc mắc của học viên: "${userNote}"` : ''}
 
 NĂNG LỰC HỌC VIÊN (DAS3H):
@@ -199,7 +214,7 @@ Hãy viết lời giải thích chuẩn sư phạm theo cấu trúc 4 phần nê
       correctAnswer: question.correctAnswer,
       isCorrect,
       learnerMastery: primarySkill
-        ? { skillCode: primarySkill.code, skillName: primarySkill.name, masteryScore, levelDescription }
+        ? { skillCode: primarySkill.code, skillName: primarySkill.name, masteryScore, evidenceStatus, levelDescription }
         : null,
       explanation: generatedText,
       sections,

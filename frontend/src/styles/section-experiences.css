@@ -1,0 +1,103 @@
+/* Each learning task has its own composition. Source mapping is documented in docs/learning-workspace-design.md. */
+/* Reading: an editorial index, with filters and numbered article rows. */
+.study-layout[data-section=reading]{background:var(--workspace-bg)}
+.study-layout[data-section=reading] .prep-learning-library>.page-header{padding:0 0 24px;border-bottom:1px solid var(--study-line)}
+.study-layout[data-section=reading] .prep-learning-library .prep-library-catalog{display:grid;grid-template-columns:1fr;gap:0;counter-reset:reading-index;background:var(--workspace-surface);border-block:1px solid var(--study-line)}
+.study-layout[data-section=reading] .prep-learning-library .prep-learning-card{counter-increment:reading-index;display:grid;grid-template-columns:45px minmax(0,1fr) auto;column-gap:20px;row-gap:7px;padding:24px 12px;border:0;border-bottom:1px solid var(--study-line);border-radius:0;box-shadow:none;transform:none;background:transparent;min-height:140px;align-items:start}
+.study-layout[data-section=reading] .prep-learning-library .prep-learning-card:last-child{border-bottom:0}
+.study-layout[data-section=reading] .prep-learning-library .prep-learning-card::before{content:counter(reading-index,decimal-leading-zero);grid-column:1;grid-row:1/5;font-size:27px;line-height:1.4;letter-spacing:-1px;color:var(--workspace-muted);font-weight:600}
+.study-layout[data-section=reading] .prep-learning-library .prep-learning-card>span:nth-child(-n+3){grid-column:2}
+.study-layout[data-section=reading] .prep-learning-library .prep-learning-card>span:nth-child(2){font-size:18px;color:var(--study-navy);line-height:1.5;font-weight:650}
+.study-layout[data-section=reading] .prep-learning-library .prep-learning-card>span:nth-child(4){grid-column:3;grid-row:1/5;align-self:center;border:1px solid var(--study-line);border-radius:999px;padding:10px 16px;margin:0;font-size:12px;color:var(--study-blue);max-width:180px}
+.study-layout[data-section=reading] .prep-library-filters{padding:18px;border-radius:14px;background:var(--workspace-surface)}
+.study-layout[data-section=reading] .prep-learning-sidebar{padding:24px;background:var(--workspace-soft);border:1px solid var(--study-line);border-radius:24px;display:grid;gap:18px}
+.study-layout[data-section=reading] .prep-reading-passage{max-width:850px;line-height:1.9}
+/* Listening: a media library; the listening player remains the focus during practice. */
+.study-layout[data-section=listening] .prep-learning-library>.page-header{padding:0 0 24px;border:0;border-bottom:1px solid var(--study-line);border-radius:0;background:transparent;color:var(--study-navy)}
+.study-layout[data-section=listening] .prep-learning-library>.page-header h1{color:var(--study-navy);font-size:32px}
+.study-layout[data-section=listening] .prep-learning-library>.page-header .page-header-description{color:var(--workspace-muted);max-width:620px}
+.study-layout[data-section=listening] .prep-learning-library .prep-library-catalog{grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.study-layout[data-section=listening] .prep-learning-card{position:relative;padding:23px;border:1px solid var(--study-line);border-radius:24px;background:var(--workspace-surface);overflow:hidden;box-shadow:none}
+.study-layout[data-section=listening] .prep-learning-card::before{content:'▶';display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--workspace-soft);color:var(--study-blue);font-size:17px;margin-bottom:20px}
+.study-layout[data-section=listening] .prep-learning-card>span:first-child{font-size:18px;color:var(--study-navy);line-height:1.6}
+.study-layout[data-section=listening] .prep-learning-card>span:last-child{color:var(--study-blue);border-color:var(--study-line);font-size:12px}
+.study-layout[data-section=listening] .prep-learning-sidebar{padding:24px;border-radius:24px;background:var(--workspace-soft);border:1px solid var(--study-line)}
+.study-layout[data-section=listening] .prep-listening-player{border-top:1px solid var(--study-line);border-radius:24px}
+.study-layout[data-section=listening] .prep-learning-study>.page-header{border:0;padding-bottom:0}
+/* Theory: a reading desk with the lesson index above the article, never a left rail. */
+.study-layout[data-section=theory]{background:var(--workspace-bg)}
+.study-layout[data-section=theory] .app-content{max-width:1240px}
+.study-layout[data-section=theory] .page-header-feature{padding:0 0 24px;border-bottom:1px solid var(--study-line)}
+.study-layout[data-section=theory] .prep-knowledge-tabs{background:transparent;border-radius:0;padding:0 0 12px;border-bottom:1px solid #dde5f1;gap:8px}
+.study-layout[data-section=theory] .prep-knowledge-tabs button{border-radius:999px;color:#6b7d96;min-height:44px}
+.study-layout[data-section=theory] .prep-knowledge-tabs button[aria-pressed=true]{background:var(--study-navy);color:#fff;box-shadow:none}
+.study-layout[data-section=theory] .prep-theory-outline{position:static;padding:20px 24px;border-radius:24px;border:1px solid var(--study-line);background:#edf3fc}
+.study-layout[data-section=theory] .prep-theory-outline nav{display:flex;flex-wrap:wrap;gap:8px;max-height:220px;margin-top:14px}
+.study-layout[data-section=theory] .prep-theory-outline nav button{width:auto;border:1px solid var(--study-line);background:var(--workspace-surface);border-radius:9px;font-size:12px;padding:8px 12px}
+.study-layout[data-section=theory] .prep-theory-outline nav button[aria-current=true]{background:var(--study-navy);color:#fff;border-color:var(--study-navy)}
+.study-layout[data-section=theory] .prep-theory-reading{padding:40px;background:var(--workspace-surface);border-radius:24px;border:1px solid var(--study-line);line-height:1.9}
+/* Vocabulary: subject shelves, distinct from the numbered reading index. */
+.study-layout[data-section=flashcards]{background:var(--workspace-bg)}
+.study-layout[data-section=flashcards] .prep-folder-page>.page-header{padding:0 0 24px;border-bottom:1px solid var(--study-line)}
+.study-layout[data-section=flashcards] .vocabulary-library-toolbar{padding:16px 0 22px;border-bottom:1px solid var(--study-line)}
+.study-layout[data-section=flashcards] .prep-folder-catalog{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.study-layout[data-section=flashcards] .prep-folder-tile{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:20px;padding:24px;background:var(--workspace-surface);border:1px solid var(--study-line);border-top:1px solid var(--study-line);border-radius:24px;box-shadow:none}
+.study-layout[data-section=flashcards] .prep-folder-tile:nth-child(3n+2){border-top-color:var(--study-line)}.study-layout[data-section=flashcards] .prep-folder-tile:nth-child(3n){border-top-color:var(--study-line)}
+.study-layout[data-section=flashcards] .vocabulary-folder-icon{width:48px;height:48px;border-radius:13px;color:var(--study-blue);background:var(--workspace-soft)}
+.study-layout[data-section=flashcards] .prep-folder-tile h2{font-size:20px;line-height:1.5;color:var(--study-navy);margin:8px 0}
+.study-layout[data-section=flashcards] .vocabulary-folder-content{flex:1}.study-layout[data-section=flashcards] .prep-folder-eyebrow{font-size:11px;color:var(--workspace-muted)}
+.study-layout[data-section=flashcards] .vocabulary-scope button[aria-pressed=true]{background:var(--workspace-soft);color:var(--study-blue)}
+/* Recommendations: the next concrete action, followed by diagnosis. */
+.study-layout[data-section=recommendations] .prep-recommendations>.page-header{padding:0 0 24px;border-bottom:1px solid var(--study-line)}
+.study-layout[data-section=recommendations] .prep-priority-skill{padding:34px 38px;border:0;border-radius:28px;background:var(--study-navy);color:white;box-shadow:none}
+.study-layout[data-section=recommendations] .prep-priority-skill :is(h2,.text-ink-medium){color:#fff}
+.study-layout[data-section=recommendations] .prep-priority-skill h2{font-size:28px;line-height:1.5}
+.study-layout[data-section=recommendations] .prep-priority-skill p{color:#d0def3}
+.study-layout[data-section=recommendations] .prep-priority-skill .primary-button{background:#e6f0ff;color:var(--study-navy);border-color:#e6f0ff}
+/* History: a dated activity timeline rather than another catalog. */
+.study-layout[data-section=history] .history-page{max-width:1200px}
+.study-layout[data-section=history] .page-header{padding:0 0 24px;border-bottom:1px solid var(--study-line)}
+.study-layout[data-section=history] .history-list{border:0;border-radius:0;background:transparent;overflow:visible}
+.study-layout[data-section=history] .history-card{position:relative;background:var(--workspace-surface);margin:0 0 16px 20px;border:1px solid #e0e7f0;border-radius:14px;padding:23px}
+.study-layout[data-section=history] .history-card::before{content:'';position:absolute;left:-20px;top:32px;width:9px;height:9px;border-radius:50%;background:#668abb;box-shadow:0 0 0 5px #eaf0f9}
+.study-layout[data-section=history] .history-card::after{content:'';position:absolute;left:-16px;top:49px;bottom:-30px;width:1px;background:#d9e3f2}
+.study-layout[data-section=history] .history-card:last-child::after{display:none}
+@media(hover:hover){.study-layout[data-section=listening] .prep-learning-card:hover,.study-layout[data-section=flashcards] .prep-folder-tile:hover{transform:translateY(-3px);box-shadow:0 10px 24px #234f650c}.study-layout[data-section=reading] .prep-learning-library .prep-learning-card:hover{background:var(--workspace-soft)}}
+@media(min-width:1000px){.study-layout[data-section=reading] .prep-learning-sidebar{grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}}
+@media(max-width:1100px){.study-layout[data-section=listening] .prep-learning-library .prep-library-catalog,.study-layout[data-section=flashcards] .prep-folder-catalog{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.study-layout[data-section=reading] .prep-learning-library .prep-learning-card{grid-template-columns:32px minmax(0,1fr);gap:8px 12px;padding:20px 6px}.study-layout[data-section=reading] .prep-learning-library .prep-learning-card>span:nth-child(4){grid-column:2;grid-row:auto;justify-self:start;font-size:11px;padding:8px 12px}.study-layout[data-section=reading] .prep-learning-library .prep-learning-card>span:nth-child(2){font-size:18px}.study-layout[data-section=listening] .prep-learning-library>.page-header{padding:0 0 24px;border-radius:0}.study-layout[data-section=listening] .prep-learning-library>.page-header h1{font-size:28px}.study-layout[data-section=listening] .prep-learning-library .prep-library-catalog{grid-template-columns:1fr}.study-layout[data-section=listening] .prep-learning-card{padding:22px}.study-layout[data-section=flashcards] .prep-folder-catalog{grid-template-columns:1fr}.study-layout[data-section=theory] .prep-theory-reading{padding:25px 20px}.study-layout[data-section=theory] .prep-theory-outline{padding:18px}.study-layout[data-section=theory] .prep-theory-outline nav{display:none}.study-layout[data-section=recommendations] .prep-priority-skill{padding:26px}.study-layout[data-section=recommendations] .prep-priority-skill h2{font-size:24px}.study-layout[data-section=history] .history-card{padding:18px;margin-left:14px}.study-layout[data-section=history] .history-card::before{left:-14px}.study-layout[data-section=history] .history-card::after{left:-10px}}
+.study-layout[data-section=listening] .prep-learning-page>aside[aria-label="Thư viện và đoạn nghe đã lưu"]{grid-template-columns:minmax(0,1fr)}
+@media(min-width:1000px){.study-layout[data-section=listening] .prep-learning-sidebar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}}
+@media(min-width:701px){.study-layout[data-section=theory] .prep-theory-outline select{display:none}}
+@media(min-width:1000px){.study-layout[data-section=reading] .prep-library-filters{grid-template-columns:repeat(5,minmax(0,1fr))}}
+
+/* Shared rhythm across the different task compositions. */
+.study-layout[data-section] .page-header-feature{min-height:118px}
+.study-layout[data-section=theory] .prep-theory-outline{background:var(--workspace-soft);border-color:var(--study-line)}
+.study-layout[data-section=flashcards] .prep-folder-tile h2{font-size:18px}
+.study-layout[data-section=flashcards] .vocabulary-folder-icon{width:44px;height:44px;border-radius:12px}
+.study-layout[data-section=reading] .prep-library-filters{border:1px solid var(--study-line)}
+.study-layout[data-section=reading] .prep-learning-library .prep-library-catalog{border:1px solid var(--study-line);border-radius:24px;overflow:hidden}
+.study-layout[data-section=reading] .prep-learning-library .prep-learning-card{padding:22px 24px;min-height:130px}
+.study-layout[data-section=listening] .prep-learning-card{padding:24px}
+.study-layout[data-section=listening] .prep-learning-card::before{border-radius:12px}
+.study-layout[data-section=recommendations] .prep-priority-skill{padding:28px 32px}
+@media(max-width:700px){.study-layout[data-section] .page-header-feature{min-height:0}.study-layout[data-section=reading] .prep-library-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px}.study-layout[data-section=reading] .prep-library-filters>select:last-child{grid-column:1/-1}.study-layout[data-section=reading] .prep-library-filters select{font-size:13px;padding:10px;min-width:0}.study-layout[data-section=reading] .prep-learning-library .prep-learning-card{padding:20px 16px}.study-layout[data-section=recommendations] .prep-priority-skill{padding:24px}}
+/* Program identity follows the corresponding cards on the homepage. */
+.study-layout[data-section=reading]{--section-accent:#225fc3;--section-tint:#eaf2ff}
+.study-layout[data-section=listening]{--section-accent:#3d5598;--section-tint:#edf0fb}
+.study-layout[data-section=theory]{--section-accent:#29716c;--section-tint:#e8f3f2}
+.study-layout[data-section=flashcards]{--section-accent:#926728;--section-tint:#f8f1e7}
+.study-layout[data-section=history],.study-layout[data-section=recommendations]{--section-accent:#1463e8;--section-tint:#eaf2ff}
+.study-layout[data-section] .page-header-eyebrow{color:var(--section-accent,var(--study-blue))}
+.study-layout[data-section=reading] .prep-learning-library .prep-library-catalog{background:var(--section-tint)}
+.study-layout[data-section=listening] .prep-learning-card,.study-layout[data-section=flashcards] .prep-folder-tile{background:var(--section-tint);border-color:var(--study-line);border-radius:28px}
+.study-layout[data-section=listening] .prep-learning-card::before,.study-layout[data-section=flashcards] .vocabulary-folder-icon{background:#ffffffa6;color:var(--section-accent)}
+.study-layout[data-section=flashcards] .prep-folder-tile h2{color:var(--section-accent)}
+.study-layout[data-section=flashcards] .prep-folder-tile .primary-button{background:#fff;color:var(--section-accent);border:1px solid #c9d6e9;border-radius:999px}
+.study-layout[data-section=theory] .prep-theory-outline{background:var(--section-tint)}
+.study-layout[data-section=theory] .prep-knowledge-tabs button[aria-pressed=true],.study-layout[data-section=theory] .prep-theory-outline nav button[aria-current=true]{background:var(--section-accent);border-color:var(--section-accent)}
+.study-layout[data-section=recommendations] .prep-priority-skill{background:#1c3055;border-radius:28px}
+.study-layout[data-section=listening] .prep-learning-library>.page-header h1{font-size:36px}
+@media(max-width:700px){.study-layout[data-section=listening] .prep-learning-library>.page-header h1{font-size:30px}.study-layout[data-section] :is(.prep-learning-card,.prep-folder-tile){border-radius:24px}}
+@media(max-width:700px){.study-layout[data-section=listening] input[aria-label="Tìm bài nghe"]{flex-basis:100%;width:100%;min-height:44px}}

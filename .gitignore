@@ -1,4 +1,5 @@
 node_modules/
+.vercel/
 .env
 dist/
 
@@ -6,8 +7,22 @@ dist/
 !.env.example
 !**/.env.example
 coverage/
+frontend/test-results/
+frontend/test-results-*/
+frontend/playwright-report/
+.homepage-review-baseline.json
 *.tsbuildinfo
 *.log
 backend/storage/
+frontend/test/fixtures/
 **/.venv-listening/
 **/__pycache__/
+
+data
+experiments/hlr/artifacts/
+deploy/railway-release/
+deploy/.ssh-deployment/
+*.aof
+*.rdb
+baocao/
+ednet_santa_mapping_clean/

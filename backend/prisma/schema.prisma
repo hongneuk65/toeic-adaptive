@@ -27,6 +27,8 @@ model User {
   updatedAt    DateTime @updatedAt
 
   ability Float @default(0.0)
+  trainedDas3hStates TrainedDas3hState[]
+  trainedDas3hObservations TrainedDas3hObservation[]
 
   examAttempts          ExamAttempt[]
   folders               FlashcardFolder[]
@@ -70,6 +72,7 @@ model Question {
   passage        String? // Đoạn văn đọc (dành cho Part 6, 7)
   audioUrl       String? // Link file âm thanh (dành cho Part 1-4)
   imageUrl       String? // Link ảnh (Part 1 hoặc biểu đồ Part 3, 4, 7)
+  stimulus       Json? // Structured source documents, tables, blanks and group position
   content        String // Nội dung câu hỏi
   optionA        String
   optionB        String
@@ -85,8 +88,6 @@ model Question {
   updatedAt      DateTime   @updatedAt
 
   skills                QuestionSkill[]
-  examAnswers           ExamAnswer[]
-  studentSkillHistories StudentSkillHistory[]
 
   @@index([part])
   @@index([difficulty])
@@ -143,6 +144,7 @@ enum ExamType {
   FULL // 200 câu (100 Listening, 100 Reading)
   MINI // 100 câu rút gọn
   PART_5 // 30 câu chuyên sâu ngữ pháp/từ vựng
+  CUSTOM // Các Part do người học chọn
 }
 
 model ExamAttempt {
@@ -152,6 +154,11 @@ model ExamAttempt {
   startedAt      DateTime  @default(now())
   submittedAt    DateTime?
   questionIds    Int[]    @default([])
+  deadlineAt DateTime?
+  questionSnapshot Json?
+  draftAnswers Json @default("[]")
+  draftRevision Int @default(0)
+  selectedParts  Int[]    @default([])
   listeningScore Int?
   readingScore   Int?
   totalScore     Int?
@@ -173,7 +180,6 @@ model ExamAnswer {
   createdAt      DateTime @default(now())
 
   attempt  ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   // Ngăn chặn trùng lặp câu trả lời trong cùng 1 lần thi ở mức database
   @@unique([attemptId, questionId])
@@ -291,8 +297,37 @@ model FlashcardReview {
   card Flashcard @relation(fields: [cardId], references: [id], onDelete: Cascade)
   known Boolean @default(false)
   reviewCount Int @default(0)
+  intervalDays Int @default(0)
+  dueAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  recallWins Int @default(0)
+  recallLosses Int @default(0)
+  lastPracticedAt DateTime?
+  contentHash String?
+  schedulingSource String @default("fixed-interval")
+  events FlashcardRecallEvent[]
   @@unique([userId, cardId])
+  @@index([userId, dueAt])
+}
+
+model FlashcardRecallEvent {
+  id Int @id @default(autoincrement())
+  reviewId Int
+  review FlashcardReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  attemptId String @unique
+  requestHash String
+  contentHash String
+  recallMode String
+  correct Boolean
+  elapsedMs Int?
+  lagDays Float
+  priorWins Int
+  priorLosses Int
+  predictedRecall Float?
+  schedulingSource String
+  result Json
+  occurredAt DateTime @default(now())
+  @@index([reviewId, occurredAt])
 }
 
 model Das3hWeights {
@@ -313,7 +348,6 @@ model StudentSkillHistory {
   skill      Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
   isCorrect  Boolean
   questionId Int
-  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
 
   @@index([userId, skillId, createdAt])
@@ -472,4 +506,46 @@ model ListeningSettings {
   requestsPerHour Int @default(10)
   maxSubtitleBytes Int @default(200000)
   maxRecordingSeconds Int @default(60)
+}
+
+model MasteryOutbox {
+  id String @id
+  payload Json
+  createdAt DateTime @default(now())
+  processedAt DateTime?
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now())
+  lastError String?
+  @@index([processedAt, nextAttemptAt])
+}
+model LearningAttempt {
+  id String @id
+  userId Int
+  kind String
+  scopeId Int
+  payloadHash String
+  result Json
+  createdAt DateTime @default(now())
+}
+
+// Calibration is versioned separately from the legacy heuristic ability.
+model TrainedDas3hState {
+  userId Int
+  modelVersion String
+  ability Float @default(0)
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId, modelVersion])
+}
+
+// One completed response, regardless of the number of legacy micro-skills.
+model TrainedDas3hObservation {
+  id String @id
+  userId Int
+  sourceQuestionId String
+  catalogHash String
+  isCorrect Boolean
+  occurredAt DateTime
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, catalogHash, occurredAt])
 }

@@ -16,10 +16,10 @@ const valueColors: Record<StatTone, string> = {
 
 export function StatCard({ label, value, hint, tone = 'ink' }: StatCardProps) {
   return (
-    <article className="rounded-xl border border-paper-kraft bg-white p-4 sm:p-5">
+    <article className="min-w-0 border-l-2 border-paper-kraft px-4 py-2 sm:px-5">
       <p className="text-sm font-medium text-ink-medium">{label}</p>
-      <p className={`mt-3 font-display text-3xl font-semibold tracking-tight ${valueColors[tone]}`}>{value}</p>
-      <p className="mt-1 text-xs text-ink-light">{hint}</p>
+      <p className={`mt-2 break-words font-display text-3xl font-semibold tracking-tight tabular-nums ${valueColors[tone]}`}>{value}</p>
+      <p className="mt-2 text-xs leading-relaxed text-ink-medium">{hint}</p>
     </article>
   );
 }

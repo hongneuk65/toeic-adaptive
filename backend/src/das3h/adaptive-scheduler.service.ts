@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { questionSelect } from '../common/question-select';
+import { importedQuestions } from '../common/imported-questions';
 import { PrismaService } from '../prisma/prisma.service';
 import { Das3hService } from './das3h.service';
 
@@ -29,26 +30,27 @@ export class AdaptiveSchedulerService {
 
     const excludedIds = recentHistories.map((h) => h.questionId);
 
-    // 2. Lấy 50 câu ứng viên chưa làm kèm itemDifficulty
-    let pool = await this.prisma.question.findMany({
-      where: {
-        id: { notIn: excludedIds },
-        skills: { some: { skillId: Number(skillId) } },
-      },
-      select: { ...questionSelect, itemDifficulty: true },
-      take: this.CANDIDATE_LIMIT,
+    // Sample evenly across difficulty strata, with a random offset in every stratum.
+    // Fetch only lightweight metadata across the bank before loading selected stimuli.
+    let eligible = await this.prisma.question.findMany({
+      where: { ...importedQuestions, id: { notIn: excludedIds }, skills: { some: { skillId: Number(skillId) } } },
+      select: { id: true, itemDifficulty: true },
+      orderBy: [{ itemDifficulty: 'asc' }, { id: 'asc' }],
     });
-
-    // Nếu hết câu chưa làm, lấy lại trong toàn bộ câu của kỹ năng đó
-    if (pool.length === 0) {
-      pool = await this.prisma.question.findMany({
-        where: {
-          skills: { some: { skillId: Number(skillId) } },
-        },
-        select: { ...questionSelect, itemDifficulty: true },
-        take: this.CANDIDATE_LIMIT,
-      });
-    }
+    if (!eligible.length) eligible = await this.prisma.question.findMany({
+      where: { ...importedQuestions, skills: { some: { skillId: Number(skillId) } } },
+      select: { id: true, itemDifficulty: true },
+      orderBy: [{ itemDifficulty: 'asc' }, { id: 'asc' }],
+    });
+    const count = Math.min(this.CANDIDATE_LIMIT, eligible.length);
+    const sampledIds = Array.from({ length: count }, (_, i) => {
+      const start = Math.floor(i * eligible.length / count);
+      const end = Math.floor((i + 1) * eligible.length / count);
+      return eligible[start + Math.floor(Math.random() * (end - start))].id;
+    });
+    const pool = await this.prisma.question.findMany({
+      where: { id: { in: sampledIds } }, select: { ...questionSelect, itemDifficulty: true },
+    });
 
     if (pool.length === 0) {
       throw new NotFoundException('Chưa có câu hỏi nào trong kho cho kỹ năng này.');
@@ -64,6 +66,7 @@ export class AdaptiveSchedulerService {
     const probMap = new Map(
       evaluatedResults.map((r) => [r.questionId, r.predictedProbability]),
     );
+    const sources = new Map(evaluatedResults.map(r => [r.questionId, r]));
 
     const evaluated = pool.map((q) => {
       const prob = probMap.get(q.id) ?? this.TARGET_PROB;
@@ -73,6 +76,8 @@ export class AdaptiveSchedulerService {
         question: sanitizedQuestion,
         predictedProbability: prob,
         distanceToTarget: distance,
+        predictionSource: sources.get(q.id)?.predictionSource ?? 'legacy-heuristic',
+        modelVersion: sources.get(q.id)?.modelVersion ?? null,
       };
     });
 
@@ -91,6 +96,8 @@ export class AdaptiveSchedulerService {
       targetProb: this.TARGET_PROB,
       evaluatedCandidatesCount: pool.length,
       isExploration,
+      predictionSource: selected.predictionSource,
+      modelVersion: selected.modelVersion,
     };
   }
 }

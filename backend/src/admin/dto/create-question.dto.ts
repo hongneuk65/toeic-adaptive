@@ -1,4 +1,17 @@
-import { ArrayNotEmpty, IsArray, IsEnum, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  ArrayUnique,
+  IsArray,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateIf,
+  Max,
+  Min,
+} from 'class-validator';
 import { Difficulty } from '@prisma/client';
 
 export class CreateQuestionDto {
@@ -35,12 +48,15 @@ export class CreateQuestionDto {
   @IsNotEmpty()
   optionC: string;
 
+  @ValidateIf((dto: CreateQuestionDto) => dto.part !== 2)
   @IsString()
   @IsNotEmpty()
-  optionD: string;
+  optionD?: string;
 
   @IsString()
-  @IsIn(['A', 'B', 'C', 'D'], { message: 'correctAnswer phải là A, B, C hoặc D' })
+  @IsIn(['A', 'B', 'C', 'D'], {
+    message: 'correctAnswer phải là A, B, C hoặc D',
+  })
   correctAnswer: string;
 
   @IsOptional()
@@ -53,7 +69,9 @@ export class CreateQuestionDto {
 
   // Hỗ trợ Q-matrix: 1 câu hỏi có thể liên kết nhiều skill
   @IsArray()
+  @ArrayUnique()
   @ArrayNotEmpty({ message: 'Câu hỏi phải gắn với ít nhất 1 skill' })
   @IsInt({ each: true })
+  @Min(1, { each: true })
   skillIds: number[];
 }

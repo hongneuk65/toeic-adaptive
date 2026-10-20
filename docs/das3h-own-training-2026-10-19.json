@@ -1,0 +1,98 @@
+{
+  "cohort": {
+    "learners": 3000,
+    "submissions": 413744,
+    "scope": "audited 3000 learner cohort, all completed history; not all KT4"
+  },
+  "split": "learner-disjoint 70/15/15; prior submission timestamps strictly before prediction",
+  "seed": 42,
+  "windowsMs": [
+    null,
+    2592000000,
+    604800000,
+    86400000,
+    3600000
+  ],
+  "featureContract": "sum skill bias and log1p(wins)/log1p(attempts), cumulative windows (now-window, now)",
+  "sourceHashes": {
+    "projection": "d19ecbf41c79ee18818ecdd50764cf0a2f3bf7bdaa3eb632c6c3eac95b50fdb7",
+    "taxonomy": "4b4a3f3444e3b6498d1bc8654dc4eaef67c7b347af5bd78cf3d24284e193fc3b",
+    "catalog": "137d2936b746c98e1586ef134bf9f9bc4b5a878c96b88e630b2241fe9f15d3cd",
+    "cohort": "5b72a4df9bb14f0bb8204455683fe447c99b6f3e60d9fd72d12f7c915db92849",
+    "trainer": "a2afc91ca5819be56c09392d183abc35a7d48082cf7d1db809af7691d732c02f"
+  },
+  "counts": {
+    "train": {
+      "learners": 2100,
+      "events": 281250
+    },
+    "val": {
+      "learners": 450,
+      "events": 66647
+    },
+    "test": {
+      "learners": 450,
+      "events": 65847
+    }
+  },
+  "mappingStatus": "research_candidate_not_final",
+  "trials": [
+    {
+      "variant": "item_only",
+      "C": 0.1,
+      "validationLogLoss": 0.6025605897448019,
+      "converged": true
+    },
+    {
+      "variant": "item_only",
+      "C": 1.0,
+      "validationLogLoss": 0.5999039302969038,
+      "converged": true
+    },
+    {
+      "variant": "item_only",
+      "C": 10.0,
+      "validationLogLoss": 0.6150707775306556,
+      "converged": true
+    },
+    {
+      "variant": "own_das3h",
+      "C": 0.1,
+      "validationLogLoss": 0.5863576555477299,
+      "converged": true
+    },
+    {
+      "variant": "own_das3h",
+      "C": 1.0,
+      "validationLogLoss": 0.5845567539553009,
+      "converged": true
+    },
+    {
+      "variant": "own_das3h",
+      "C": 10.0,
+      "validationLogLoss": 0.5992356300101453,
+      "converged": true
+    }
+  ],
+  "metrics": {
+    "item_only": {
+      "C": 1.0,
+      "validationLogLoss": 0.5999039302969038,
+      "auc": 0.698845993071687,
+      "log_loss": 0.5889779068054918,
+      "brier": 0.20181621389141516,
+      "accuracy": 0.6867738849150303
+    },
+    "own_das3h": {
+      "C": 1.0,
+      "validationLogLoss": 0.5845567539553009,
+      "auc": 0.703701068008131,
+      "log_loss": 0.5797251388339046,
+      "brier": 0.19789494685294676,
+      "accuracy": 0.6953391954075356
+    }
+  },
+  "releaseGatePassed": true,
+  "seconds": 244.5235735999995,
+  "version": "own-das3h-00d43658677e8319"
+}

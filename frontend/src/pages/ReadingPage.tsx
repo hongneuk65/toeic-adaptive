@@ -4,8 +4,11 @@ import { api, getErrorMessage } from "../lib/api";
 import { useAsyncResource } from "../hooks/useAsyncResource";
 import { useAuth } from "../auth/useAuth";
 import { PageHeader } from "../components/ui/PageHeader";
+import "../styles/prep-learning.css";
 import { AiMarkdown } from "../components/rag/AiMarkdown";
 import { ReadingAdmin } from "../components/reading/ReadingAdmin";
+import { ReadingClausePractice } from "../components/reading/ReadingClausePractice";
+import { ReadingSourceDocument } from "../components/reading/ReadingSourceDocument";
 import type {
   ReadingArticle,
   ReadingAttempt,
@@ -228,8 +231,8 @@ function ReadingWorkspace({
     return nodes;
   }, [version.text, evidence]);
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="page-stack prep-study-workspace">
+      <div className="prep-study-toolbar flex flex-wrap items-center justify-between gap-3">
         <button
           className="underline text-sm"
           onClick={() =>
@@ -243,7 +246,7 @@ function ReadingWorkspace({
           Thư viện Reading
         </button>
         <span className="text-sm text-ink-medium">
-          Lần {attempt.tryNumber}{" "}
+          Câu {index + 1}/{version.questions.length} · Lần {attempt.tryNumber}{" "}
           {attempt.tryNumber === 1 ? "· Kết quả lần đầu" : "· Làm lại"} · Phiên
           bản {version.revision}
         </span>
@@ -251,7 +254,7 @@ function ReadingWorkspace({
       {error && (
         <p
           role="alert"
-          className="rounded bg-rose-50 p-3 text-sm text-rose-800"
+          className="prep-learning-error rounded bg-rose-50 p-3 text-sm text-rose-800"
         >
           {error}
         </p>
@@ -265,12 +268,12 @@ function ReadingWorkspace({
         <h1 className="text-2xl font-semibold">{version.title}</h1>
         <p className="mt-2 text-sm text-ink-medium">
           {version.topic} · {kinds[version.kind]} · {levels[version.difficulty]}{" "}
-          (ước lượng biên tập) ·{" "}
+          (ước lượng) ·{" "}
           {version.origin === "AI"
             ? "Bài AI cá nhân · chưa duyệt, chỉ luyện tập"
             : version.origin === "AI_DRAFT"
               ? "AI hỗ trợ · đã biên tập"
-              : "Bài thư viện hệ thống"}
+              : version.origin === "CRAWL" ? "Đề TOEIC đã nhập · Giữ nguyên nội dung nguồn" : "Bài thư viện hệ thống"}
         </p>
       </div>
       {submitted && (
@@ -288,15 +291,15 @@ function ReadingWorkspace({
           </p>
           <button
             disabled={busy}
-            className="mt-3 underline text-sm"
+            className="secondary-button mt-3"
             onClick={onRestart}
           >
             Làm lại thành lần mới
           </button>
         </div>
       )}
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(340px,1fr)]">
-        <section className="min-w-0 rounded border border-paper-kraft bg-paper-white p-5 sm:p-7 lg:sticky lg:top-28">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,1fr)]">
+        <section className="prep-reading-passage min-w-0 bg-paper-white p-5 sm:p-7">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-semibold">Bài đọc</h2>
             <label className="text-sm">
@@ -315,14 +318,14 @@ function ReadingWorkspace({
               </select>
             </label>
           </div>
-          <div
+          <ReadingSourceDocument key={version.id} stimulus={version.stimulus} fontSize={size}><div
             ref={passage}
             onMouseUp={choose}
             onTouchEnd={choose}
             onKeyUp={choose}
             tabIndex={0}
             aria-label="Văn bản bài Reading"
-            className="whitespace-pre-wrap break-words leading-[1.85] lg:max-h-[65vh] lg:overflow-y-auto"
+            className="whitespace-pre-wrap break-words leading-[1.85]"
             style={{ fontSize: size }}
           >
             {highlighted}
@@ -330,15 +333,16 @@ function ReadingWorkspace({
           <button className="mt-4 text-xs underline" onClick={choose}>
             Dùng phần văn bản đang bôi chọn
           </button>
+          </ReadingSourceDocument>
         </section>
         <div className="min-w-0 space-y-4">
-          <section className="rounded border border-paper-kraft bg-paper-white p-5 space-y-4">
-            <div className="flex justify-between gap-3">
+          <section className="prep-question-surface space-y-4 bg-paper-white p-4 sm:p-6">
+            <div className="flex flex-wrap justify-between gap-3">
               <h2 className="font-semibold">
                 Câu {index + 1} / {version.questions.length} ·{" "}
                 {types[question.type]}
               </h2>
-              <span className="text-xs text-ink-light">{saving}</span>
+              <span className="text-xs text-ink-medium">{saving}</span>
             </div>
             <p className="text-base leading-relaxed">{question.prompt}</p>
             <fieldset className="space-y-2" disabled={submitted || busy}>
@@ -442,7 +446,7 @@ function ReadingWorkspace({
               </button>
               <button
                 disabled={
-                  index + 1 >= version.questions.length || busy || !answers[0]
+                  index + 1 >= version.questions.length || busy || (version.questions[0]?.type === "MAIN" && !answers[0])
                 }
                 className="text-sm disabled:opacity-40"
                 onClick={() => {
@@ -454,7 +458,7 @@ function ReadingWorkspace({
               </button>
             </div>
             {!submitted && (
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <button
                   disabled={busy}
                   className="text-sm underline"
@@ -736,12 +740,13 @@ export function ReadingPage() {
             : !!studied(a.version?.id) &&
               !studied(a.version?.id)?.submittedAt)),
   );
+  if (params.get("practice") === "clauses") return <ReadingClausePractice onLibrary={() => setParams({})} />;
   return (
-    <div className="space-y-6">
+    <div className={`page-stack prep-learning-page ${articleId || attemptId ? "prep-learning-study" : "prep-learning-library"}`}>
       {(error || catalog.error || content.error) && (
         <p
           role="alert"
-          className="rounded bg-rose-50 p-3 text-sm text-rose-800"
+          className="prep-learning-error rounded bg-rose-50 p-3 text-sm text-rose-800"
         >
           {error || catalog.error || content.error}{" "}
           <button
@@ -755,7 +760,12 @@ export function ReadingPage() {
           </button>
         </p>
       )}
-      {attempt ? (
+      {(articleId || attemptId) && !attempt && !article ? (
+        <section className="learning-surface space-y-4" aria-busy={content.loading}>
+          <button className="secondary-button" onClick={() => setParams({})}>Về thư viện Reading</button>
+          <p role={content.loading ? "status" : undefined}>{content.loading ? "Đang mở bài đọc…" : "Chưa mở được bài đọc. Bấm Tải lại để thử lại hoặc chọn bài khác trong thư viện."}</p>
+        </section>
+      ) : attempt ? (
         <ReadingWorkspace
           key={attempt.id}
           initial={attempt}
@@ -764,7 +774,7 @@ export function ReadingPage() {
           onRestart={() => void start(attempt.version.articleId)}
         />
       ) : article ? (
-        <section className="rounded border border-paper-kraft bg-paper-white p-6 space-y-4">
+        <section className="page-section space-y-4">
           <button className="text-sm underline" onClick={() => setParams({})}>
             Thư viện Reading
           </button>
@@ -773,10 +783,10 @@ export function ReadingPage() {
           </h1>
           <p className="text-sm text-ink-medium">
             {article.ownerId === null
-              ? "Bài thư viện hệ thống · Nội dung đã biên tập"
+              ? article.version?.origin === "CRAWL" ? "Đề TOEIC đã nhập · Giữ nguyên nội dung nguồn" : "Bài thư viện hệ thống"
               : "Văn bản cá nhân · Riêng tư · Giữ nguyên văn bản bạn đã nhập"}
           </p>
-          <p className="whitespace-pre-wrap text-lg leading-loose">
+          <p className="max-w-prose whitespace-pre-wrap break-words text-lg leading-loose">
             {article.text}
           </p>
           {["CREATING", "PROCESSING"].includes(article.status) && (
@@ -796,7 +806,7 @@ export function ReadingPage() {
               className="primary-button"
               onClick={() => void start(article.id)}
             >
-              Đọc và bắt đầu câu ý chính
+              Đọc và bắt đầu luyện tập
             </button>
           ) : (
             article.status === "FAILED" && (
@@ -821,63 +831,13 @@ export function ReadingPage() {
       ) : (
         <>
           <PageHeader
-            title="Reading · Đọc để hiểu"
-            description="Đọc ý chính, tìm thông tin và giải thích lựa chọn bằng bằng chứng trong bài."
+            eyebrow="READING LIBRARY / ĐỌC & HIỂU"
+            title="Luyện đọc"
+            actions={<button className="secondary-button" onClick={() => setParams({practice:"clauses"})}>Luyện tìm mệnh đề chính</button>}
+            description="Chọn bài đọc, trả lời câu hỏi và đối chiếu bằng chứng để hiểu sâu hơn."
           />
-          <details className="section-disclosure">
-            <summary>Tạo bài từ văn bản của bạn</summary>
-            <form
-              className="space-y-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void act(async () => {
-                  const next = await api<{ id: number }>("/reading/personal", {
-                    method: "POST",
-                    data: { title, text },
-                  });
-                  setParams({ article: String(next.id) });
-                  catalog.reload();
-                });
-              }}
-            >
-              <p className="text-sm">
-                Dán văn bản tiếng Anh từ 40 từ, tối đa{" "}
-                {catalog.data?.limits.maxText || 10000} ký tự. AI tạo tối đa{" "}
-                {catalog.data?.limits.maxQuestions || 5} câu dựa trên bài, không
-                đổi văn bản gốc. Bài cá nhân riêng tư, chưa duyệt và chỉ dùng
-                luyện tập.
-              </p>
-              <input
-                aria-label="Tên bài Reading cá nhân"
-                maxLength={200}
-                className="form-input !border"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Tên bài (tuỳ chọn)"
-              />
-              <textarea
-                aria-label="Văn bản Reading cá nhân"
-                rows={8}
-                maxLength={catalog.data?.limits.maxText || 10000}
-                required
-                className="form-input !border"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-              />
-              <button
-                disabled={busy || !text.trim()}
-                className="primary-button"
-              >
-                {busy ? "Đang lưu…" : "Tạo bài luyện riêng"}
-              </button>
-              <p className="text-xs text-ink-medium">
-                Không nhập thông tin cá nhân không cần thiết. Email/số điện
-                thoại được che trong ngữ cảnh AI. Bài thư viện vẫn học được khi
-                AI không hoạt động.
-              </p>
-            </form>
-          </details>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="prep-library-layout reading-library-layout grid items-start gap-6">
+          <section aria-label="Thư viện bài đọc" className="min-w-0 space-y-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wider text-accent-navy">Thư viện Reading</p><h2 className="section-title mt-1">Bài luyện dành cho bạn</h2></div><span className="rounded-full bg-paper-cream px-3 py-1 text-sm text-ink-medium">{filtered.length} bài phù hợp</span></div><div className="prep-library-filters grid gap-3 sm:grid-cols-2 2xl:grid-cols-5">
             <select
               aria-label="Lọc chủ đề Reading"
               className="form-input !border"
@@ -943,26 +903,22 @@ export function ReadingPage() {
               <option value="PRIVATE">Cá nhân</option>
             </select>
           </div>
-          <p className="text-xs text-ink-medium">
-            Độ khó là ước lượng biên tập, chưa hiệu chuẩn. {filtered.length} bài
-            phù hợp.
-          </p>
           {catalog.loading && <p role="status">Đang tải thư viện…</p>}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="prep-library-catalog grid gap-5 md:grid-cols-2">
             {filtered.map((a) => {
               const last = studied(a.version?.id);
               return (
                 <button
                   disabled={busy}
                   key={a.id}
-                  className="rounded border border-paper-kraft bg-paper-white p-5 text-left transition hover:bg-paper-cream"
+                  className="prep-learning-card group grid w-full gap-2 text-left"
                   onClick={() =>
                     last && !last.submittedAt
                       ? setParams({ attempt: String(last.id) })
                       : setParams({ article: String(a.id) })
                   }
                 >
-                  <span className="block text-xs text-ink-light">
+                  <span className="block text-xs font-medium text-accent-navy">
                     {a.ownerId === null ? "Thư viện" : "Cá nhân · AI"} ·{" "}
                     {a.version
                       ? kinds[a.version.kind]
@@ -970,14 +926,14 @@ export function ReadingPage() {
                         ? "Chưa tạo được"
                         : "Đang tạo"}
                   </span>
-                  <span className="mt-2 block text-lg font-semibold">
+                  <span className="block break-words text-lg font-semibold text-ink-dark">
                     {a.version?.title || a.title}
                   </span>
-                  <span className="mt-2 block text-sm text-ink-medium">
+                  <span className="block text-sm text-ink-medium">
                     {a.version?.topic}{" "}
                     {a.version && `· ${levels[a.version.difficulty]}`}
                   </span>
-                  <span className="mt-4 block text-sm">
+                  <span className="mt-3 block border-t border-paper-kraft/60 pt-3 text-sm font-semibold text-accent-navy">
                     {last
                       ? last.submittedAt
                         ? `${last.correct}/${last.total} câu đúng · Lần ${last.tryNumber}`
@@ -991,8 +947,62 @@ export function ReadingPage() {
             })}
           </div>
           {!catalog.loading && !filtered.length && (
-            <p>Chưa có bài phù hợp với bộ lọc này.</p>
+            <div className="status-message space-y-3"><p>Chưa có bài phù hợp với bộ lọc này.</p><button className="secondary-button" onClick={() => { setTopic(""); setDifficulty(""); setKind(""); setProgress(""); setSource(""); }}>Xóa bộ lọc</button></div>
           )}
+          </section>
+          <aside aria-label="Bài đọc cá nhân và lịch sử" className="prep-learning-sidebar min-w-0 space-y-4"><div><h2 className="font-semibold">Góc học của bạn</h2><p className="mt-1 text-sm text-ink-medium">Xem lại tiến độ hoặc luyện với văn bản riêng.</p></div><details className="section-disclosure">
+            <summary>Tạo bài từ văn bản của bạn</summary>
+            <form
+              className="space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void act(async () => {
+                  const next = await api<{ id: number }>("/reading/personal", {
+                    method: "POST",
+                    data: { title, text },
+                  });
+                  setParams({ article: String(next.id) });
+                  catalog.reload();
+                });
+              }}
+            >
+              <p className="text-sm">
+                Dán văn bản tiếng Anh từ 40 từ, tối đa{" "}
+                {catalog.data?.limits.maxText || 10000} ký tự. AI tạo tối đa{" "}
+                {catalog.data?.limits.maxQuestions || 5} câu dựa trên bài, không
+                đổi văn bản gốc. Bài cá nhân riêng tư, chưa duyệt và chỉ dùng
+                luyện tập.
+              </p>
+              <input
+                aria-label="Tên bài Reading cá nhân"
+                maxLength={200}
+                className="form-input !border"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Tên bài (tuỳ chọn)"
+              />
+              <textarea
+                aria-label="Văn bản Reading cá nhân"
+                rows={8}
+                maxLength={catalog.data?.limits.maxText || 10000}
+                required
+                className="form-input !border"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
+              <button
+                disabled={busy || !text.trim()}
+                className="primary-button"
+              >
+                {busy ? "Đang lưu…" : "Tạo bài luyện riêng"}
+              </button>
+              <p className="text-xs text-ink-medium">
+                Không nhập thông tin cá nhân không cần thiết. Email/số điện
+                thoại được che trong ngữ cảnh AI. Bài thư viện vẫn học được khi
+                AI không hoạt động.
+              </p>
+            </form>
+          </details>
           <details className="section-disclosure">
             <summary>Lịch sử lần đầu và làm lại</summary>
             <div className="space-y-2">
@@ -1010,11 +1020,8 @@ export function ReadingPage() {
                 </button>
               ))}
             </div>
-          </details>
+          </details></aside></div>
         </>
-      )}
-      {content.loading && (articleId || attemptId) && (
-        <p role="status">Đang tải bài đọc…</p>
       )}
       {admin && <ReadingAdmin onChanged={catalog.reload} />}
     </div>

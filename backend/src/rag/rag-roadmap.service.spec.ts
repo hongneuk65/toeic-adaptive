@@ -6,20 +6,23 @@ describe('RagRoadmapService', () => {
   let service: RagRoadmapService;
 
   const mockPrisma = {
+    user: { findUnique: () => Promise.resolve({ ability: 0 }) },
+    studentSkillHistory: { findMany: () => Promise.resolve([]) },
+    das3hWeights: { findMany: () => Promise.resolve([]) },
     skill: {
       findMany: () =>
         Promise.resolve([
-          { id: 1, code: 'P5_PARTS_OF_SPEECH', name: 'Từ loại', part: 5, category: 'Grammar' },
-          { id: 2, code: 'P5_VERB_TENSES_VOICE', name: 'Thì động từ', part: 5, category: 'Grammar' },
-          { id: 3, code: 'P1_PHOTO_OBJECT', name: 'Mô tả đồ vật', part: 1, category: 'Listening' },
+          { id: 1, code: 'P5_PARTS_OF_SPEECH', name: 'Từ loại', part: 5, category: 'Grammar', easiness: Math.log(0.3 / 0.7) },
+          { id: 2, code: 'P5_VERB_TENSES_VOICE', name: 'Thì động từ', part: 5, category: 'Grammar', easiness: Math.log(0.55 / 0.45) },
+          { id: 3, code: 'P1_PHOTO_OBJECT', name: 'Mô tả đồ vật', part: 1, category: 'Listening', easiness: Math.log(0.85 / 0.15) },
         ]),
     },
     userSkillMastery: {
       findMany: () =>
         Promise.resolve([
-          { userId: 1, skillId: 1, masteryScore: 0.3, practiceCount: 4 },
-          { userId: 1, skillId: 2, masteryScore: 0.55, practiceCount: 8 },
-          { userId: 1, skillId: 3, masteryScore: 0.85, practiceCount: 15 },
+          { userId: 1, skillId: 1, masteryScore: 0.99, practiceCount: 4 },
+          { userId: 1, skillId: 2, masteryScore: 0.99, practiceCount: 8 },
+          { userId: 1, skillId: 3, masteryScore: 0.99, practiceCount: 15 },
         ]),
     },
     theoryLesson: {

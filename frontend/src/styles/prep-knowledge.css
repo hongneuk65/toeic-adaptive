@@ -1,0 +1,43 @@
+.prep-knowledge-page { color: #183450; }
+.prep-theory-page > .page-header, .prep-folder-page > .page-header, .prep-flashcard-library .page-header { animation: prep-knowledge-enter 240ms ease-out both; }
+.prep-knowledge-page .page-header h1 { letter-spacing: -.035em; }
+.prep-knowledge-page .page-header-compact h1 { color: #14395e; }
+.prep-knowledge-tabs { padding: 5px; border-radius: 999px; background: #edf3fc; }
+.prep-knowledge-tabs button { border-radius: 999px; transition: background-color 140ms ease, color 140ms ease, box-shadow 140ms ease; }
+.prep-knowledge-tabs button[aria-pressed="true"] { background: #2864dc; color: white; box-shadow: 0 2px 6px #2864dc22; }
+.prep-theory-outline { border: 1px solid #e0e8f3; border-radius: 20px; background: white; padding: 20px 14px; }
+.prep-theory-outline nav button { border-radius: 12px; border-left: 0; }
+.prep-theory-outline nav button[aria-current="true"] { background: #eaf2ff; color: #2455a0; }
+.prep-theory-reading { border: 1px solid #e0e8f3; border-radius: 24px; line-height: 1.75; }
+.prep-theory-reading article { margin-inline: auto; }
+.prep-quiz-page { gap: 24px; }
+.prep-quiz-recap { border: 1px solid #c8dcfc; border-radius: 20px; padding: 24px; background: #edf5ff; }
+.prep-quiz-recap h2 { color: #2052a0; font-size: 24px; }
+.prep-quiz-sheet { border: 1px solid #e0e8f3; border-radius: 20px; }
+.prep-quiz-sheet label { border-radius: 14px; }
+.prep-folder-catalog { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.prep-folder-tile { min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; padding: 24px; border: 1px solid #e0e8f3; border-radius: 20px; background: white; transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease; }
+.prep-folder-tile h2 { margin-block: 10px 6px; font-size: 21px; line-height: 1.35; }
+.prep-folder-eyebrow { color: #2761ae; font-size: 12px; font-weight: 600; }
+.prep-folder-tile > div:last-child { justify-content: space-between; }
+.prep-folder-tile:focus-within { border-color: #99baf3; box-shadow: 0 5px 16px #235bc00c; }
+.prep-flashcard-focus .page-header h1 { font-size: clamp(24px, 3vw, 32px); }
+.prep-flashcard-page .flip-card-front,
+.prep-flashcard-page .flip-card-back { border-color: #d6e4f5; border-radius: 24px; }
+.prep-flashcard-page .flip-card-front { background: linear-gradient(135deg, #ffffff, #f4f8ff); }
+.prep-flashcard-page .flip-card-back { background: #f0f6ff; }
+@keyframes prep-knowledge-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (hover: hover) and (pointer: fine) {
+  .prep-folder-tile:hover { border-color: #adc8f3; transform: translateY(-3px); box-shadow: 0 8px 20px #235bc010; }
+}
+@media (max-width: 1100px) { .prep-folder-catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 639px) {
+  .prep-folder-catalog { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .prep-folder-tile { padding: 20px; gap: 20px; }
+  .prep-quiz-recap { padding: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prep-knowledge-page > .page-header, .prep-flashcard-library .page-header { animation: none; }
+  .prep-folder-tile, .prep-knowledge-tabs button { transition: none; }
+  .prep-folder-tile:hover { transform: none; }
+}

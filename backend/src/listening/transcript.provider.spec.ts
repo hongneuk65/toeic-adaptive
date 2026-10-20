@@ -37,6 +37,24 @@ describe('YouTube transcript adapter (real library, controlled HTTP fixtures)', 
     expect(transcriptError(new Error('HTTP 403'))).toContain('chặn');
     expect(transcriptError(new DOMException('timeout', 'TimeoutError'))).toContain('quá chậm');
   });
+  it('reuses a blocked caption attempt briefly instead of repeating network calls per segment', async () => {
+    const http = jest.fn(async () => new Response('', { status: 403 }));
+    global.fetch = http as typeof fetch;
+    const provider = new YoutubeTranscriptProvider();
+    await expect(provider.fetch('dQw4w9WgXcQ')).rejects.toThrow('403');
+    const calls = http.mock.calls.length;
+    await expect(provider.fetch('dQw4w9WgXcQ')).rejects.toThrow('403');
+    expect(http).toHaveBeenCalledTimes(calls);
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 61000);
+    try { await expect(provider.fetch('dQw4w9WgXcQ')).rejects.toThrow('403'); expect(http.mock.calls.length).toBeGreaterThan(calls); }
+    finally { clock.mockRestore(); }
+  });
+  it('coalesces simultaneous caption requests and reuses their successful result', async () => {
+    const provider = new YoutubeTranscriptProvider();
+    const fresh = jest.spyOn(provider as unknown as { fetchFresh(id: string): Promise<{ cues: { start: number; end: number; text: string }[]; provider: string }> }, 'fetchFresh').mockResolvedValue({ cues: [{ start: 0, end: 2, text: 'Listen carefully.' }], provider: 'youtube-manual' });
+    const [first, second] = await Promise.all([provider.fetch('dQw4w9WgXcQ'), provider.fetch('dQw4w9WgXcQ')]);
+    expect(first).toEqual(second); await provider.fetch('dQw4w9WgXcQ'); expect(fresh).toHaveBeenCalledTimes(1);
+  });
   it('reports unavailable English and rejects transcript URLs outside YouTube', async () => {
     global.fetch = jest.fn(async (input: string | URL | Request) => {
       const url = String(input);

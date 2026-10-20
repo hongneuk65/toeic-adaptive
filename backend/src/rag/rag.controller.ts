@@ -1,3 +1,6 @@
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '@prisma/client';
 import {
   Controller,
   Post,
@@ -14,9 +17,11 @@ import type { Response } from 'express';
 import { RagService } from './rag.service';
 import { ExplainErrorDto, ChatTutorDto } from './dto/rag.dto';
 import { getUserId } from '../common/user-id';
+import { RequestBudgetGuard } from '../common/request-budget.guard';
 
 @Controller('rag')
-@UseGuards(AuthGuard('jwt'))
+@Roles(Role.USER)
+@UseGuards(AuthGuard('jwt'), RolesGuard, RequestBudgetGuard)
 export class RagController {
   constructor(private readonly ragService: RagService) {}
 

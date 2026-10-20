@@ -39,6 +39,7 @@ const config: Config = {
   ],
   coverageDirectory: './coverage',
   testEnvironment: 'node',
+  setupFiles: ['<rootDir>/test/unit-environment.cjs'],
 };
 
 export default config;

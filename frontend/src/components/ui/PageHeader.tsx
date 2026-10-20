@@ -5,23 +5,24 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   actions?: ReactNode;
+  variant?: 'feature' | 'compact';
 }
 
-export function PageHeader({ eyebrow, title, description, actions }: PageHeaderProps) {
+export function PageHeader({ eyebrow, title, description, actions, variant = 'feature' }: PageHeaderProps) {
   return (
-    <header className="notebook-heading flex flex-col gap-4 py-2 lg:flex-row lg:items-center lg:justify-between">
+    <header className={`page-header page-header-${variant}`}>
       <div className="min-w-0">
         {eyebrow && (
-          <p className="mb-1 text-xs font-bold uppercase tracking-wide text-accent-coral">
+          <p className="page-header-eyebrow mb-2 text-xs font-semibold text-ink-medium">
             {eyebrow}
           </p>
         )}
         <h1 className="font-display text-2xl font-semibold tracking-tight leading-tight text-ink-dark sm:text-3xl">
           {title}
         </h1>
-        {description && <p className="mt-1 text-sm text-ink-medium">{description}</p>}
+        {description && <p className="page-header-description mt-2 max-w-2xl text-sm leading-relaxed text-ink-medium">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && <div className="page-header-actions">{actions}</div>}
     </header>
   );
 }

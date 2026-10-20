@@ -19,8 +19,13 @@ const question = { id: 1, part: 5, content: 'Example', correctAnswer: 'A', optio
 
 describe('RAG preparation and streaming', () => {
   const db = {
+    user: { findUnique: jest.fn<() => Promise<{ ability: number }>>() },
+    skill: { findMany: jest.fn<() => Promise<{ id: number; easiness: number }[]>>() },
+    studentSkillHistory: { findMany: jest.fn<() => Promise<[]>>() },
+    das3hWeights: { findMany: jest.fn<() => Promise<[]>>() },
+    examAttempt: { findFirst: jest.fn<() => Promise<{ id: number } | null>>() },
     question: { findUnique: jest.fn<() => Promise<typeof question | null>>() },
-    userSkillMastery: { findUnique: jest.fn<() => Promise<{ masteryScore: number } | null>>() },
+    userSkillMastery: { findUnique: jest.fn<() => Promise<{ masteryScore: number; practiceCount: number } | null>>() },
     aiChatMessage: {
       findMany: jest.fn<() => Promise<{ role: string; content: string }[]>>(),
       create: jest.fn<(params: any) => Promise<any>>(),
@@ -32,8 +37,13 @@ describe('RAG preparation and streaming', () => {
   let chat: RagChatService;
   beforeEach(() => {
     jest.resetAllMocks();
+    db.examAttempt.findFirst.mockResolvedValue(null);
     db.question.findUnique.mockResolvedValue(question);
-    db.userSkillMastery.findUnique.mockResolvedValue({ masteryScore: 0.3 });
+    db.userSkillMastery.findUnique.mockResolvedValue({ masteryScore: 0.99, practiceCount: 5 });
+    db.user.findUnique.mockResolvedValue({ ability: Math.log(0.3 / 0.7) });
+    db.skill.findMany.mockResolvedValue([{ id: 7, easiness: 0 }]);
+    db.studentSkillHistory.findMany.mockResolvedValue([]);
+    db.das3hWeights.findMany.mockResolvedValue([]);
     db.aiChatMessage.findMany.mockResolvedValue([{ role: 'user', content: 'old message' }]);
     db.aiChatMessage.create.mockImplementation(async ({ data }) => ({ id: 3, createdAt: new Date(), ...data }));
     retriever.retrieveContext.mockResolvedValue([]);
@@ -48,7 +58,7 @@ describe('RAG preparation and streaming', () => {
     const result = await explainer.explainError({ userId: 2, questionId: 1, selectedAnswer: 'B', onChunk: (chunk) => chunks.push(chunk) });
     expect(chunks).toEqual(text);
     expect(result.explanation).toBe(text.join(''));
-    expect(result.learnerMastery?.masteryScore).toBe(0.3);
+    expect(result.learnerMastery?.masteryScore).toBeCloseTo(0.3);
     expect(result.sections).toEqual({ misconceptionAnalysis: 'Misconception', correctAnswerExplanation: 'Correct', keyTakeawayRule: 'Rule', recommendedAction: 'Practice' });
     expect(result.isCorrect).toBe(false);
   });
@@ -56,18 +66,26 @@ describe('RAG preparation and streaming', () => {
   it('keeps the JSON explanation API compatible and personalized per request', async () => {
     const params = { userId: 2, questionId: 1, selectedAnswer: 'A' };
     const a = await explainer.explainError(params);
-    db.userSkillMastery.findUnique.mockResolvedValue({ masteryScore: 0.8 });
+    db.user.findUnique.mockResolvedValue({ ability: Math.log(0.8 / 0.2) });
     const b = await explainer.explainError(params);
-    expect(a.learnerMastery?.masteryScore).toBe(0.3);
-    expect(b.learnerMastery?.masteryScore).toBe(0.8);
+    expect(a.learnerMastery?.masteryScore).toBeCloseTo(0.3);
+    expect(b.learnerMastery?.masteryScore).toBeCloseTo(0.8);
     expect(b.isCorrect).toBe(true);
+  });
+
+  it('labels cold-start skill evidence separately from a probability estimate', async () => {
+    db.userSkillMastery.findUnique.mockResolvedValue(null);
+    const result = await explainer.explainError({ userId: 2, questionId: 1, selectedAnswer: 'CHƯA_CHỌN' });
+    expect(result.learnerMastery?.evidenceStatus).toBe('unassessed');
+    expect(result.learnerMastery?.levelDescription).toBe('Chưa đủ dữ liệu đánh giá kỹ năng');
+    expect(result.isCorrect).toBe(false);
   });
 
   it('starts retrieval without waiting for the independent mastery query', async () => {
     let resolve!: (value: null) => void;
     db.userSkillMastery.findUnique.mockImplementation(() => new Promise((done) => { resolve = done; }));
     const pending = explainer.explainError({ userId: 2, questionId: 1, selectedAnswer: 'B' });
-    await Promise.resolve();
+    await new Promise(resolve => setImmediate(resolve));
     expect(retriever.retrieveContext).toHaveBeenCalledTimes(1);
     resolve(null);
     await pending;
@@ -78,6 +96,7 @@ describe('RAG preparation and streaming', () => {
     db.question.findUnique.mockImplementation(() => new Promise((done) => { resolve = done; }));
     const iterator = chat.streamUserMessage({ userId: 2, message: 'new message', questionId: 1 });
     const first = iterator.next();
+    await new Promise(resolve => setImmediate(resolve));
     expect(db.aiChatMessage.findMany).toHaveBeenCalledTimes(1);
     expect(db.aiChatMessage.create).not.toHaveBeenCalled();
     resolve(question);
@@ -105,6 +124,16 @@ describe('RAG preparation and streaming', () => {
       options.signal.throwIfAborted();
     });
     await expect(explainer.explainError({ userId: 2, questionId: 1, selectedAnswer: 'B', signal: controller.signal, onChunk: () => {} })).rejects.toThrow();
+  });
+
+  it('rejects explanation and streaming chat for questions in an open exam before retrieval or AI', async () => {
+    db.examAttempt.findFirst.mockResolvedValue({ id: 99 });
+    await expect(explainer.explainError({ userId: 2, questionId: 1, selectedAnswer: 'B' })).rejects.toThrow('Nộp bài thi');
+    const iterator = chat.streamUserMessage({ userId: 2, questionId: 1, message: 'Show answer' });
+    await expect(iterator.next()).rejects.toThrow('Nộp bài thi');
+    expect(retriever.retrieveContext).not.toHaveBeenCalled();
+    expect(llm.streamText).not.toHaveBeenCalled();
+    expect(db.aiChatMessage.create).not.toHaveBeenCalled();
   });
 });
 

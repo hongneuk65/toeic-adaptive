@@ -1,8 +1,9 @@
 import { AuthShell } from '../components/ui/AuthShell';
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { api, getErrorMessage } from '../lib/api';
+import { learningReturnTo } from '../auth/return-to';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -12,6 +13,7 @@ export const LoginPage: React.FC = () => {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,8 +26,8 @@ export const LoginPage: React.FC = () => {
         data: { email, password },
       });
 
-      login(res.accessToken);
-      navigate('/dashboard');
+      const user = await login(res.accessToken);
+      navigate(user.role === 'ADMIN' ? '/admin' : learningReturnTo(location.state?.returnTo), { replace: true });
     } catch (err) {
       setErrorMessage(getErrorMessage(err, 'Đăng nhập thất bại. Vui lòng kiểm tra lại!'));
     } finally {
@@ -34,7 +36,8 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <AuthShell title="Chào mừng trở lại" description="Đăng nhập để tiếp tục lộ trình luyện TOEIC của bạn." footer={<>Chưa có tài khoản? <Link className="font-semibold text-accent-coral hover:underline" to="/register">Đăng ký</Link></>}>
+    <AuthShell title="Đăng nhập" description="Đăng nhập để tiếp tục lộ trình luyện TOEIC của bạn." footer={<>Chưa có tài khoản? <Link className="font-semibold text-accent-coral hover:underline" to="/register">Đăng ký</Link></>}>
+      {location.state?.registered && <p role="status" className="mb-4 text-sm text-accent-navy">Đã tạo tài khoản. Đăng nhập để bắt đầu học.</p>}
       {errorMessage && <p role="alert" className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{errorMessage}</p>}
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>

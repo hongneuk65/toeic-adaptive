@@ -1,8 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiStream } from '../../lib/api';
 import { AiMarkdown } from './AiMarkdown';
 import { readJsonSse } from '../../lib/sse';
+import { useDialogFocus } from '../../hooks/useDialogFocus';
 import { useAsyncResource } from '../../hooks/useAsyncResource';
 import type { PersonalizedExplanationResult } from '../../types/rag';
 
@@ -22,6 +23,8 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
   onAskTutor,
 }) => {
   const navigate = useNavigate();
+  const dialog = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialog, isOpen, onClose);
   const requestKey = useMemo(() => ({ isOpen, questionId, selectedAnswer }), [isOpen, questionId, selectedAnswer]);
   const [progress, setProgress] = useState<{ key: typeof requestKey; text: string }>();
   const load = useCallback(async (signal: AbortSignal) => {
@@ -55,17 +58,17 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
 
   return (
     <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl max-h-[90vh] bg-paper-white border border-paper-kraft shadow-paper-light rounded-xl flex flex-col overflow-hidden">
+      <div ref={dialog} role="dialog" aria-modal="true" aria-label="Giải thích câu hỏi" tabIndex={-1} className="relative w-full max-w-2xl max-h-[90vh] bg-paper-white border border-paper-kraft shadow-paper-light rounded-xl flex flex-col overflow-hidden">
         <div className="staple top-2 left-6" />
         <div className="staple top-2 right-6" />
 
         <div className="p-4 border-b border-paper-kraft bg-paper-cream flex items-center justify-between">
           <div>
             <h2 className="font-hand text-xl font-bold text-ink-dark">
-              Giải Thích Chi Tiết (RAG + AI)
+              Giải thích câu hỏi
             </h2>
             <p className="font-mono text-xs text-ink-light">
-              Chẩn đoán cá nhân hóa theo DAS3H & Kho Tri thức
+              Quy tắc và dẫn chứng liên quan
             </p>
           </div>
           <button
@@ -82,7 +85,7 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
             <div className="py-16 text-center space-y-3">
               <div className="inline-block w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
               <p className="font-hand text-lg text-ink-medium">
-                Đang truy xuất kho tri thức TOEIC & phân tích điểm yếu...
+                Đang chuẩn bị lời giải…
               </p>
             </div>
           )}
@@ -113,15 +116,7 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
                     </span>
                   )}
                 </div>
-                {data.learnerMastery && (
-                  <div className="font-mono text-amber-900">
-                    Độ thông thạo:{' '}
-                    <strong className="text-amber-950">
-                      {Math.round(data.learnerMastery.masteryScore * 100)}%
-                    </strong>{' '}
-                    ({data.learnerMastery.levelDescription})
-                  </div>
-                )}
+
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs font-mono">

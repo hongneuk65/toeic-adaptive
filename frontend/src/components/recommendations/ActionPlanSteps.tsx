@@ -15,7 +15,6 @@ export const ActionPlanSteps: React.FC = () => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Bước 1 */}
         <div className="relative flex flex-col justify-between rounded-lg border border-paper-kraft/70 bg-paper-cream p-5 shadow-paper-subtle">
-          <div className="tape w-16 top-[-8px] left-4" />
           <div>
             <span className="font-mono text-xs font-bold text-accent-coral uppercase block">BƯỚC 01</span>
             <h3 className="font-display text-xl font-bold text-ink-dark mt-1">Ôn lý thuyết phần yếu</h3>
@@ -33,7 +32,6 @@ export const ActionPlanSteps: React.FC = () => {
 
         {/* Bước 2 */}
         <div className="relative flex flex-col justify-between rounded-lg border border-paper-kraft/70 bg-paper-cream p-5 shadow-paper-subtle">
-          <div className="tape tape-mint w-16 top-[-8px] left-4" />
           <div>
             <span className="font-mono text-xs font-bold text-accent-navy uppercase block">BƯỚC 02</span>
             <h3 className="font-display text-xl font-bold text-ink-dark mt-1">Ôn từ vựng</h3>
@@ -51,12 +49,11 @@ export const ActionPlanSteps: React.FC = () => {
 
         {/* Bước 3 */}
         <div className="relative flex flex-col justify-between rounded-lg border border-paper-kraft/70 bg-paper-cream p-5 shadow-paper-subtle">
-          <div className="tape tape-pink w-16 top-[-8px] left-4" />
           <div>
             <span className="font-mono text-xs font-bold text-accent-sage uppercase block">BƯỚC 03</span>
             <h3 className="font-display text-xl font-bold text-ink-dark mt-1">Làm mini test</h3>
             <p className="font-body text-xs text-ink-medium mt-2">
-              Làm bài có giới hạn thời gian để cập nhật ước tính điểm ETS.
+              Làm bài có giới hạn thời gian, xem kết quả và các câu cần ôn.
             </p>
           </div>
           <button

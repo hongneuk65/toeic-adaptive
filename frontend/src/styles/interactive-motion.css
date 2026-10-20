@@ -1,0 +1,16 @@
+/* Layered feedback complements existing hover lift without replacing transforms. */
+:is(.primary-button,.secondary-button,.app-start-action,.prep-home-hero-cta,.prep-home-white-button,.prep-home-blue-button,.prep-home-program-card > a) { position: relative; }
+.interaction-ripple-layer { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; }
+.interaction-ripple { position: absolute; border-radius: 50%; background: currentColor; opacity: 0; pointer-events: none; animation: interaction-ripple 480ms ease-out forwards; }
+@keyframes interaction-ripple { from { transform: scale(0); opacity: .2; } to { transform: scale(1); opacity: 0; } }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .pointer-motion-active { position: relative; rotate: var(--pointer-rotate, 0deg); }
+  .pointer-motion-light { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(circle at var(--pointer-x,50%) var(--pointer-y,50%), #fff3, transparent 65%); }
+  :is(.prep-home-program-card,.prep-learning-card,.prep-folder-tile,.prep-exam-mode,.interactive-card) { transition-property: transform, rotate, background-color, border-color, box-shadow; transition-duration: 180ms; transition-timing-function: ease-out; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pointer-motion-active { rotate: none; }
+  .pointer-motion-light,.interaction-ripple-layer { display: none; }
+}
+/* Decorative layers must not inherit catalog badge styles. */
+.prep-learning-card > .pointer-motion-light { border:0; margin:0; padding:0; }

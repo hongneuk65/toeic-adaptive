@@ -15,6 +15,7 @@ export interface PersonalizedExplanationResult {
     skillCode: string;
     skillName: string;
     masteryScore: number;
+    evidenceStatus?: 'practiced' | 'unassessed';
     levelDescription: string;
   } | null;
   explanation: string;

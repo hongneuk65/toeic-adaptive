@@ -19,13 +19,17 @@ import { AdaptiveAnswerDto, RecordMasteryDto } from './dto/adaptive-answer.dto';
 import { getUserId } from '../common/user-id';
 
 @Controller('das3h')
-@UseGuards(AuthGuard('jwt'))
+@Roles(Role.USER)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class Das3hController {
     constructor(
         private readonly das3hService: Das3hService,
         private readonly adaptiveScheduler: AdaptiveSchedulerService,
         private readonly masteryQueueService: MasteryQueueService,
     ) { }
+
+    @Get('status')
+    getModelStatus() { return this.das3hService.getModelStatus(); }
 
     /**
      * POST /das3h/predict
@@ -106,6 +110,7 @@ export class Das3hController {
             Number(body.questionId),
             body.selectedAnswer,
             body.skillId ? Number(body.skillId) : undefined,
+            body.attemptId,
         );
     }
 

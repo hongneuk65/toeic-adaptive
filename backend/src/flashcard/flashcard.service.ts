@@ -3,11 +3,18 @@ import {
   ForbiddenException,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { nextReview } from './review-schedule';
+import { createHash, randomUUID } from 'node:crypto';
+import { HLR_PRIOR, hlrSchedule, loadHlrModel, normalizeRecall, recallProbability } from './hlr';
+import { ReviewFlashcardDto } from './dto/review-flashcard.dto';
 
 @Injectable()
 export class FlashcardService {
+  private readonly hlrModel = loadHlrModel();
   constructor(private readonly prisma: PrismaService) { }
 
   // 1. Lấy danh sách toàn bộ Folder (Đúng chuẩn schema bảng User chỉ có id và email)
@@ -26,7 +33,7 @@ export class FlashcardService {
         orderBy: { id: 'desc' },
       });
 
-      return folders.map((f, idx) => {
+      return folders.filter(f => f.readingKey !== 'santa-vocabulary-library-v1' || f._count.flashcards > 0).map((f, idx) => {
         // Lấy username từ email (ví dụ: test3@gmail.com -> test3)
         const author = f.user?.email ? f.user.email.split('@')[0] : 'Hệ thống';
 
@@ -102,13 +109,46 @@ export class FlashcardService {
   }
   async reviews(userId: number, folderId: number) {
     await this.getFolderDetail(folderId, userId);
-    return this.prisma.flashcardReview.findMany({ where: { userId, card: { folderId } }, select: { cardId: true, known: true, reviewCount: true } });
+    return this.prisma.flashcardReview.findMany({ where: { userId, card: { folderId } }, select: { cardId: true, known: true, reviewCount: true, intervalDays: true, dueAt: true, schedulingSource: true } });
   }
-  async review(userId: number, cardId: number, known: boolean) {
+  async review(userId: number, cardId: number, known: boolean, input: Partial<ReviewFlashcardDto> = {}) {
+    const mode = input.recallMode ?? 'self_report';
+    if (mode === 'typed' && (input.response === undefined || !input.attemptId)) throw new BadRequestException('Lượt tự nhớ cần câu trả lời và mã lượt ôn.');
     const card = await this.prisma.flashcard.findUnique({ where: { id: cardId } });
     if (!card?.folderId) throw new NotFoundException('Không tìm thấy thẻ.');
     await this.getFolderDetail(card.folderId, userId);
-    return this.prisma.flashcardReview.upsert({ where: { userId_cardId: { userId, cardId } }, create: { userId, cardId, known, reviewCount: 1 }, update: { known, reviewCount: { increment: 1 } } });
+    const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+    const contentHash = digest([card.word, card.meaning]);
+    const requestHash = digest([cardId, mode, mode === 'typed' ? normalizeRecall(input.response ?? '') : known, input.elapsedMs ?? null]);
+    const attemptId = input.attemptId ?? randomUUID();
+    return this.prisma.$transaction(async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${userId}::bigint)`;
+      const event = await tx.flashcardRecallEvent.findUnique({ where: { attemptId }, include: { review: { select: { userId: true } } } });
+      if (event) {
+        if (event.review.userId !== userId || event.requestHash !== requestHash) throw new ConflictException('Mã lượt ôn đã được dùng cho câu trả lời khác.');
+        return event.result;
+      }
+      const previous = await tx.flashcardReview.findUnique({ where: { userId_cardId: { userId, cardId } } });
+      // Transport retries and repeated presses within one minute are the same review.
+      if (!input.attemptId && previous?.known === known && Date.now() - previous.updatedAt.getTime() < 60000) return previous;
+      const now = new Date();
+      const sameContent = previous?.contentHash === contentHash;
+      const wins = sameContent ? previous.recallWins : 0;
+      const losses = sameContent ? previous.recallLosses : 0;
+      // Self-reported exposure has unknown retrieval evidence: restart the training lag.
+      const lagDays = sameContent && previous.lastPracticedAt && previous.schedulingSource !== 'fixed-interval' ? Math.max(0, (now.getTime() - previous.lastPracticedAt.getTime()) / 86400000) : 0;
+      const correct = mode === 'typed' ? normalizeRecall(input.response ?? '') === normalizeRecall(card.word) : known;
+      const typed = mode === 'typed';
+      const recallWins = wins + (typed && correct ? 1 : 0);
+      const recallLosses = losses + (typed && !correct ? 1 : 0);
+      const model = this.hlrModel ?? HLR_PRIOR;
+      const schedulingSource = typed ? this.hlrModel ? `hlr-trained:${model.version}` : 'hlr-prior-experimental' : 'fixed-interval';
+      const schedule = typed ? hlrSchedule(model, recallWins, recallLosses, correct, now) : nextReview(correct, previous?.intervalDays ?? 0, now);
+      const state = { known: correct, ...schedule, recallWins, recallLosses, contentHash, schedulingSource, lastPracticedAt: now };
+      const result = await tx.flashcardReview.upsert({ where: { userId_cardId: { userId, cardId } }, create: { userId, cardId, reviewCount: 1, ...state }, update: { reviewCount: { increment: 1 }, ...state } });
+      await tx.flashcardRecallEvent.create({ data: { reviewId: result.id, attemptId, requestHash, contentHash, recallMode: mode, correct, elapsedMs: input.elapsedMs, lagDays, priorWins: wins, priorLosses: losses, predictedRecall: typed && lagDays > 0 ? recallProbability(model, wins, losses, lagDays) : null, schedulingSource, result: JSON.parse(JSON.stringify(result)), occurredAt: now } });
+      return result;
+    });
   }
 
   // 5. Thêm từ vào Folder (Kiểm tra quyền sở hữu)

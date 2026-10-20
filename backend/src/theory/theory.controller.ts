@@ -1,3 +1,6 @@
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '@prisma/client';
 import { Body, Controller, Get, Param, ParseIntPipe, Post, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TheoryService } from './theory.service';
@@ -5,9 +8,13 @@ import { SubmitQuizDto } from './dto/submit-quiz.dto';
 import { getOptionalUserId } from '../common/user-id';
 
 @Controller('theory')
-@UseGuards(AuthGuard('jwt'))
+@Roles(Role.USER)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class TheoryController {
   constructor(private readonly theoryService: TheoryService) { }
+
+  @Get('catalog')
+  getCatalog() { return this.theoryService.getCatalog(); }
 
   @Get('part/:part')
   getLessonsByPart(@Param('part', ParseIntPipe) part: number) {

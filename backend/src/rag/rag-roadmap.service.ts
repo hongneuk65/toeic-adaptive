@@ -1,3 +1,4 @@
+import { Das3hService } from '../das3h/das3h.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -8,6 +9,7 @@ export interface RoadmapStep {
   part: number;
   category: string;
   masteryScore: number;
+  evidenceStatus: 'practiced' | 'unassessed';
   priority: 'P0_CRITICAL' | 'P1_FOCUS' | 'P2_ADVANCED';
   priorityLabel: string;
   recommendedLesson: {
@@ -56,6 +58,13 @@ export class RagRoadmapService {
       }),
     ]);
 
+    const das3h = new Das3hService(this.prisma);
+    const [contributions, user, trainedScores] = await Promise.all([
+      das3h.getSkillContributions(userId, allSkills.map(skill => skill.id)),
+      this.prisma.user.findUnique({ where: { id: userId }, select: { ability: true } }),
+      das3h.getTrainedSkillScores(userId, allSkills.map(skill => skill.id)),
+    ]);
+
     const masteryMap = new Map<number, { score: number; count: number }>();
     userMasteries.forEach((m) => {
       masteryMap.set(m.skillId, { score: m.masteryScore, count: m.practiceCount });
@@ -76,7 +85,7 @@ export class RagRoadmapService {
 
     for (const skill of allSkills) {
       const info = masteryMap.get(skill.id) || { score: 0.5, count: 0 };
-      const score = info.score;
+      const score = trainedScores.get(skill.id) ?? das3h.sigmoid((user?.ability ?? 0) + (contributions.get(skill.id) ?? 0));
       totalScore += score;
 
       if (!partScores[skill.part]) {
@@ -90,23 +99,29 @@ export class RagRoadmapService {
       let actionText: string;
       let estimatedPointGain: number;
 
-      if (score < 0.45) {
+      if (!info.count) {
+        priority = 'P1_FOCUS';
+        priorityLabel = 'Chưa đủ dữ liệu đánh giá';
+        actionText = 'Làm một lượt luyện tập để xác định mức độ hiện tại của kỹ năng';
+        estimatedPointGain = 0;
+        focusCount++;
+      } else if (score < 0.45) {
         priority = 'P0_CRITICAL';
-        priorityLabel = 'P0 - Báo động đỏ (Cấp bách)';
-        actionText = 'Ôn gấp lý thuyết gốc và làm mini-quiz thích ứng ZPD để bù lỗ hổng';
-        estimatedPointGain = 25;
+        priorityLabel = 'Nên củng cố';
+        actionText = 'Ôn bài học liên quan rồi luyện một lượt ngắn';
+        estimatedPointGain = 0;
         criticalCount++;
       } else if (score < 0.65) {
         priority = 'P1_FOCUS';
-        priorityLabel = 'P1 - Trọng tâm bứt phá (ZPD)';
-        actionText = 'Luyện tập thích ứng để tăng xác suất thành thạo lên trên 70%';
-        estimatedPointGain = 15;
+        priorityLabel = 'Nên luyện tiếp';
+        actionText = 'Luyện câu mới để củng cố kiến thức và kiểm tra lại kết quả';
+        estimatedPointGain = 0;
         focusCount++;
       } else {
         priority = 'P2_ADVANCED';
         priorityLabel = 'P2 - Nâng cao & Duy trì';
-        actionText = 'Luyện các bẫy khó và tối ưu tốc độ làm bài dưới 15 giây/câu';
-        estimatedPointGain = 5;
+        actionText = 'Luyện có giới hạn thời gian theo từng Part khi đã sẵn sàng';
+        estimatedPointGain = 0;
         masteredCount++;
       }
 
@@ -117,6 +132,7 @@ export class RagRoadmapService {
         part: skill.part,
         category: skill.category,
         masteryScore: score,
+        evidenceStatus: info.count ? 'practiced' : 'unassessed',
         priority,
         priorityLabel,
         recommendedLesson: lessonMap.get(skill.id) || null,
@@ -150,7 +166,8 @@ export class RagRoadmapService {
 
     const totalSkills = allSkills.length;
     const averageMastery = totalSkills > 0 ? totalScore / totalSkills : 0.5;
-    const estimatedPotentialIncrease = Math.min(250, criticalCount * 25 + focusCount * 15);
+    // Prediction probabilities are not validated TOEIC point gains.
+    const estimatedPotentialIncrease = 0;
 
     return {
       summary: {

@@ -39,4 +39,12 @@ describe('caption to local ASR fallback', () => {
     expect(f.createMany).not.toHaveBeenCalled();
     expect(f.update).toHaveBeenLastCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: 'FAILED', error: expect.stringContaining('audio') }) }));
   });
+  it('uses ASR when existing captions do not cover the selected segment', async () => {
+    const f = fixture();
+    f.fetchCaptions.mockResolvedValue({ cues: [{ start: 0, end: 3, text: 'Earlier caption.' }], provider: 'youtube-auto' });
+    f.fetchAudio.mockResolvedValue({ cues, provider: 'local-whisper', segmentStart: 120, segmentEnd: 180 });
+    await f.processor.process(f.job);
+    expect(f.fetchAudio).toHaveBeenCalledWith('dQw4w9WgXcQ', 120, 180);
+    expect(f.createMany).toHaveBeenCalledWith({ data: [{ ...cues[0], position: 0, transcriptId: 42 }] });
+  });
 });

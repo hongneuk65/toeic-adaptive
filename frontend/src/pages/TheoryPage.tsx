@@ -65,11 +65,15 @@ export const TheoryPage: React.FC = () => {
     // Trạng thái mini-quiz
     const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
     const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
+    const [attemptId, setAttemptId] = useState(() => crypto.randomUUID());
+    const submittedAnswers = useRef<{ questionId: number; selectedAnswer: string }[] | null>(null);
     const generation = useRef(0);
     useEffect(() => () => { generation.current++; }, []);
     const busy = useRef(false);
     const [submitting, setSubmitting] = useState(false);
     const resetQuiz = () => {
+        setAttemptId(crypto.randomUUID());
+        submittedAnswers.current = null;
         generation.current++;
         busy.current = false;
         setSubmitting(false);
@@ -83,7 +87,7 @@ export const TheoryPage: React.FC = () => {
     };
 
     const handleSelectOption = (questionId: number, option: string) => {
-        if (quizResult || busy.current) return;
+        if (quizResult || busy.current || submittedAnswers.current) return;
         setUserAnswers((prev) => ({ ...prev, [questionId]: option }));
     };
 
@@ -99,13 +103,14 @@ export const TheoryPage: React.FC = () => {
             return;
         }
 
+        submittedAnswers.current ??= answers;
         const requestGeneration = generation.current;
         busy.current = true;
         setSubmitting(true);
         try {
             const result = await api<QuizResult>(`/theory/${currentLesson.id}/quiz/submit`, {
                 method: 'POST',
-                data: { answers },
+                data: { answers: submittedAnswers.current, attemptId },
             });
             if (generation.current === requestGeneration) setQuizResult(result);
         } catch (err) {
@@ -233,10 +238,11 @@ export const TheoryPage: React.FC = () => {
                                                         {q.content}
                                                     </p>
 
-                                                    {/* 4 phương án A B C D */}
+                                                    {/* Các phương án trả lời có nội dung */}
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                                         {(['A', 'B', 'C', 'D'] as const).map((opt) => {
                                                             const optText = q[`option${opt}` as keyof Question];
+                                                            if (typeof optText !== 'string' || !optText.trim()) return null;
                                                             const isSelected = userAnswers[q.id] === opt;
 
                                                             // Mặc định: Giao diện thi rõ ràng, nền trắng, viền xám

@@ -3,7 +3,11 @@ import type { ExamSession } from '../types/exam';
 const DURATION_MINUTES = { FULL: 120, MINI: 60, PART_5: 20 };
 
 export function remainingSeconds(exam: ExamSession, now = Date.now()) {
-  const deadline = Date.parse(exam.startedAt) + DURATION_MINUTES[exam.examType] * 60000;
+  const customParts = exam.selectedParts ?? [...new Set((exam.questions ?? []).map(question => question.part))];
+  const readingMinutes = customParts.reduce((sum, part) => sum + ([0,0,0,0,0,20,10,45][part] || 0), 0);
+  const listeningSeconds = exam.listeningPlan?.targetSeconds ?? Math.round((exam.questions ?? []).filter(question => question.part <= 4).length * 27);
+  const duration = exam.examType === 'CUSTOM' ? listeningSeconds + readingMinutes * 60 : DURATION_MINUTES[exam.examType] * 60;
+  const deadline = exam.deadlineAt ? Date.parse(exam.deadlineAt) : Date.parse(exam.startedAt) + duration * 1000;
   return Math.max(0, Math.ceil((deadline - now) / 1000));
 }
 
@@ -20,9 +24,19 @@ export function readAnswers(attemptId: number, questionIds?: readonly number[]):
   }
 }
 
-export function saveAnswers(attemptId: number, answers: Record<number, string>): boolean {
+export function readDraftRevision(attemptId: number): number | null {
+  try {
+    const raw = sessionStorage.getItem(`exam_draft_revision_${attemptId}`);
+    if (raw === null) return null;
+    const revision = Number(raw);
+    return Number.isSafeInteger(revision) && revision >= 0 ? revision : null;
+  } catch { return null; }
+}
+
+export function saveAnswers(attemptId: number, answers: Record<number, string>, revision?: number): boolean {
   try {
     sessionStorage.setItem(`exam_answers_${attemptId}`, JSON.stringify(answers));
+    if (revision !== undefined) sessionStorage.setItem(`exam_draft_revision_${attemptId}`, String(revision));
     return true;
   } catch {
     return false;
@@ -30,7 +44,7 @@ export function saveAnswers(attemptId: number, answers: Record<number, string>):
 }
 
 export function clearExamStorage(attemptId: number): void {
-  for (const key of [`exam_${attemptId}`, `exam_answers_${attemptId}`]) {
+  for (const key of [`exam_${attemptId}`, `exam_answers_${attemptId}`, `exam_draft_revision_${attemptId}`]) {
     try {
       sessionStorage.removeItem(key);
     } catch {

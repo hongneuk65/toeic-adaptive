@@ -1,3 +1,5 @@
+import { HistoryModule } from './history/history.module';
+import { VocabularyModule } from './vocabulary/vocabulary.module';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -28,10 +30,14 @@ import { ReadingModule } from './reading/reading.module';
     RagModule,
     ListeningModule,
     ReadingModule,
+    VocabularyModule,
+    HistoryModule,
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST || 'localhost',
         port: Number(process.env.REDIS_PORT) || 6379,
+        username: process.env.REDIS_USERNAME || undefined,
+        password: process.env.REDIS_PASSWORD || undefined,
       },
     }),
     MasteryQueueModule,

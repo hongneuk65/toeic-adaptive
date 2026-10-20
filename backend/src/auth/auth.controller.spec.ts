@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { RequestBudgetGuard } from '../common/request-budget.guard';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -9,7 +10,7 @@ describe('AuthController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [{ provide: AuthService, useValue: {} }],
-    }).compile();
+    }).overrideGuard(RequestBudgetGuard).useValue({ canActivate: () => true }).compile();
 
     controller = module.get<AuthController>(AuthController);
   });

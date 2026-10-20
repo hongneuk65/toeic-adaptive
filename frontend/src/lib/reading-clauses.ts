@@ -1,0 +1,29 @@
+export interface ClauseExercise {
+  id: string;
+  sentence: string;
+  options: string[];
+  answer: number;
+  subject: string;
+  verb: string;
+  explanation: string;
+}
+
+// Curated teaching examples, not an automatic English parser or imported test content.
+export const clauseExercises: readonly ClauseExercise[] = [
+  {id:'concession',sentence:'Although the supplier offered a discount, our company renewed its existing contract.',options:['Although the supplier offered a discount','Our company renewed its existing contract.','The supplier offered a discount.'],answer:1,subject:'our company',verb:'renewed',explanation:'Although mở đầu mệnh đề phụ nhượng bộ. Phần còn lại có chủ ngữ our company và động từ renewed, tự đứng thành câu hoàn chỉnh.'},
+  {id:'while',sentence:'While the technicians were repairing the network, the sales team contacted clients by phone.',options:['The sales team contacted clients by phone.','While the technicians were repairing the network','The technicians were repairing the network.'],answer:0,subject:'the sales team',verb:'contacted',explanation:'While giới thiệu bối cảnh thời gian, nên cả cụm While…network là mệnh đề phụ. Hành động chính là contacted với chủ ngữ the sales team.'},
+  {id:'relative-proposal',sentence:'The proposal, which the committee reviewed yesterday, was approved this morning.',options:['Which the committee reviewed yesterday','The committee reviewed yesterday.','The proposal was approved this morning.'],answer:2,subject:'the proposal',verb:'was approved',explanation:'Which…yesterday là mệnh đề quan hệ bổ sung thông tin cho proposal. Lược phần này, ta được The proposal was approved this morning. Động từ chính là cả cụm bị động was approved.'},
+  {id:'condition',sentence:'If the client accepts the quotation, the finance department will issue an invoice.',options:['If the client accepts the quotation','The client accepts the quotation.','The finance department will issue an invoice.'],answer:2,subject:'the finance department',verb:'will issue',explanation:'If mở đầu điều kiện. Kết quả chính nằm ở the finance department will issue an invoice; will issue là cụm động từ của mệnh đề chính.'},
+  {id:'reason',sentence:'Because several employees were attending a conference, the manager postponed the training session.',options:['The manager postponed the training session.','Because several employees were attending a conference','Several employees were attending a conference.'],answer:0,subject:'the manager',verb:'postponed',explanation:'Because giới thiệu lý do, không phải hành động chính của câu. Mệnh đề chính có chủ ngữ the manager và động từ postponed.'},
+  {id:'before',sentence:'Before visitors enter the laboratory, they must sign the safety register.',options:['Before visitors enter the laboratory','They must sign the safety register.','Visitors enter the laboratory.'],answer:1,subject:'they',verb:'must sign',explanation:'Before…laboratory là mệnh đề phụ chỉ thời gian. They thay cho visitors và là chủ ngữ chính; must sign là cụm động từ chính.'},
+  {id:'once',sentence:'Once the inspection is complete, the shipment can leave the warehouse.',options:['The inspection is complete.','The shipment can leave the warehouse.','Once the inspection is complete'],answer:1,subject:'the shipment',verb:'can leave',explanation:'Once mang nghĩa “ngay khi”, đánh dấu mệnh đề phụ thời gian. The shipment can leave the warehouse tự đứng độc lập; động từ chính gồm cả can leave.'},
+  {id:'even-though',sentence:'Even though demand has increased, the manufacturer has kept its prices unchanged.',options:['Even though demand has increased','Demand has increased.','The manufacturer has kept its prices unchanged.'],answer:2,subject:'the manufacturer',verb:'has kept',explanation:'Even though nối một ý nhượng bộ. Mệnh đề chính nói điều nhà sản xuất thực hiện; has kept là cụm động từ hiện tại hoàn thành, không chỉ kept.'},
+  {id:'after',sentence:'After the customer submitted a complaint, the service team arranged a replacement.',options:['The service team arranged a replacement.','After the customer submitted a complaint','The customer submitted a complaint.'],answer:0,subject:'the service team',verb:'arranged',explanation:'After…complaint xác định thời điểm. Chủ ngữ chính là the service team, theo sau bởi động từ arranged và tân ngữ a replacement.'},
+  {id:'unless',sentence:'Unless the weather improves, the organizers will move the event indoors.',options:['The weather improves.','Unless the weather improves','The organizers will move the event indoors.'],answer:2,subject:'the organizers',verb:'will move',explanation:'Unless có nghĩa “trừ khi”, mở đầu điều kiện phủ định. The organizers will move the event indoors là mệnh đề chính; will move là cụm động từ chính.'},
+  {id:'relative-documents',sentence:'The documents that the auditor requested are available on the secure server.',options:['The documents are available on the secure server.','That the auditor requested','The auditor requested the documents.'],answer:0,subject:'the documents',verb:'are',explanation:'That the auditor requested bổ nghĩa cho documents, không phải mệnh đề chính. Lược phần quan hệ, The documents are available on the secure server vẫn đủ chủ ngữ và vị ngữ; are là động từ chính.'},
+  {id:'when',sentence:'When the new branch opens next month, our regional director will attend the ceremony.',options:['When the new branch opens next month','Our regional director will attend the ceremony.','The new branch opens next month.'],answer:1,subject:'our regional director',verb:'will attend',explanation:'When đánh dấu mệnh đề thời gian. Phần our regional director will attend the ceremony nêu hành động chính, với will attend là cụm động từ.'},
+];
+
+export function clauseScore(answers: readonly (number | null)[]): number {
+  return clauseExercises.reduce((score, exercise, index) => score + Number(answers[index] === exercise.answer), 0);
+}

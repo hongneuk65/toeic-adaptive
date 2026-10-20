@@ -1,3 +1,4 @@
+import { learnerExplanation } from '../common/learner-explanation';
 import {
   BadRequestException,
   ForbiddenException,
@@ -235,6 +236,7 @@ export class ReadingService {
       version: version
         ? {
             ...version,
+            stimulus: await this.sourceStimulus(version),
             questions: publicQuestions(
               version.questions as unknown as ReadingQuestion[],
             ),
@@ -288,11 +290,22 @@ export class ReadingService {
       ...attempt,
       version: {
         ...attempt.version,
-        questions: attempt.submittedAt ? questions : publicQuestions(questions),
+        stimulus: await this.sourceStimulus(attempt.version),
+        questions: attempt.submittedAt ? questions.map(question => ({ ...question, explanation: learnerExplanation(question.explanation) })) : publicQuestions(questions),
       },
       evidenceNote:
         'Bằng chứng được lưu riêng, không cộng/trừ điểm trắc nghiệm.',
     };
+  }
+  async sourceStimulus(version: { origin: string; text: string }) {
+    if (version.origin !== 'CRAWL') return null;
+    // Reuse only presentation belonging to the exact unchanged source passage.
+    // Edited passages fall back to their saved text rather than stale source documents.
+    const source = await this.prisma.question.findFirst({
+      where: { part: 7, passage: version.text, explanation: { startsWith: '[santa-ednet:' } },
+      select: { stimulus: true }, orderBy: { id: 'asc' },
+    });
+    return source?.stimulus ?? null;
   }
   async progress(
     userId: number,
@@ -314,7 +327,7 @@ export class ReadingService {
     } catch (e) {
       throw new BadRequestException((e as Error).message);
     }
-    if (dto.currentIndex > 0 && !answers[0])
+    if (questions[0]?.type === 'MAIN' && dto.currentIndex > 0 && !answers[0])
       throw new BadRequestException(
         'Trả lời câu ý chính trước khi chuyển câu.',
       );
@@ -532,9 +545,16 @@ export class ReadingService {
     });
   }
   async draft(userId: number, dto: ReadingDraftDto, articleId?: number) {
-    this.checkText(dto.text);
     if (!dto.title.trim() || !dto.topic.trim())
       throw new BadRequestException('Nhập tên và chủ đề.');
+    // Validation mode is derived from persisted source provenance, never request data.
+    const existing = articleId ? await this.systemArticle(articleId) : undefined;
+    const currentSource = existing?.versions.find(version => version.id === existing.currentVersionId) ?? existing?.versions[0];
+    const sourceCrawl = !dto.aiDraft && currentSource?.origin === 'CRAWL';
+    if (sourceCrawl) {
+      if (!dto.text.trim() || dto.text.length > readingLimits().maxText)
+        throw new BadRequestException('Văn bản nguồn rỗng hoặc vượt giới hạn ký tự.');
+    } else this.checkText(dto.text);
     let questions: ReadingQuestion[];
     if (dto.aiDraft) {
       await this.limit(userId, 'generate', readingLimits().generations);
@@ -550,6 +570,7 @@ export class ReadingService {
           dto.text,
           dto.questions,
           readingLimits().maxQuestions,
+          { sourceCrawl },
         );
       } catch (e) {
         throw new BadRequestException((e as Error).message);
@@ -583,7 +604,7 @@ export class ReadingService {
           topic: dto.topic,
           kind: dto.kind,
           difficulty: dto.difficulty,
-          origin: dto.aiDraft ? 'AI_DRAFT' : 'SYSTEM',
+          origin: dto.aiDraft ? 'AI_DRAFT' : sourceCrawl ? 'CRAWL' : 'SYSTEM',
           questions: json(questions),
         },
       });
@@ -612,11 +633,16 @@ export class ReadingService {
       where: { id: versionId, articleId: id },
     });
     if (!version) throw new NotFoundException();
-    validateQuestions(
-      version.text,
-      version.questions,
-      readingLimits().maxQuestions,
-    );
+    try {
+      validateQuestions(
+        version.text,
+        version.questions,
+        readingLimits().maxQuestions,
+        { sourceCrawl: version.origin === 'CRAWL' },
+      );
+    } catch (error) {
+      throw new BadRequestException((error as Error).message);
+    }
     return this.prisma.readingVersion.update({
       where: { id: versionId },
       data: { reviewed: true },

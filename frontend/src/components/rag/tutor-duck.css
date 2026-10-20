@@ -1,0 +1,59 @@
+.tutor-duck-launcher {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #254d70;
+  cursor: pointer;
+}
+.tutor-duck-launcher:focus-visible { outline: 3px solid #427caf; outline-offset: 5px; }
+.tutor-duck-launcher-avatar {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border: 1px solid #b7d2e7;
+  border-radius: 50%;
+  background: #f7fbff;
+  box-shadow: 0 4px 14px #254d701a;
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+.tutor-duck-launcher-avatar > svg { width: 56px; height: 56px; }
+.tutor-duck-launcher-label {
+  border: 1px solid #d7e4ee;
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px #254d700d;
+}
+.tutor-duck-header { background: #f2f8fd; }
+.tutor-duck-header-avatar { display: inline-flex; width: 48px; height: 48px; flex-shrink: 0; }
+.tutor-duck-header-avatar > svg { width: 100%; height: 100%; }
+.tutor-duck-intro-avatar { display: block; width: 112px; height: 112px; margin-inline: auto; }
+.tutor-duck-author { display: inline-flex; align-items: center; gap: 5px; }
+.tutor-duck-message-avatar { width: 28px; height: 28px; flex-shrink: 0; }
+ .tutor-duck-launcher:focus-visible .duck-mascot-wing { animation: duck-wave 500ms ease-out; }
+@media (hover: hover) and (pointer: fine) {
+  .tutor-duck-launcher:hover .duck-mascot-wing { animation: duck-wave 500ms ease-out; }
+  .tutor-duck-launcher:hover .tutor-duck-launcher-avatar { background: #eaf5ff; box-shadow: 0 5px 18px #254d7026; }
+}
+@media (max-width: 639px) {
+  .tutor-duck-launcher { right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); }
+  .tutor-duck-launcher-avatar { width: 56px; height: 56px; }
+  .tutor-duck-launcher-avatar > svg { width: 48px; height: 48px; }
+  .tutor-duck-launcher-label { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tutor-duck-launcher-avatar { transition: none; }
+  .tutor-duck-launcher svg { animation: none !important; transform: none !important; }
+}

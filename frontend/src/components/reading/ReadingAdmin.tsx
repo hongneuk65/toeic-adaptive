@@ -1,7 +1,8 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { api, getErrorMessage } from "../../lib/api";
 import { useAsyncResource } from "../../hooks/useAsyncResource";
 import type { ReadingVersion } from "../../types/reading";
+import { ReadingQuestionEditor } from './ReadingQuestionEditor';
 interface Overview {
   articles: {
     id: number;
@@ -42,12 +43,16 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
   const [questions, setQuestions] = useState("[]");
   const [id, setId] = useState<number | null>(null);
   const [version, setVersion] = useState<ReadingVersion | null>(null);
+  const actionLock = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const unsaved = version && (draft.title !== version.title || draft.text !== version.text || draft.topic !== version.topic || draft.kind !== version.kind || draft.difficulty !== version.difficulty || questions !== JSON.stringify(version.questions, null, 2));
   const act = async (work: () => Promise<void>) => {
-    if (busy) return;
+    if (actionLock.current) return;
+    actionLock.current = true;
     setBusy(true);
+    setNotice("");
     setError("");
     try {
       await work();
@@ -56,6 +61,7 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
     } catch (cause) {
       setError(getErrorMessage(cause));
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   };
@@ -65,6 +71,7 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
         `/reading/admin/articles/${articleId}`,
       );
       const v = article.versions[0];
+      if (!v) throw new Error("Bài đọc chưa có phiên bản để chỉnh sửa.");
       setId(articleId);
       setVersion(v);
       setDraft({
@@ -78,7 +85,7 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
       setNotice("Đang sửa bản nháp; kết quả cũ vẫn dùng phiên bản đã lưu.");
     });
   return (
-    <details className="section-disclosure">
+    <details open className="section-disclosure">
       <summary>Biên soạn và quản lý Reading</summary>
       <div className="space-y-5 text-sm">
         {(error || data.error) && (
@@ -86,11 +93,16 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
             {error || data.error}
           </p>
         )}
+        {data.loading && <p role="status">Đang tải thư viện bài đọc…</p>}
+        {data.error && <button className="secondary-button" onClick={data.reload}>Tải lại thư viện</button>}
         {notice && <p role="status">{notice}</p>}
         <div className="flex gap-3">
           <button
             className="underline"
+            disabled={busy}
             onClick={() => {
+              if (unsaved && !window.confirm("Bỏ các chỉnh sửa chưa lưu để tạo bài mới?")) return;
+              setError("");setNotice("");
               setId(null);
               setVersion(null);
               setDraft(empty);
@@ -104,7 +116,7 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
             value={id || ""}
             disabled={busy}
             onChange={(event) => {
-              if (event.target.value) void load(Number(event.target.value));
+              if (event.target.value && (!unsaved || window.confirm("Bỏ các chỉnh sửa chưa lưu để mở bài khác?"))) void load(Number(event.target.value));
             }}
             className="form-input !border"
           >
@@ -117,6 +129,7 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
             ))}
           </select>
         </div>
+        <fieldset disabled={busy} className="admin-editor-fields">
         <label className="block">
           Tên bài
           <input
@@ -142,7 +155,7 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
           >
             {["EMAIL", "NOTICE", "ADVERTISEMENT", "MESSAGE", "ARTICLE"].map(
               (v) => (
-                <option key={v}>{v}</option>
+                <option key={v} value={v}>{{ EMAIL: "Email", NOTICE: "Thông báo", ADVERTISEMENT: "Quảng cáo", MESSAGE: "Tin nhắn", ARTICLE: "Bài viết", EASY: "Dễ", MEDIUM: "Vừa", HARD: "Khó" }[v]}</option>
               ),
             )}
           </select>
@@ -153,7 +166,7 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
             onChange={(e) => setDraft({ ...draft, difficulty: e.target.value })}
           >
             {["EASY", "MEDIUM", "HARD"].map((v) => (
-              <option key={v}>{v}</option>
+              <option key={v} value={v}>{{ EMAIL: "Email", NOTICE: "Thông báo", ADVERTISEMENT: "Quảng cáo", MESSAGE: "Tin nhắn", ARTICLE: "Bài viết", EASY: "Dễ", MEDIUM: "Vừa", HARD: "Khó" }[v]}</option>
             ))}
           </select>
         </div>
@@ -166,14 +179,15 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
             onChange={(e) => setDraft({ ...draft, text: e.target.value })}
           />
         </label>
+        <ReadingQuestionEditor sourceOrder={version?.origin === 'CRAWL'} value={questions} text={draft.text} onChange={setQuestions} />
         <details>
           <summary className="cursor-pointer underline">
-            Câu hỏi, đáp án và bằng chứng (JSON)
+            Nâng cao: nhập câu hỏi bằng JSON
           </summary>
           <p className="my-2">
             Mỗi câu: type, prompt, options gồm 4 lựa chọn, answer từ 0–3,
             explanation, evidenceRequired, evidence gồm start/end/text. Câu đầu
-            MAIN. Chỉ số tính theo ký tự trong văn bản gốc.
+            MAIN cho bài biên soạn; bài crawl giữ thứ tự nguồn. Chỉ số tính theo ký tự trong văn bản gốc.
           </p>
           <textarea
             aria-label="Câu hỏi Reading JSON"
@@ -203,6 +217,8 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
                 );
                 setId(result.articleId);
                 setVersion(result.version);
+                setQuestions(JSON.stringify(result.version.questions, null, 2));
+                setDraft({ title: result.version.title, text: result.version.text, topic: result.version.topic, kind: result.version.kind, difficulty: result.version.difficulty });
                 setNotice(
                   "Đã lưu bản nháp mới. Xem trước và duyệt trước khi xuất bản.",
                 );
@@ -228,6 +244,7 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
                 setId(result.articleId);
                 setVersion(result.version);
                 setQuestions(JSON.stringify(result.version.questions, null, 2));
+                setDraft({title:result.version.title,text:result.version.text,topic:result.version.topic,kind:result.version.kind,difficulty:result.version.difficulty});
                 setNotice(
                   "AI tạo bản nháp. Kiểm tra nội dung trước khi duyệt.",
                 );
@@ -237,10 +254,11 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
             AI hỗ trợ bản nháp
           </button>
         </div>
+        {unsaved && <p role="status" className="text-ink-medium">Có chỉnh sửa chưa lưu. Lưu bản nháp trước khi duyệt hoặc xuất bản.</p>}
         {version && (
           <section className="rounded border border-paper-kraft p-4 space-y-3">
             <h3 className="font-semibold">
-              Xem trước · phiên bản {version.revision}
+              Xem trước bản đã lưu · phiên bản {version.revision}
               {version.reviewed ? " · Đã duyệt" : " · Chưa duyệt"}
             </h3>
             <p className="whitespace-pre-wrap leading-relaxed">
@@ -272,7 +290,7 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
             ))}
             <div className="flex flex-wrap gap-4">
               <button
-                disabled={busy || version.reviewed}
+                disabled={busy || version.reviewed || !!unsaved}
                 className="underline"
                 onClick={() =>
                   void act(async () => {
@@ -289,7 +307,7 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
                 Xác nhận đã kiểm tra
               </button>
               <button
-                disabled={busy || !version.reviewed}
+                disabled={busy || !version.reviewed || !!unsaved}
                 className="primary-button"
                 onClick={() =>
                   void act(async () => {
@@ -320,6 +338,7 @@ export function ReadingAdmin({ onChanged }: { onChanged(): void }) {
             </div>
           </section>
         )}
+        </fieldset>
         <details>
           <summary className="cursor-pointer">
             Báo lỗi nội dung ({data.data?.reports.length || 0})

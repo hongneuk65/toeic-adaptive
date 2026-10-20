@@ -15,3 +15,12 @@ doc.md
 **/.venv-listening
 **/__pycache__
 backend/storage
+deploy/railway-release
+deploy/.ssh-deployment
+data
+ednet_santa_mapping_clean
+baocao
+experiments
+**/test-results*
+**/*.aof
+**/*.rdb

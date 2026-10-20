@@ -1,0 +1,40 @@
+/* Reuse the homepage brand and navigation on every learning route. */
+.study-layout{--study-blue:#1463e8;--study-navy:#233876;--study-ink:#18233f;--study-line:#d9e3f1;background:#f5f8fc;color:var(--study-ink)}
+.study-layout .app-content{max-width:1240px;padding:28px 32px 80px}
+.study-layout .page-header-feature{background:transparent;border:0;border-bottom:1px solid var(--study-line);border-radius:0;box-shadow:none;padding:0 0 24px;animation:none;min-height:0}
+.study-layout .page-header-feature h1,.study-layout .page-header-compact h1{color:var(--study-navy);font-size:30px;letter-spacing:-.7px;line-height:1.25}
+.study-layout .page-header-feature .page-header-description{color:#60708c;font-size:14px;line-height:1.8;margin-top:10px}
+.study-layout .page-header-eyebrow,.study-layout .page-header-feature .page-header-eyebrow{color:#60708c;font-size:11px;letter-spacing:.06em}
+.study-layout .page-header-feature .primary-button,.study-layout .primary-button{background:var(--study-blue);color:white;border-radius:12px}
+.study-layout .primary-button:hover{background:#084bd0}
+.study-layout .page-header-feature .secondary-button,.study-layout .secondary-button{background:#dff1ff;color:#1657ae;border:1px solid transparent;border-radius:12px}
+.study-layout .secondary-button:hover{background:#cce9ff}
+.study-layout .page-header-feature :focus-visible{outline-color:#1463e8}
+.study-layout .page-stack{gap:26px}.study-layout .page-header-compact{padding-bottom:0}
+.study-layout .prep-learning-page{--learning-blue:#1463e8;--learning-border:#d9e3f1}
+.study-layout .prep-learning-card{border:1px solid #d9e3f1;border-radius:18px;box-shadow:none;padding:22px}
+.study-layout .prep-learning-card:hover{transform:none;background:#f5f9ff;border-color:#8cb8ff;box-shadow:0 5px 18px #2338760a}
+.study-layout .prep-learning-sidebar{border-radius:18px;background:#edf5ff;padding:22px}
+.study-layout :is(.prep-reading-passage,.prep-question-surface,.prep-listening-player){border-radius:18px;box-shadow:none}
+.study-layout .prep-study-toolbar{border-radius:14px}.study-layout .prep-library-filters select.form-input{border-radius:12px}
+.study-layout .pointer-motion-active{rotate:none}.study-layout .pointer-motion-light{display:none}
+.vocabulary-library-toolbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;padding-bottom:18px;border-bottom:1px solid #d9e3f1}
+.vocabulary-scope{display:flex;gap:5px;flex-wrap:wrap}.vocabulary-scope button{min-height:44px;padding:9px 14px;font-size:13px;color:#60708c;border:1px solid transparent;border-radius:10px}.vocabulary-scope button[aria-pressed=true]{background:#dff1ff;color:#1657ae;font-weight:650}.vocabulary-library-toolbar>label{max-width:290px}.vocabulary-library-toolbar>p{font-size:13px}
+.study-layout .prep-folder-catalog{gap:18px}.study-layout .prep-folder-tile{position:relative;border:1px solid #d9e3f1;border-radius:18px;padding:24px;gap:18px;box-shadow:none;cursor:pointer}
+.study-layout .prep-folder-tile:hover{transform:none;border-color:#8cb8ff;box-shadow:0 5px 18px #2338760a}
+.vocabulary-folder-icon{display:grid;place-items:center;width:43px;height:46px;background:#edf5ff;border-radius:12px;color:#1463e8}
+.study-layout .vocabulary-folder-content{flex:1}.study-layout .prep-folder-tile h2{font-size:19px;color:#233876;margin-top:8px}.study-layout .prep-folder-eyebrow{font-size:12px;color:#60708c}
+.study-layout .prep-folder-tile>div:last-child{border-top:1px solid #e7edf6;padding-top:16px}.study-layout .prep-folder-tile .primary-button{background:#dff1ff;color:#1657ae;font-size:12px;min-height:40px;padding:9px 14px}
+/* One semantic link owns each card; independent commands stay above it. */
+.folder-open-link::after{content:'';position:absolute;inset:0;border-radius:18px}.folder-delete-button{position:relative;z-index:2}.prep-folder-tile:focus-within{outline:3px solid #1463e8;outline-offset:3px}
+.history-card{position:relative;cursor:pointer}.history-card-action>a{position:static!important}.history-card-action>a::after{content:'';position:absolute;inset:0}.history-card:focus-within{outline:3px solid #1463e8;outline-offset:-3px}
+.prep-home-program-card{position:relative;cursor:pointer}.prep-home-program-card>a{position:static}.prep-home-program-card>a::after{content:'';position:absolute;inset:0;border-radius:inherit}.prep-home-program-card:focus-within{outline:3px solid #1463e8;outline-offset:4px}
+@media(max-width:800px){.study-layout .app-content{padding:24px 24px 72px}.study-layout .page-header-feature h1,.study-layout .page-header-compact h1{font-size:27px}}
+@media(max-width:640px){.study-layout .app-content{padding-inline:16px}.study-layout .page-header{flex-wrap:wrap;gap:16px}.vocabulary-library-toolbar>label{max-width:none}.vocabulary-library-toolbar{gap:12px}.study-layout .prep-folder-tile,.study-layout .prep-learning-card{padding:20px}}
+
+.folder-open-link::after,.history-card-action>a::after,.prep-home-program-card>a::after{z-index:1}
+.prep-home .prep-home-program-card>a{position:static}
+.prep-home-resume-list>li,.prep-home-progress-content>aside{position:relative;cursor:pointer}
+.prep-home-resume-list>li>a,.prep-home-progress-content>aside>a{position:static}
+.prep-home-resume-list>li>a::after,.prep-home-progress-content>aside>a::after{content:'';position:absolute;inset:0;z-index:1;border-radius:inherit}
+.prep-home-resume-list>li:focus-within,.prep-home-progress-content>aside:focus-within{outline:3px solid #1463e8;outline-offset:3px}

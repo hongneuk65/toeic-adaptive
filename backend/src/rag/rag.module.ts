@@ -7,9 +7,10 @@ import { RagLlmService } from './rag-llm.service';
 import { RagExplainerService } from './rag-explainer.service';
 import { RagChatService } from './rag-chat.service';
 import { RagRoadmapService } from './rag-roadmap.service';
+import { RequestBudgetModule } from '../common/request-budget.guard';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, RequestBudgetModule],
   controllers: [RagController],
   providers: [
     RagService,

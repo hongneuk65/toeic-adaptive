@@ -1,4 +1,7 @@
+import '../styles/exam-room.css';
+import { ExamStimulus } from './exam/ExamStimulus';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 import { api, getErrorMessage } from '../lib/api';
 import { useAsyncResource } from '../hooks/useAsyncResource';
 import { RagExplanationModal } from './rag/RagExplanationModal';
@@ -13,23 +16,34 @@ interface Props {
   skill: SkillMasteryItem;
   onClose: () => void;
   onAnswerRecorded: () => void;
+  onNextQuestion?: () => void;
+  contextLabel?: string;
 }
 
-export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswerRecorded }) => {
+export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswerRecorded, onNextQuestion, contextLabel }) => {
   const load = useCallback((signal: AbortSignal) =>
     api<AdaptiveQuestionResponse>(`/das3h/adaptive-question?skillId=${skill.skillId}`, { signal }), [skill.skillId]);
   const { data: adaptiveData, loading: loadingAdaptive, error, reload } = useAsyncResource(load);
+  const [practiceAttemptId, setPracticeAttemptId] = useState(() => crypto.randomUUID());
+  const answerPayload = useRef<string | null>(null);
+  const [answerLocked, setAnswerLocked] = useState(false);
   const [selectedOpt, setSelectedOpt] = useState<string | null>(null);
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
   const [answerResult, setAnswerResult] = useState<AnswerAdaptiveResponse | null>(null);
   const [showRagModal, setShowRagModal] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const pendingAnswer = useRef<AbortController | null>(null);
+  const dialog = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialog, true, onClose);
 
   useEffect(() => () => pendingAnswer.current?.abort(), []);
 
   const loadQuestion = () => {
     if (pendingAnswer.current) return;
     setSelectedOpt(null);
+    setPracticeAttemptId(crypto.randomUUID());
+    answerPayload.current = null;
+    setAnswerLocked(false);
     setAnswerResult(null);
     setShowRagModal(false);
     reload();
@@ -40,14 +54,18 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
 
     const controller = new AbortController();
     pendingAnswer.current = controller;
+    answerPayload.current ??= selectedOpt;
+    setAnswerLocked(true);
     setSubmittingAnswer(true);
+    setSubmitError('');
     try {
       const res = await api<AnswerAdaptiveResponse>('/das3h/answer-adaptive', {
         method: 'POST',
         signal: controller.signal,
         data: {
           questionId: adaptiveData.selectedQuestion.id,
-          selectedAnswer: selectedOpt,
+          selectedAnswer: answerPayload.current,
+          attemptId: practiceAttemptId,
           skillId: skill.skillId,
         },
       });
@@ -57,7 +75,7 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
         onAnswerRecorded();
       }
     } catch (err) {
-      if (!controller.signal.aborted) alert(getErrorMessage(err, 'Lỗi gửi câu trả lời'));
+      if (!controller.signal.aborted) setSubmitError(getErrorMessage(err, 'Chưa gửi được câu trả lời. Hãy thử lại.'));
     } finally {
       pendingAnswer.current = null;
       if (!controller.signal.aborted) setSubmittingAnswer(false);
@@ -66,64 +84,42 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
 
   return (
     <div className="modal-backdrop fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-paper-white max-w-2xl w-full border border-paper-kraft rounded-lg shadow-paper-heavy p-6 md:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto">
-        <div className="staple top-3 left-6" />
-        <div className="staple top-3 right-6" />
+      <div ref={dialog} role="dialog" aria-modal="true" aria-label="Luyện kỹ năng" tabIndex={-1} className="bg-paper-white max-w-2xl w-full border border-paper-kraft rounded-lg shadow-paper-heavy p-6 md:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto">
 
-        <div className="flex justify-between items-start border-b border-paper-kraft pb-3">
-          <div>
-            <span className="font-mono text-xs font-bold text-accent-coral uppercase">
-              LUYỆN TẬP THÍCH ỨNG VÙNG ZPD
+        <div className="flex justify-between items-start gap-4 border-b border-paper-kraft pb-3">
+          <div className="min-w-0">
+            <span className="text-xs font-semibold text-ink-medium">
+              {contextLabel || 'Luyện kỹ năng'}
             </span>
-            <h3 className="font-display text-2xl font-bold text-ink-dark mt-0.5">
+            <h3 className="text-xl font-semibold leading-snug break-words text-ink-dark mt-1">
               {skill.skillName} (Part {skill.part})
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="text-ink-light hover:text-ink-dark font-mono text-2xl font-bold"
+            className="shrink-0 min-h-11 px-2 text-sm text-ink-medium hover:text-ink-dark"
           >
             Đóng
           </button>
         </div>
 
+        {submitError && <p role="alert" className="status-message text-rose-800">{submitError}</p>}
         {loadingAdaptive ? (
-          <div className="py-16 text-center space-y-3">
-            <div className="w-10 h-10 border-4 border-paper-kraft border-t-accent-coral rounded-full animate-spin mx-auto" />
-            <p className="font-hand text-lg text-ink-medium">
-              DAS3H đang chọn lọc câu hỏi thích ứng tối ưu...
+          <div role="status" className="py-10 text-center space-y-3">
+            <div className="w-10 h-10 border-4 border-paper-kraft border-t-accent-navy rounded-full animate-spin mx-auto" />
+            <p className="text-sm text-ink-medium">
+              Đang chuẩn bị câu hỏi…
             </p>
           </div>
         ) : !adaptiveData ? (
-          <div className="py-8 text-center text-ink-medium font-body">
+          <div role="alert" className="py-8 text-center text-ink-medium">
             {error || 'Không tìm thấy câu hỏi thích ứng cho kỹ năng này.'}
             <button onClick={loadQuestion} className="block mx-auto mt-3 underline">Thử lại</button>
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="bg-paper-cream p-3 border border-paper-kraft rounded flex flex-wrap items-center justify-between text-xs font-mono gap-2">
-              <span>
-                Xác suất dự kiến: <strong className="text-accent-coral font-bold">{(adaptiveData.predictedProb * 100).toFixed(1)}%</strong>
-              </span>
-              <span>Mục tiêu ZPD: <strong>{(adaptiveData.targetProb * 100).toFixed(0)}%</strong></span>
-              <span>Chế độ: <strong>{adaptiveData.isExploration ? 'Khám phá' : 'Tối ưu'}</strong></span>
-            </div>
-
-            {adaptiveData.selectedQuestion.passage && (
-              <div className="bg-paper-cream p-4 border border-paper-kraft rounded font-exam text-sm leading-relaxed whitespace-pre-line max-h-48 overflow-y-auto">
-                {adaptiveData.selectedQuestion.passage}
-              </div>
-            )}
-
-            {adaptiveData.selectedQuestion.imageUrl && (
-              <div className="text-center">
-                <img
-                  src={adaptiveData.selectedQuestion.imageUrl}
-                  alt="Minh họa câu hỏi"
-                  className="max-h-60 mx-auto rounded border border-paper-kraft object-contain"
-                />
-              </div>
-            )}
+            {adaptiveData.selectedQuestion.part >= 3 ? <ExamStimulus question={adaptiveData.selectedQuestion} blankNumbers={{}} /> : adaptiveData.selectedQuestion.imageUrl && <img src={adaptiveData.selectedQuestion.imageUrl} alt="Hình ảnh câu hỏi" className="max-h-60 max-w-full mx-auto object-contain" />}
+            {adaptiveData.selectedQuestion.part <= 2 && <p className="text-sm text-ink-medium">Luyện nghe: nghe và chọn {adaptiveData.selectedQuestion.part === 2 ? 'một trong ba' : 'một trong bốn'} đáp án. Nội dung lời thoại được ẩn khi trả lời.</p>}
 
             {adaptiveData.selectedQuestion.audioUrl && (
               <div className="bg-paper-cream p-3 rounded border border-paper-kraft">
@@ -135,15 +131,15 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
               </div>
             )}
 
-            <div className="font-exam font-bold text-ink-dark text-base">
+            {adaptiveData.selectedQuestion.part > 2 && <div className="font-exam font-bold text-ink-dark text-base">
               {adaptiveData.selectedQuestion.content}
-            </div>
+            </div>}
 
             <div className="space-y-2 font-exam text-sm">
-              {(['A', 'B', 'C', 'D'] as const).map((opt) => {
+              {(adaptiveData.selectedQuestion.part === 2 ? ['A', 'B', 'C'] as const : ['A', 'B', 'C', 'D'] as const).map((opt) => {
                 const optKey = `option${opt}` as keyof AdaptiveQuestion;
                 const optText = adaptiveData.selectedQuestion[optKey] as string;
-                if (!optText) return null;
+                if (adaptiveData.selectedQuestion.part > 2 && !optText?.trim()) return null;
 
                 const isSelected = selectedOpt === opt;
                 const isAnswered = !!answerResult;
@@ -153,7 +149,7 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
                 let btnClass = 'border-paper-kraft bg-paper-cream hover:bg-paper-kraft-light/40 text-ink-dark';
 
                 if (isSelected && !isAnswered) {
-                  btnClass = 'border-accent-coral bg-paper-rose/40 text-ink-dark font-bold ring-2 ring-accent-coral';
+                  btnClass = 'border-accent-navy bg-paper-cream text-ink-dark font-semibold ring-1 ring-accent-navy';
                 }
 
                 if (isAnswered) {
@@ -169,22 +165,23 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
                 return (
                   <button
                     key={opt}
-                    disabled={isAnswered || submittingAnswer}
+                    disabled={isAnswered || submittingAnswer || answerLocked}
+                    aria-pressed={isSelected}
                     onClick={() => setSelectedOpt(opt)}
                     className={`w-full p-3 text-left border rounded transition flex items-start gap-3 ${btnClass}`}
                   >
                     <span className="font-bold shrink-0">{opt}.</span>
-                    <span className="flex-1">{optText}</span>
+                    {adaptiveData.selectedQuestion.part > 2 && <span className="flex-1">{optText}</span>}
                   </button>
                 );
               })}
             </div>
 
             {answerResult && (
-              <div className={`p-4 rounded border ${answerResult.isCorrect ? 'bg-emerald-50 border-emerald-300' : 'bg-rose-50 border-rose-300'} space-y-2`}>
-                <div className="flex items-center gap-2">
-                  <span className="font-display text-xl font-bold">
-                    {answerResult.isCorrect ? 'CHÍNH XÁC' : 'CHƯA CHÍNH XÁC'}
+              <div role="status" className={`p-4 rounded border ${answerResult.isCorrect ? 'bg-emerald-50 border-emerald-300' : 'bg-rose-50 border-rose-300'} space-y-2`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-lg font-semibold">
+                    {answerResult.isCorrect ? 'Chính xác' : 'Chưa chính xác'}
                   </span>
                   <span className="font-body text-xs font-bold text-ink-medium">
                     (Đáp án chuẩn là <strong className="text-ink-dark">{answerResult.correctAnswer}</strong>)
@@ -199,7 +196,7 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
                 )}
 
                 <p className="font-mono text-xs text-ink-medium">
-                  Cập nhật thông thạo kỹ năng thành công theo mô hình DAS3H.
+                  Đã lưu kết quả luyện tập.
                 </p>
 
                 <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
@@ -213,28 +210,28 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-paper-kraft">
+            <div className="flex flex-col items-stretch gap-3 pt-4 border-t border-paper-kraft sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
               {!answerResult ? (
                 <button
                   disabled={!selectedOpt || submittingAnswer}
                   onClick={submitAdaptiveAnswer}
-                  className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-body text-sm font-bold rounded shadow transition"
+                  className="primary-button"
                 >
-                  {submittingAnswer ? 'Đang chấm bài...' : 'KIỂM TRA ĐÁP ÁN'}
+                  {submittingAnswer ? 'Đang chấm bài…' : 'Kiểm tra đáp án'}
                 </button>
               ) : (
                 <>
                   <button
-                    onClick={loadQuestion}
-                    className="px-5 py-2 bg-accent-coral hover:bg-accent-coral/90 text-white font-body text-xs font-bold rounded shadow transition"
+                    onClick={onNextQuestion || loadQuestion}
+                    className="primary-button"
                   >
-                    LÀM TIẾP CÂU KHÁC CÙNG KỸ NĂNG
+                    Câu tiếp theo
                   </button>
                   <button
                     onClick={onClose}
-                    className="px-4 py-2 bg-paper-cream hover:bg-paper-kraft-light/50 border border-paper-kraft text-ink-dark font-body text-xs font-bold rounded transition"
+                    className="secondary-button"
                   >
-                    ĐÓNG & CẬP NHẬT HỒ SƠ
+                    Hoàn tất
                   </button>
                 </>
               )}

@@ -6,8 +6,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AnswerDto, ProgressDto, SegmentDto, SettingsDto, SourceDto, SubtitleDto } from './listening.dto';
 import { cloze, gradeText, mergeCues, parseSubtitles, youtubeId } from './listening-core';
 import { LocalAsrProvider } from './local-asr.provider';
-import { mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdir, writeFile, rm, copyFile, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { Prisma } from '@prisma/client';
+import { questionSelect } from '../common/question-select';
+import type { ListeningCatalogQueryDto } from './listening.dto';
 
 @Injectable()
 export class ListeningService {
@@ -36,12 +39,17 @@ export class ListeningService {
     if (!source) throw new NotFoundException('Không tìm thấy bài cá nhân.');
     return this.prisma.listeningSource.update({ where: { id }, data: { deletedAt: null } });
   }
-  async list(userId: number) {
-    const [sources, sessions, settings] = await Promise.all([
-      this.prisma.listeningSource.findMany({ where: { deletedAt: null, OR: [{ ownerId: userId }, { ownerId: null, published: true }] }, orderBy: { createdAt: 'desc' }, take: 100 }),
+  async list(userId: number, query: Partial<ListeningCatalogQueryDto> = {}) {
+    const page = query.page || 1, pageSize = query.pageSize || 24;
+    const where: Prisma.ListeningSourceWhereInput = { deletedAt: null, OR: [{ ownerId: userId }, { ownerId: null, published: true }],
+      ...(query.search?.trim() ? { title: { contains: query.search.trim(), mode: 'insensitive' } } : {}),
+      ...(query.kind ? { kind: query.kind } : {}) };
+    const [sources, sessions, settings, total] = await Promise.all([
+      this.prisma.listeningSource.findMany({ where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: (page - 1) * pageSize, take: pageSize }),
       this.prisma.listeningSession.findMany({ where: { userId, source: { deletedAt: null } }, include: { source: { select: { title: true, kind: true } } }, orderBy: { updatedAt: 'desc' }, take: 30 }), this.settings(),
+      this.prisma.listeningSource.count({ where }),
     ]);
-    return { sources, sessions, settings, asrAvailable: this.asr.available() };
+    return { sources, sessions, settings, asrAvailable: this.asr.available(), pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } };
   }
   async createSource(userId: number, dto: SourceDto, admin = false) {
     await this.limit(userId, 'source');
@@ -49,7 +57,7 @@ export class ListeningService {
     let videoId: string | undefined;
     try {
       if (dto.kind === 'YOUTUBE') videoId = youtubeId(dto.url);
-      else if (!/^\/api\/listening\/media\/[\w.-]+$/.test(dto.url) && !/^\/listening-demo\.wav$/.test(dto.url)) {
+      else if (!/^\/api\/listening\/media\/[\w.-]+$/.test(dto.url) && !/^\/api\/exam\/media\/[a-f0-9]{64}\.(mp3|wav|mp4|webm)$/.test(dto.url) && !/^\/listening-demo\.wav$/.test(dto.url)) {
         const url = new URL(dto.url); if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Nguồn media cần là URL HTTPS hoặc file hệ thống.');
       }
     } catch (error) { throw new BadRequestException(error instanceof Error ? error.message : 'URL không hợp lệ.'); }
@@ -59,7 +67,7 @@ export class ListeningService {
   }
   async requestTranscript(userId: number, sourceId: number, admin = false, range?: { start?: number; end?: number }) {
     const source = await this.source(userId, sourceId, admin);
-    if (!source.videoId) throw new BadRequestException('Nguồn thư viện do người biên soạn chuẩn bị lời thoại.');
+    if (!source.videoId) return this.requestImportedTranscript(userId, source);
     const settings = await this.settings();
     const start = range?.start ?? 0; const end = range?.end ?? start + settings.defaultSegmentSeconds;
     if (end <= start || end - start > settings.maxSegmentSeconds || !Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end > 86400) throw new BadRequestException('Đoạn nhận dạng không hợp lệ.');
@@ -77,15 +85,44 @@ export class ListeningService {
       // Unique cache key coalesces concurrent requests from different users.
       transcript = await this.prisma.listeningTranscript.upsert({ where: { cacheKey }, update: {}, create: { sourceId, cacheKey, version: randomUUID(), provider: 'youtube', status: 'FAILED' } });
     }
-    const claimed = await this.prisma.listeningTranscript.updateMany({ where: { id: transcript.id, status: 'FAILED', attempts: { lt: 3 } }, data: { attempts: { increment: 1 }, status: 'PENDING', error: null } });
-    if (!claimed.count) { if (transcript.attempts >= 3) throw new BadRequestException('Đã thử lấy phụ đề 3 lần. Bạn có thể nghe tự do hoặc chọn bài khác.'); return { id: transcript.id, status: 'PENDING' }; }
+    // Three failures must not permanently disable a saved lesson, including failures
+    // created before ASR was configured. Rate limits still bound repeated requests.
+    await this.prisma.listeningTranscript.updateMany({ where: { id: transcript.id, status: 'FAILED', attempts: { gte: 3 }, OR: [{ expiresAt: { lt: new Date() } }, { expiresAt: null, createdAt: { lt: new Date(Date.now() - 3600000) } }] }, data: { attempts: 0 } });
+    const claimed = await this.prisma.listeningTranscript.updateMany({ where: { id: transcript.id, status: 'FAILED', attempts: { lt: 3 } }, data: { attempts: { increment: 1 }, status: 'PENDING', error: null, expiresAt: new Date(Date.now() + 3600000) } });
+    if (!claimed.count) { if (transcript.attempts >= 3) throw new BadRequestException('Đã thử tạo lời thoại 3 lần. Hãy thử lại sau một giờ hoặc nhận dạng audio từ tab/file.'); return { id: transcript.id, status: 'PENDING' }; }
     try { await this.queue.add('fetch', { transcriptId: transcript.id, videoId: source.videoId, ttlHours: settings.transcriptTtlHours, start, end }, { jobId: `transcript-${transcript.id}`, removeOnComplete: true, removeOnFail: 100 }); }
     catch { await this.prisma.listeningTranscript.update({ where: { id: transcript.id }, data: { status: 'FAILED', error: 'Hàng đợi chưa sẵn sàng. Vui lòng thử lại.' } }); throw new BadRequestException('Hàng đợi chưa sẵn sàng.'); }
     return { id: transcript.id, status: 'PENDING' };
   }
+  private async requestImportedTranscript(userId: number, source: { id: number; url: string; ownerId: number | null }) {
+    const name = source.url.match(/^\/api\/exam\/media\/([a-f0-9]{64}\.(?:mp3|wav))$/)?.[1];
+    if (!name || source.ownerId !== null) throw new BadRequestException('Nguồn thư viện do người biên soạn chuẩn bị lời thoại.');
+    const existing = await this.prisma.listeningTranscript.findFirst({ where: { sourceId: source.id, status: { in: ['READY', 'PENDING', 'PROCESSING'] } }, orderBy: { createdAt: 'desc' } });
+    if (existing) return { id: existing.id, status: existing.status };
+    if (!this.asr.available()) throw new BadRequestException('Bộ nhận dạng audio chưa sẵn sàng. Admin có thể bổ sung lời thoại nguồn.');
+    const question = await this.prisma.question.findFirst({ where: { audioUrl: source.url }, select: { stimulus: true } });
+    const stimulus = question?.stimulus as { audioDurationSeconds?: number } | null;
+    const duration = stimulus?.audioDurationSeconds;
+    if (!duration || !Number.isFinite(duration) || duration <= 0 || duration > 300) throw new BadRequestException('Audio chưa có thời lượng đã đo hợp lệ.');
+    const original = resolve(process.env.EXAM_MEDIA_DIR || 'storage/exam', name);
+    try { if (!(await stat(original)).isFile()) throw new Error(); } catch { throw new BadRequestException('Không tìm thấy audio nguồn.'); }
+    await this.limit(userId, 'transcript');
+    const transcript = await this.prisma.listeningTranscript.upsert({ where: { cacheKey: `santa-audio:${source.id}` }, update: {}, create: { sourceId: source.id, cacheKey: `santa-audio:${source.id}`, provider: 'local-audio', version: randomUUID(), segmentStart: 0, segmentEnd: duration, status: 'FAILED' } });
+    const claimed = await this.prisma.listeningTranscript.updateMany({ where: { id: transcript.id, status: 'FAILED' }, data: { status: 'PENDING', error: null, attempts: { increment: 1 } } });
+    if (!claimed.count) return { id: transcript.id, status: transcript.status === 'READY' ? 'READY' : 'PENDING' };
+    const directory = resolve('storage/asr-input');
+    const input = resolve(directory, `${randomUUID()}.${name.split('.').pop()}`);
+    try {
+      await mkdir(directory, { recursive: true });
+      await copyFile(original, input); // The queue owns and deletes only this temporary copy.
+      await this.queue.add('audio', { transcriptId: transcript.id, ttlHours: 24 * 365, start: 0, end: duration, audioPath: input }, { jobId: `transcript-${transcript.id}`, removeOnComplete: true, removeOnFail: 100 });
+    }
+    catch { await rm(input, { force: true }); await this.prisma.listeningTranscript.update({ where: { id: transcript.id }, data: { status: 'FAILED', error: 'Hàng đợi chưa sẵn sàng.' } }); throw new BadRequestException('Hàng đợi chưa sẵn sàng.'); }
+    return { id: transcript.id, status: 'PENDING' };
+  }
   async transcriptFor(sourceId: number, videoId: string | null, range?: { start: number; end: number }) {
     const coverage = range ? { OR: [{ segmentStart: null }, { segmentStart: { lte: range.start }, segmentEnd: { gte: range.end } }] } : {};
-    const local = await this.prisma.listeningTranscript.findFirst({ where: { sourceId, provider: { in: ['uploaded-subtitles', 'user-text', 'demo', 'local-audio'] }, status: 'READY', cacheKey: null, ...coverage }, orderBy: { createdAt: 'desc' } });
+    const local = await this.prisma.listeningTranscript.findFirst({ where: { sourceId, provider: { in: ['uploaded-subtitles', 'user-text', 'demo', 'local-audio', 'santa-source-segment'] }, status: 'READY', cacheKey: null, ...coverage }, orderBy: { createdAt: 'desc' } });
     if (local) return local;
     if (!videoId) return this.prisma.listeningTranscript.findFirst({ where: { sourceId, ...coverage }, orderBy: { createdAt: 'desc' } });
     const ready = await this.prisma.listeningTranscript.findFirst({ where: { cacheKey: { startsWith: `youtube:${videoId}:en:` }, status: 'READY', ...coverage }, orderBy: { createdAt: 'desc' } });
@@ -122,9 +159,13 @@ export class ListeningService {
     return { id: transcript.id, status: 'PENDING' };
   }
   async sourceStatus(userId: number, id: number, admin = false, range?: { start: number; end: number }) {
-    const source = await this.source(userId, id, admin); const transcript = await this.transcriptFor(id, source.videoId, range);
+    const source = await this.source(userId, id, admin);
+    const practiceQuestions = await this.prisma.question.findMany({ where: { audioUrl: source.url }, select: questionSelect, orderBy: { id: 'asc' } });
+    const measured = (practiceQuestions[0]?.stimulus as { audioDurationSeconds?: number } | null)?.audioDurationSeconds;
+    const effectiveRange = range && measured && source.ownerId === null ? { start: range.start, end: Math.min(range.end, measured) } : range;
+    const transcript = await this.transcriptFor(id, source.videoId, effectiveRange);
     const duration = transcript?.status === 'READY' ? (await this.prisma.listeningUnit.aggregate({ where: { transcriptId: transcript.id }, _max: { end: true } }))._max.end : null;
-    return { source, transcript: transcript ? { id: transcript.id, status: transcript.status, error: transcript.error, attempts: transcript.attempts, version: transcript.version, provider: transcript.provider, duration, segmentStart: transcript.segmentStart, segmentEnd: transcript.segmentEnd } : null };
+    return { source, practiceQuestions, mediaDuration: measured ?? null, transcript: transcript ? { id: transcript.id, status: transcript.status, error: transcript.error, attempts: transcript.attempts, version: transcript.version, provider: transcript.provider, duration, segmentStart: transcript.segmentStart, segmentEnd: transcript.segmentEnd } : null };
   }
   async importTranscript(userId: number, id: number, dto: SubtitleDto, admin = false) {
     await this.source(userId, id, admin);
@@ -148,10 +189,15 @@ export class ListeningService {
   }
   async start(userId: number, dto: SegmentDto) {
     const source = await this.source(userId, dto.sourceId); const settings = await this.settings();
+    if (source.ownerId === null && /^\/api\/exam\/media\/[a-f0-9]{64}\.(mp3|wav)$/.test(source.url)) {
+      const question = await this.prisma.question.findFirst({ where: { audioUrl: source.url }, select: { stimulus: true } });
+      const duration = (question?.stimulus as { audioDurationSeconds?: number } | null)?.audioDurationSeconds;
+      if (duration && Number.isFinite(duration)) dto = { ...dto, end: Math.min(dto.end, duration) };
+    }
     if (dto.end <= dto.start || dto.end - dto.start > settings.maxSegmentSeconds) throw new BadRequestException(`Chọn đoạn từ 1 đến ${settings.maxSegmentSeconds} giây.`);
     await this.limit(userId, 'session', 60);
     const transcript = await this.transcriptFor(source.id, source.videoId, dto);
-    if (source.videoId && transcript?.status !== 'READY') await this.requestTranscript(userId, source.id, false, dto);
+    if (transcript?.status !== 'READY' && (source.videoId || (source.ownerId === null && /^\/api\/exam\/media\/[a-f0-9]{64}\.(mp3|wav)$/.test(source.url) && this.asr.available()))) await this.requestTranscript(userId, source.id, false, dto);
     const session = await this.prisma.listeningSession.create({ data: { userId, sourceId: source.id, transcriptId: transcript?.status === 'READY' ? transcript.id : null, start: dto.start, end: dto.end } });
     return this.session(userId, session.id);
   }
@@ -166,6 +212,14 @@ export class ListeningService {
   }
   async session(userId: number, id: number) {
     let session = await this.ownedSession(userId, id);
+    if (!session.transcriptId && session.source.ownerId === null && /^\/api\/exam\/media\/[a-f0-9]{64}\.(mp3|wav)$/.test(session.source.url)) {
+      const question = await this.prisma.question.findFirst({ where: { audioUrl: session.source.url }, select: { stimulus: true } });
+      const duration = (question?.stimulus as { audioDurationSeconds?: number } | null)?.audioDurationSeconds;
+      if (duration && duration > session.start && duration < session.end) {
+        await this.prisma.listeningSession.update({ where: { id }, data: { end: duration } });
+        session = { ...session, end: duration };
+      }
+    }
     if (!session.transcriptId) {
       const transcript = await this.transcriptFor(session.sourceId, session.source.videoId, session);
       if (transcript?.status === 'READY') { await this.prisma.listeningSession.update({ where: { id }, data: { transcriptId: transcript.id } }); session = { ...session, transcriptId: transcript.id, transcript: { provider: transcript.provider } }; }
@@ -198,6 +252,13 @@ export class ListeningService {
     const session = await this.ownedSession(userId, id); const unit = (await this.units(session))[session.currentIndex];
     if (!unit) throw new BadRequestException('Chưa có câu luyện.');
     return { hint: session.mode === 'CLOZE' ? `Chữ đầu các từ: ${cloze(unit.text, session.difficulty).hint}` : `Câu có khoảng ${unit.text.split(/\s+/).length} từ. Hãy nghe lại ở tốc độ chậm hơn.` };
+  }
+  async shadowingScript(userId: number, id: number) {
+    const session = await this.ownedSession(userId, id);
+    if (session.mode !== 'SPEAK') throw new BadRequestException('Chuyển sang Shadowing để mở lời thoại.');
+    const unit = (await this.units(session))[session.currentIndex];
+    if (!unit) throw new BadRequestException('Chưa có đoạn luyện.');
+    return { unitId: unit.id, text: unit.text, start: unit.start, end: unit.end };
   }
   async report(userId: number, sourceId: number, reason: string) {
     await this.source(userId, sourceId); await this.limit(userId, 'report', 10);

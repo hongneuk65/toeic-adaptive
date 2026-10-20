@@ -1,3 +1,5 @@
+import type { ExamStimulus } from './exam';
+
 export interface ReadingEvidence {
   start: number;
   end: number;
@@ -13,6 +15,7 @@ export interface ReadingQuestion {
   evidence?: ReadingEvidence[];
 }
 export interface ReadingVersion {
+  stimulus?: ExamStimulus | null;
   id: number;
   articleId: number;
   revision: number;

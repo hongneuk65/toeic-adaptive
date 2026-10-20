@@ -1,4 +1,9 @@
-import { useEffect, useState } from 'react';
+import './styles/study-shell.css';
+import './styles/learning-workspace.css';
+import './styles/section-experiences.css';
+import { RouteErrorBoundary } from './components/ui/RouteErrorBoundary';
+const HistoryPage = lazy(() => import('./pages/HistoryPage').then(module => ({ default: module.HistoryPage })));
+import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { useAuth } from './auth/useAuth';
@@ -6,106 +11,95 @@ import { ProtectedRoute } from './auth/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { RecommendationsPage } from './pages/RecommendationsPage';
-import { FlashcardFoldersPage } from './pages/FlashcardFoldersPage';
-import { FlashcardStudyPage } from './pages/FlashcardStudyPage';
-import { TheoryReadingPage } from './pages/TheoryReadingPage';
-import { TheoryQuizPage } from './pages/TheoryQuizPage';
-import { ExamListPage } from './pages/ExamListPage';
-import { ExamRoomPage } from './pages/ExamRoomPage';
-import { ExamReviewPage } from './pages/ExamReviewPage';
+const RecommendationsPage = lazy(() => import('./pages/RecommendationsPage').then(module => ({ default: module.RecommendationsPage })));
+const FlashcardFoldersPage = lazy(() => import('./pages/FlashcardFoldersPage').then(module => ({ default: module.FlashcardFoldersPage })));
+const FlashcardStudyPage = lazy(() => import('./pages/FlashcardStudyPage').then(module => ({ default: module.FlashcardStudyPage })));
+const TheoryReadingPage = lazy(() => import('./pages/TheoryReadingPage').then(module => ({ default: module.TheoryReadingPage })));
+const TheoryQuizPage = lazy(() => import('./pages/TheoryQuizPage').then(module => ({ default: module.TheoryQuizPage })));
+const ExamListPage = lazy(() => import('./pages/ExamListPage').then(module => ({ default: module.ExamListPage })));
+const ExamRoomPage = lazy(() => import('./pages/ExamRoomPage').then(module => ({ default: module.ExamRoomPage })));
+const ExamReviewPage = lazy(() => import('./pages/ExamReviewPage').then(module => ({ default: module.ExamReviewPage })));
 import { AiTutorFloatingButton } from './components/rag/AiTutorFloatingButton';
 import { AiTutorDrawer } from './components/rag/AiTutorDrawer';
-import { ListeningPage } from './pages/ListeningPage';
-import { ReadingPage } from './pages/ReadingPage';
+const ListeningPage = lazy(() => import('./pages/ListeningPage').then(module => ({ default: module.ListeningPage })));
+const ReadingPage = lazy(() => import('./pages/ReadingPage').then(module => ({ default: module.ReadingPage })));
+import { useInteractiveMotion } from './components/ui/useInteractiveMotion';
+import { PublicRoute } from './auth/PublicRoute';
+import { SelectionVocabulary } from './components/vocabulary/SelectionVocabulary';
 
-const navItems = [
-  { label: 'Trang chủ', path: '/dashboard' },
-  { label: 'Gợi ý', path: '/recommendations' },
-  { label: 'Flashcard', path: '/flashcards' },
-  { label: 'Lý thuyết', path: '/theory' },
-  { label: 'Listening', path: '/listening' },
-  { label: 'Reading', path: '/reading' },
-  { label: 'Thi thử', path: '/exam' },
+const AdminPage = lazy(() => import('./pages/admin/AdminPage').then(module => ({ default: module.AdminPage })));
+
+const navigation = [
+  { title: 'Luyện tập', items: [{ label: 'Reading', path: '/reading' }, { label: 'Listening', path: '/listening' }] },
+  { title: 'Ôn tập', items: [{ label: 'Lý thuyết', path: '/theory' }, { label: 'Từ vựng', path: '/flashcards' }, { label: 'Lịch sử làm bài', path: '/history' }] },
 ];
+const directLinks = [{ label: 'Trang chủ', path: '/dashboard' }, { label: 'Gợi ý học', path: '/recommendations' }, { label: 'Thi thử', path: '/exam' }];
 
-const PaperNavbar: React.FC = () => {
-  const { logout } = useAuth();
+function LearningNavigation() {
   const location = useLocation();
-
-  return (
-    <header className="sticky top-0 z-30 w-full border-b border-paper-kraft/70 bg-paper-white/95 shadow-paper-subtle backdrop-blur">
-      <div className="mx-auto flex min-h-16 w-full max-w-[1280px] items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-4">
-          <Link to="/dashboard" className="flex shrink-0 items-center gap-2 font-display text-base font-semibold tracking-tight text-ink-dark">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-coral text-xs font-bold text-white">TA</span>
-            TOEIC Adaptive
-          </Link>
-
-          <nav aria-label="Điều hướng chính" className="hidden items-center gap-1 md:flex">
-            {navItems.map((item) => {
-              const isActive = location.pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={`study-nav rounded-md px-3 py-2 text-sm font-semibold transition ${isActive
-                    ? 'bg-paper-cream text-accent-coral'
-                    : 'text-ink-medium hover:bg-paper-cream hover:text-ink-dark'
-                    }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            onClick={logout}
-            className="rounded-lg px-3 py-2 text-sm font-medium text-ink-medium transition hover:bg-paper-cream"
-          >
-            Đăng xuất
-          </button>
-        </div>
-      </div>
-      <nav aria-label="Điều hướng di động" className="flex gap-1 overflow-x-auto border-t border-paper-kraft/30 px-4 py-2 md:hidden">
-        {navItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            aria-current={location.pathname.startsWith(item.path) ? 'page' : undefined}
-            className={`study-nav shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold ${location.pathname.startsWith(item.path)
-              ? 'bg-paper-cream text-ink-dark'
-              : 'text-ink-medium'
-              }`}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-    </header>
-  );
-};
-
-const AppLayout: React.FC = () => {
-  const [tutorOpen, setTutorOpen] = useState(false);
-  const location = useLocation();
-
-  // Ẩn nút AI Tutor khi đang trong phòng thi tính giờ trực tiếp
-  const isExamRoom = /^\/exam\/\d+$/.test(location.pathname) && !location.pathname.includes('/review');
-
+  const navigationRef = useRef<HTMLDivElement>(null);
+  const current = [...directLinks, ...navigation.flatMap(group => group.items)].find(item => location.pathname.startsWith(item.path));
+  const closeNavigation = () => navigationRef.current?.querySelectorAll('details[open]').forEach(details => details.removeAttribute('open'));
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    const root = navigationRef.current;
+    root?.querySelectorAll('details[open]').forEach(details => details.removeAttribute('open'));
   }, [location.pathname]);
+  useEffect(() => {
+    const root = navigationRef.current;
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      const openDetails = (event.target as HTMLElement).closest('details[open]') || root?.querySelector('details[open]');
+      if (openDetails) {
+        event.preventDefault();
+        openDetails.removeAttribute('open');
+        openDetails.querySelector('summary')?.focus();
+      }
+    };
+    const outside = (event: MouseEvent) => {
+      if (root && !root.contains(event.target as Node)) root.querySelectorAll('details[open]').forEach(details => details.removeAttribute('open'));
+    };
+    root?.addEventListener('keydown', dismiss);
+    document.addEventListener('click', outside);
+    return () => { root?.removeEventListener('keydown', dismiss); document.removeEventListener('click', outside); };
+  }, []);
+  const link = (item: { label: string; path: string }) => <Link key={item.path} to={item.path} onClick={closeNavigation} aria-current={location.pathname.startsWith(item.path) ? 'page' : undefined} className="learning-nav-link">{item.label}</Link>;
+  return <div className="learning-navigation" ref={navigationRef}>
+    <nav className="desktop-learning-nav" aria-label="Điều hướng học tập">
+      {link(directLinks[0])}
+      {navigation.map(group => <details key={group.title} name="learning-navigation-group" className="nav-dropdown" data-active={group.items.some(item => location.pathname.startsWith(item.path)) || undefined}><summary>{group.title}</summary><div className="nav-dropdown-panel">{group.items.map(link)}</div></details>)}
+      {directLinks.slice(1).map(link)}
+    </nav>
+    <details className="mobile-learning-navigation">
+      <summary className="mobile-nav-trigger"><span>{current?.label || 'Trang chủ'}</span><span>Menu</span></summary>
+      <nav className="mobile-learning-nav" aria-label="Điều hướng học tập">
+        {link(directLinks[0])}
+        {navigation.map(group => <div key={group.title} className="mobile-nav-group"><p>{group.title}</p>{group.items.map(link)}</div>)}
+        {directLinks.slice(1).map(link)}
+      </nav>
+    </details>
+  </div>;
+}
 
+const AppNavbar = ({ focusMode }: { focusMode: boolean }) => {
+  const { logout } = useAuth();
+  return <header className="app-header">
+    <a href="#learning-main" className="skip-link">Đến nội dung học</a>
+    <div className="app-header-inner">
+      <div className="app-navigation-capsule">
+        <Link to="/dashboard" className="app-brand"><span className="app-brand-mark" aria-hidden="true">TA</span><span>TOEIC Adaptive</span></Link>
+        {!focusMode && <LearningNavigation />}
+      </div>
+      <div className="app-header-actions">
+        {!focusMode && <Link to="/recommendations" className="app-start-action">Học tiếp</Link>}
+        <button onClick={logout} className="app-account-action">Đăng xuất</button>
+      </div>
+    </div>
+  </header>;
+};
+const LearningPages = memo(function LearningPages() {
   return (
-    <div className="min-h-screen flex flex-col w-full">
-      <PaperNavbar />
-      <main key={location.pathname} className={`page-enter app-content flex-1 px-4 py-8 sm:px-6 lg:px-8 ${location.pathname === '/recommendations' ? 'app-content-wide' : ''}`}>
         <Routes>
+          <Route path="/history" element={<HistoryPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/recommendations" element={<RecommendationsPage />} />
           <Route path="/listening" element={<ListeningPage />} />
@@ -119,9 +113,35 @@ const AppLayout: React.FC = () => {
           <Route path="/exam/:attemptId/review" element={<ExamReviewPage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
-      </main>
+  );
+});
 
-      {!isExamRoom && !location.pathname.startsWith('/reading') && (
+const AppLayout: React.FC = () => {
+  const [tutorOpen, setTutorOpen] = useState(false);
+  const location = useLocation();
+  const mainRef = useRef<HTMLElement>(null);
+  const firstRoute = useRef(true);
+
+  // Ẩn nút AI Tutor khi đang trong phòng thi tính giờ trực tiếp
+  const isExamRoom = /^\/exam\/\d+$/.test(location.pathname) && !location.pathname.includes('/review');
+  const isExamWorkspace = isExamRoom || /^\/exam\/\d+\/review\/?$/.test(location.pathname);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    if (firstRoute.current) firstRoute.current = false;
+    else mainRef.current?.focus({ preventScroll: true });
+  }, [location.pathname]);
+
+  return (
+    <div data-section={location.pathname.split('/')[1]} className={`min-h-screen flex flex-col w-full ${location.pathname === '/dashboard' ? 'home-layout' : ''} ${isExamWorkspace ? 'exam-room-layout' : location.pathname !== '/dashboard' ? 'study-layout' : ''}`}>
+      <AppNavbar focusMode={isExamRoom} />
+      <div className="learning-shell">
+      <main ref={mainRef} id="learning-main" tabIndex={-1} className="app-content">
+        <RouteErrorBoundary key={location.pathname}><Suspense fallback={<p role="status" className="p-6">Đang mở trang học…</p>}><LearningPages /></Suspense></RouteErrorBoundary>
+      </main></div>
+      {!isExamRoom && <SelectionVocabulary key={location.pathname} source={location.pathname} />}
+
+      {!isExamRoom && !location.pathname.endsWith('/review') && !location.pathname.startsWith('/reading') && (
         <>
           <AiTutorFloatingButton
             isOpen={tutorOpen}
@@ -138,13 +158,17 @@ const AppLayout: React.FC = () => {
 };
 
 export default function App() {
+  useInteractiveMotion();
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Route>
           <Route element={<ProtectedRoute />}>
+            <Route path="/admin/*" element={<RouteErrorBoundary><Suspense fallback={<div className="p-8" role="status">Đang mở trang quản trị…</div>}><AdminPage /></Suspense></RouteErrorBoundary>} />
             <Route path="/*" element={<AppLayout />} />
           </Route>
         </Routes>

@@ -1,9 +1,16 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { createHash, randomUUID } from 'node:crypto';
+import { assertQuestionAnswersAccessible } from '../common/exam-answer-access';
+import { learnerExplanation } from '../common/learner-explanation';
+import { BadRequestException, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { TrainedDas3h, loadModel } from './trained-das3h';
+import { importedQuestions } from '../common/imported-questions';
+
+export interface HistoricalLearningEvent { occurredAt: string; itemDifficulty: number; }
 
 @Injectable()
-export class Das3hService {
+export class Das3hService implements OnModuleInit {
   private readonly LEARNING_RATE = 0.03;
 
   // Cửa sổ thời gian rời rạc (disjoint intervals theo ngày): [lower, upper)
@@ -29,46 +36,85 @@ export class Das3hService {
     0.08, -0.05,  // [90, 180) ngày (Win, Loss)
   ];
 
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly trained: TrainedDas3h;
+  constructor(private readonly prisma: PrismaService) { this.trained = new TrainedDas3h(prisma); }
+  onModuleInit() { loadModel(); }
+
+  getModelStatus() { return this.trained.status(); }
+
+  async getTrainedSkillScores(userId: number, skillIds: number[], now = new Date()): Promise<Map<number, number>> {
+    if (!loadModel() || !skillIds.length) return new Map();
+    const questions = await this.prisma.question.findMany({ where: { ...importedQuestions, skills: { some: { skillId: { in: skillIds } } } },
+      select: { id: true, skills: { select: { skillId: true } } } });
+    const probabilities = await this.trained.predictMany(userId, questions.map(q => q.id), now);
+    const totals = new Map<number, { sum: number; count: number }>();
+    for (const question of questions) {
+      const probability = probabilities.get(question.id);
+      if (probability === undefined) continue;
+      for (const { skillId } of question.skills) {
+        if (!skillIds.includes(skillId)) continue;
+        const total = totals.get(skillId) ?? { sum: 0, count: 0 };
+        total.sum += probability; total.count++;
+        totals.set(skillId, total);
+      }
+    }
+    return new Map([...totals].map(([id, total]) => [id, total.sum / total.count]));
+  }
 
   /**
    * Phương thức đồng bộ hóa lịch sử và kích hoạt SGD + Mastery
    */
-  async recordAndSync(userId: number, questionId: number, isCorrect: boolean, skillIds: number[], jobId?: string): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      // Serialize learning events for a user; retries roll back all partial writes.
+  async recordAndSync(userId: number, questionId: number, isCorrect: boolean, skillIds: number[], jobId?: string, historical?: HistoricalLearningEvent, transaction?: Prisma.TransactionClient): Promise<void> {
+    const record = async (tx: Prisma.TransactionClient) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(${userId}::bigint)`;
       if (jobId && await tx.processedMasteryJob.findUnique({ where: { id: jobId } })) return;
-      await this.syncRecord(tx, userId, questionId, isCorrect, [...new Set(skillIds)]);
+      await this.syncRecord(tx, userId, questionId, isCorrect, [...new Set(skillIds)], historical, jobId);
       if (jobId) await tx.processedMasteryJob.create({ data: { id: jobId } });
-    }, { timeout: 15000 });
+    };
+    if (transaction) await record(transaction);
+    else await this.prisma.$transaction(record, { timeout: 15000 });
   }
 
-  private async syncRecord(db: Prisma.TransactionClient, userId: number, questionId: number, isCorrect: boolean, skillIds: number[]) {
+  private async syncRecord(db: Prisma.TransactionClient, userId: number, questionId: number, isCorrect: boolean, skillIds: number[], historical?: HistoricalLearningEvent, eventId?: string) {
     const validUserId = Number(userId);
     const validQuestionId = Number(questionId);
 
-    // Predict BEFORE recording this answer to avoid target leakage in SGD.
-    await this.updateAbilityOnline(validUserId, validQuestionId, isCorrect, db);
+    const occurredAt = historical ? new Date(historical.occurredAt) : new Date();
+    await this.trained.recordAbility(validUserId, validQuestionId, isCorrect, occurredAt, eventId ?? randomUUID(), db);
+    if (historical) {
+      // A deleted skill cannot receive a new FK row; surviving skills retain the observation.
+      const skills = await db.skill.findMany({ where: { id: { in: skillIds } }, select: { id: true, easiness: true } });
+      skillIds = skills.map(skill => skill.id);
+      const user = await db.user.findUnique({ where: { id: validUserId }, select: { ability: true } });
+      if (!user) return; // Account deletion intentionally removes its learning data.
+      const skillRows = skills;
+      let total = 0;
+      for (const skill of skillRows) total += skill.easiness + await this.calculateHTheta(validUserId, skill.id, db, occurredAt);
+      const probability = this.sigmoid(user.ability - this.normalizeItemDifficulty(historical.itemDifficulty) + (skillRows.length ? total / skillRows.length : 0));
+      const ability = Math.max(-3.5, Math.min(3.5, user.ability + this.LEARNING_RATE * (Number(isCorrect) - probability)));
+      await db.user.update({ where: { id: validUserId }, data: { ability } });
+    } else await this.updateAbilityOnline(validUserId, validQuestionId, isCorrect, db);
     if (skillIds.length) await db.studentSkillHistory.createMany({
       data: skillIds.map((skillId) => ({
         userId: validUserId,
         questionId: validQuestionId,
         skillId: Number(skillId),
         isCorrect,
+        ...(historical ? { createdAt: occurredAt } : {}),
       })),
     });
 
-    await db.question.update({
-      where: { id: validQuestionId },
-      data: { totalAttempts: { increment: 1 }, totalCorrect: { increment: Number(isCorrect) } },
-    });
+    const counterUpdate = { where: { id: validQuestionId }, data: { totalAttempts: { increment: 1 }, totalCorrect: { increment: Number(isCorrect) } } };
+    if (historical) await db.question.updateMany(counterUpdate);
+    else await db.question.update(counterUpdate);
 
     // 3. Cập nhật điểm Mastery Score mới cho từng vi kỹ năng liên quan
     const now = new Date();
     for (const skillId of skillIds) {
       const validSkillId = Number(skillId);
       const newMasteryScore = await this.getSkillMastery(validUserId, validSkillId, db);
+      const previous = historical ? await db.userSkillMastery.findUnique({ where: { userId_skillId: { userId: validUserId, skillId: validSkillId } }, select: { lastPracticed: true } }) : null;
+      const lastPracticed = historical ? new Date(Math.max(occurredAt.getTime(), previous?.lastPracticed.getTime() ?? 0)) : now;
 
       await db.userSkillMastery.upsert({
         where: {
@@ -80,14 +126,14 @@ export class Das3hService {
         update: {
           masteryScore: newMasteryScore,
           practiceCount: { increment: 1 },
-          lastPracticed: now,
+          lastPracticed,
         },
         create: {
           userId: validUserId,
           skillId: validSkillId,
           masteryScore: newMasteryScore,
           practiceCount: 1,
-          lastPracticed: now,
+          lastPracticed,
         },
       });
     }
@@ -102,9 +148,20 @@ export class Das3hService {
     questionId: number,
     selectedAnswer: string,
     skillId?: number,
+    attemptId?: string,
   ): Promise<{ isCorrect: boolean; correctAnswer: string; explanation: string | null }> {
     const validUserId = Number(userId);
     const validQuestionId = Number(questionId);
+
+    if (attemptId) {
+      await assertQuestionAnswersAccessible(this.prisma, validUserId, [validQuestionId]);
+      const existing = await this.prisma.learningAttempt.findUnique({ where: { id: `adaptive-${validUserId}-${attemptId}` } });
+      if (existing) {
+        const hash = createHash('sha256').update(JSON.stringify([validQuestionId, selectedAnswer.trim().toUpperCase(), skillId ?? null])).digest('hex');
+        if (existing.payloadHash !== hash) throw new BadRequestException('Mã lượt luyện tập đã được dùng với đáp án khác');
+        return existing.result as { isCorrect: boolean; correctAnswer: string; explanation: string | null };
+      }
+    }
 
     const question = await this.prisma.question.findUnique({
       where: { id: validQuestionId },
@@ -124,13 +181,22 @@ export class Das3hService {
       throw new BadRequestException('Câu hỏi không thuộc kỹ năng đã chọn');
     }
 
-    await this.recordAndSync(validUserId, validQuestionId, isCorrect, skillIds);
-
-    return {
-      isCorrect,
-      correctAnswer: question.correctAnswer,
-      explanation: question.explanation,
-    };
+    await assertQuestionAnswersAccessible(this.prisma, validUserId, [validQuestionId]);
+    const result = { isCorrect, correctAnswer: question.correctAnswer, explanation: learnerExplanation(question.explanation) };
+    if (!attemptId) throw new BadRequestException('Thiếu mã lượt luyện tập');
+    const payloadHash = createHash('sha256').update(JSON.stringify([validQuestionId, selectedAnswer.trim().toUpperCase(), skillId ?? null])).digest('hex');
+    return this.prisma.$transaction(async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${validUserId}::bigint)`;
+      const id = `adaptive-${validUserId}-${attemptId}`;
+      const existing = await tx.learningAttempt.findUnique({ where: { id } });
+      if (existing) {
+        if (existing.payloadHash !== payloadHash) throw new BadRequestException('Mã lượt luyện tập đã được dùng với đáp án khác');
+        return existing.result as typeof result;
+      }
+      await this.syncRecord(tx, validUserId, validQuestionId, isCorrect, [...new Set(skillIds)], undefined, id);
+      await tx.learningAttempt.create({ data: { id, userId: validUserId, kind: 'adaptive', scopeId: validQuestionId, payloadHash, result } });
+      return result;
+    }, { timeout: 15000 });
   }
 
   /**
@@ -138,6 +204,12 @@ export class Das3hService {
    * Hỗ trợ tích hợp trung bình đa kỹ năng (Multi-skill Aggregation)
    */
   async predictProbCorrect(userId: number, questionId: number, db: Prisma.TransactionClient = this.prisma): Promise<number> {
+    const trained = (await this.trained.predictMany(userId, [questionId], new Date(), db)).get(questionId);
+    if (trained !== undefined) return trained;
+    return this.predictLegacyProbCorrect(userId, questionId, db);
+  }
+
+  private async predictLegacyProbCorrect(userId: number, questionId: number, db: Prisma.TransactionClient = this.prisma): Promise<number> {
     const user = await db.user.findUnique({
       where: { id: userId },
       select: { ability: true }, // alpha_s khởi tạo 0.0 hoặc đã cập nhật qua SGD
@@ -203,7 +275,7 @@ export class Das3hService {
     }
 
     const oldAbility = user.ability;
-    const probCorrect = await this.predictProbCorrect(userId, questionId, db);
+    const probCorrect = await this.predictLegacyProbCorrect(userId, questionId, db);
     const actual = isCorrect ? 1.0 : 0.0;
     const error = actual - probCorrect;
 
@@ -249,38 +321,52 @@ export class Das3hService {
     userId: number,
     skillId: number,
     candidates: Array<{ id: number; itemDifficulty: number }>,
-  ): Promise<Array<{ questionId: number; predictedProbability: number }>> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { ability: true },
+  ): Promise<Array<{ questionId: number; predictedProbability: number; predictionSource: string; modelVersion: string | null }>> {
+    const questionSkills = await this.prisma.question.findMany({
+      where: { id: { in: candidates.map(c => c.id) } },
+      select: { id: true, skills: { select: { skillId: true } } },
     });
-
-    const skill = await this.prisma.skill.findUnique({
-      where: { id: skillId },
-      select: { easiness: true },
+    const memberships = new Map(questionSkills.map(q => [q.id, q.skills.map(s => s.skillId)]));
+    const ids = [...new Set(questionSkills.flatMap(q => q.skills.map(s => s.skillId)))];
+    const contributions = await this.getSkillContributions(userId, ids);
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { ability: true } });
+    const trained = await this.trained.predictMany(userId, candidates.map(c => c.id));
+    const modelVersion = this.getModelStatus().version;
+    return candidates.map(c => {
+      const skills = memberships.get(c.id) ?? [skillId];
+      const average = skills.length ? skills.reduce((sum, id) => sum + (contributions.get(id) ?? 0), 0) / skills.length : 0;
+      return { questionId: c.id, predictedProbability: trained.get(c.id) ?? this.sigmoid((user?.ability ?? 0) + average - this.normalizeItemDifficulty(c.itemDifficulty)),
+        predictionSource: trained.has(c.id) ? 'trained-own-das3h' : 'legacy-heuristic', modelVersion: trained.has(c.id) ? modelVersion : null };
     });
+  }
 
-    const alpha_s = user?.ability ?? 0.0;
-    const beta_k = skill?.easiness ?? 0.0;
-    const hTheta = await this.calculateHTheta(userId, skillId);
-
-    const baseLogit = alpha_s + beta_k + hTheta;
-
-    return candidates.map((c) => {
-      const delta_j = this.normalizeItemDifficulty(c.itemDifficulty);
-      const logit = baseLogit - delta_j;
-      return {
-        questionId: c.id,
-        predictedProbability: this.sigmoid(logit),
-      };
-    });
+  /** One bounded history query and one weights query for an entire profile/pool. */
+  async getSkillContributions(userId: number, skillIds: number[], now = new Date()): Promise<Map<number, number>> {
+    if (!skillIds.length) return new Map();
+    const [skills, histories, weights] = await Promise.all([
+      this.prisma.skill.findMany({ where: { id: { in: skillIds } }, select: { id: true, easiness: true } }),
+      this.prisma.studentSkillHistory.findMany({ where: { userId, skillId: { in: skillIds }, createdAt: { gte: new Date(now.getTime() - 180 * 86400000), lte: now } }, select: { skillId: true, isCorrect: true, createdAt: true } }),
+      this.prisma.das3hWeights.findMany({ where: { skillId: { in: skillIds } }, select: { skillId: true, theta: true } }),
+    ]);
+    const counts = new Map(skillIds.map(id => [id, Array<number>(10).fill(0)]));
+    for (const history of histories) {
+      const days = (now.getTime() - history.createdAt.getTime()) / 86400000;
+      const window = this.TIME_INTERVALS.findIndex(([lower, upper]) => days >= lower && days < upper);
+      if (window >= 0) counts.get(history.skillId)![window * 2 + Number(!history.isCorrect)]++;
+    }
+    const weightMap = new Map(weights.map(w => [w.skillId, w.theta]));
+    return new Map(skills.map(skill => {
+      const stored = weightMap.get(skill.id);
+      const theta = stored?.length === 10 ? stored : this.DEFAULT_THETA;
+      const contribution = counts.get(skill.id)!.reduce((sum, count, i) => sum + Math.log1p(count) * theta[i], skill.easiness);
+      return [skill.id, contribution];
+    }));
   }
 
   /**
    * Tính toán hàm lịch sử tích lũy h_theta với các cửa sổ thời gian rời rạc (Disjoint Windows)
    */
-  async calculateHTheta(userId: number, skillId: number, db: Prisma.TransactionClient = this.prisma): Promise<number> {
-    const now = new Date();
+  async calculateHTheta(userId: number, skillId: number, db: Prisma.TransactionClient = this.prisma, now = new Date()): Promise<number> {
 
     const history = await db.studentSkillHistory.findMany({
       where: { userId, skillId, createdAt: { gte: new Date(now.getTime() - 180 * 86400000), lte: now } },

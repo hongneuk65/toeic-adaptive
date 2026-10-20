@@ -1,8 +1,13 @@
+import { createHash } from 'node:crypto';
+import { assertQuestionAnswersAccessible } from '../common/exam-answer-access';
+import { learnerExplanation } from '../common/learner-explanation';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MasteryQueueService } from '../queue/mastery-queue.service'; // Ngày 18: Import Queue
 import { SubmitQuizDto } from './dto/submit-quiz.dto';
 import { questionSelect } from '../common/question-select';
+import { importedQuestions } from '../common/imported-questions';
+import { topicForLesson } from '../mastery/learning-topics';
 
 @Injectable()
 export class TheoryService {
@@ -10,6 +15,14 @@ export class TheoryService {
     private readonly prisma: PrismaService,
     private readonly masteryQueueService: MasteryQueueService, // Ngày 18: Inject Queue
   ) {}
+
+  async getCatalog() {
+    const lessons = await this.prisma.theoryLesson.findMany({
+      select: { id: true, title: true, part: true, skillId: true, skill: { select: { code: true, name: true, category: true } } },
+      orderBy: [{ part: 'asc' }, { id: 'asc' }],
+    });
+    return lessons.map(lesson => ({ ...lesson, topic: topicForLesson(lesson) }));
+  }
 
   // 1. Lấy danh sách bài học theo Part (chỉ lấy thông tin cơ bản, không load chi tiết nặng)
   async getLessonsByPart(part: number) {
@@ -45,6 +58,7 @@ export class TheoryService {
     // Lấy tối đa 5 câu hỏi thuộc skill của bài học này (Quan hệ chuẩn xác theo theory.docx)
     return this.prisma.question.findMany({
       where: {
+        ...importedQuestions,
         skills: {
           some: { skillId: lesson.skillId },
         },
@@ -57,6 +71,15 @@ export class TheoryService {
 
   // 4. Chấm điểm bài quiz (Chống N+1 query bằng "id: { in: [...] }")
   async submitQuiz(lessonId: number, dto: SubmitQuizDto, userId?: number) {
+    const payloadHash = createHash('sha256').update(JSON.stringify([...dto.answers].sort((a, b) => a.questionId - b.questionId).map(a => ({ questionId: a.questionId, selectedAnswer: a.selectedAnswer })))).digest('hex');
+    if (userId && dto.attemptId) {
+      await assertQuestionAnswersAccessible(this.prisma, userId, dto.answers.map(a => a.questionId));
+      const existing = await this.prisma.learningAttempt.findUnique({ where: { id: `theory-${userId}-${dto.attemptId}` } });
+      if (existing) {
+        if (existing.scopeId !== lessonId || existing.payloadHash !== payloadHash) throw new BadRequestException('Mã lượt làm bài đã được dùng với nội dung khác');
+        return existing.result as { totalQuestions: number; correctCount: number; scorePercentage: number; details: { questionId: number; selectedAnswer: string; correctAnswer: string; isCorrect: boolean; explanation: string | null }[] };
+      }
+    }
     const quiz = await this.getLessonQuiz(lessonId);
     const questionIds = dto.answers.map((a) => a.questionId);
     const allowedIds = new Set(quiz.map((q) => q.id));
@@ -73,6 +96,7 @@ export class TheoryService {
       select: {
         id: true,
         correctAnswer: true,
+        itemDifficulty: true,
         explanation: true,
         skills: {
           select: {
@@ -99,22 +123,30 @@ export class TheoryService {
         selectedAnswer: ans.selectedAnswer,
         correctAnswer: q.correctAnswer,
         isCorrect,
-        explanation: q.explanation,
+        explanation: learnerExplanation(q.explanation),
       };
     });
 
-    if (userId) {
-      await this.masteryQueueService.enqueueBulkMasteryUpdate(details.map((answer) => ({
-        userId, questionId: answer.questionId, isCorrect: answer.isCorrect,
-        skillIds: questionMap.get(answer.questionId)!.skills.map((s) => s.skillId),
-      })));
-    }
-
-    return {
-      totalQuestions: dto.answers.length,
-      correctCount,
-      scorePercentage: Math.round((correctCount / dto.answers.length) * 100), // Khôi phục scorePercentage nguyên bản
-      details,
+    if (userId) await assertQuestionAnswersAccessible(this.prisma, userId, questionIds);
+    const result = {
+      totalQuestions: dto.answers.length, correctCount,
+      scorePercentage: Math.round((correctCount / dto.answers.length) * 100), details,
     };
+    if (!userId || !dto.attemptId) throw new BadRequestException('Thiếu mã lượt làm bài');
+    return this.prisma.$transaction(async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${userId}::bigint)`;
+      const id = `theory-${userId}-${dto.attemptId}`;
+      const existing = await tx.learningAttempt.findUnique({ where: { id } });
+      if (existing) {
+        if (existing.scopeId !== lessonId || existing.payloadHash !== payloadHash) throw new BadRequestException('Mã lượt làm bài đã được dùng với nội dung khác');
+        return existing.result as typeof result;
+      }
+      await tx.learningAttempt.create({ data: { id, userId, kind: 'theory', scopeId: lessonId, payloadHash, result } });
+      await tx.masteryOutbox.createMany({ data: details.map(answer => ({
+        id: `${id}-${answer.questionId}`,
+        payload: { userId, questionId: answer.questionId, isCorrect: answer.isCorrect, occurredAt: new Date().toISOString(), itemDifficulty: questionMap.get(answer.questionId)!.itemDifficulty, skillIds: questionMap.get(answer.questionId)!.skills.map(s => s.skillId) },
+      })) });
+      return result;
+    });
   }
 }

@@ -22,6 +22,22 @@ Chỉ frontend mở cổng công khai. DB/Redis bind localhost để phát tri�
 
 ## Deploy không dùng Docker
 
+### Frontend trên Vercel, backend riêng
+
+Với Railway, dùng file `railway.json` ở gốc repository: giữ Root Directory là gốc để Dockerfile copy được `backend/`. File đã đặt Dockerfile, migration trước deploy, start command và healthcheck. Chỉ gắn cấu hình này với service backend, không dùng cho PostgreSQL/Redis.
+
+Tạo PostgreSQL và Redis cùng project. Sao chép mẫu `docs/railway-variables.env.example` vào Variables của backend, thay JWT_SECRET và FRONTEND_URL; dùng Add Reference nếu tên dịch vụ khác `Postgres`/`Redis`. Các biến REDIS_USERNAME và REDIS_PASSWORD được hỗ trợ cho Redis có xác thực. Mount Volume tại `/app/storage`, Generate Domain cổng 3000. `LISTENING_ASR_ENABLED=false` cho bản demo không có model ASR; các chức năng cần model sẽ chưa hoạt động. Không seed tự động mỗi lần deploy.
+
+Sau khi backend `/health/ready` trả `{"status":"ok"}`, dùng Railway SSH vào đúng service backend để chạy một lần `npm run seed:demo`, `npm run seed:reading`, `npm run seed:listening` trên database demo mới. Sau đó tạo tài khoản qua giao diện đăng ký. Các lệnh seed có thể thêm bản ghi khi chạy lại.
+
+Import repository vào Vercel, đặt **Root Directory** là `frontend`, framework Vite. File `frontend/vercel.json` cấu hình build và SPA fallback để mở trực tiếp `/reading`, `/dashboard` hoặc tải lại trang không bị 404. `/api` không được fallback thành HTML.
+
+Trước khi deploy, đặt biến môi trường Vercel `VITE_API_URL=https://<backend-host>` (không thêm `/api` vì NestJS hiện không có global prefix). Đặt `FRONTEND_URL=https://<ten-du-an>.vercel.app` ở backend cho CORS. Sau khi thay `VITE_API_URL`, redeploy frontend vì Vite nhúng giá trị lúc build. Dùng domain production ổn định khi gửi cho giảng viên; preview domain khác cần cấu hình CORS tương ứng.
+
+Backend hiện cần PostgreSQL, Redis, worker BullMQ chạy liên tục và vùng lưu trữ Listening. Triển khai backend trên dịch vụ container/VPS phù hợp với các thành phần này, dùng cấu hình Docker hiện có hoặc quy trình bên dưới. Không đưa `.env`, database local hay khóa AI vào frontend. Chạy migration trước khi khởi động API; chỉ seed nội dung một lần trên database demo mới.
+
+Xác minh trước khi gửi link: backend `/health/ready` trả thành công; đăng ký/đăng nhập trên domain Vercel; tải dữ liệu Reading/Listening; mở trực tiếp một route rồi tải lại trang. Kiểm tra deployment protection cho phép giảng viên truy cập domain được gửi.
+
 Chạy `npm run setup`, `npm run build`; đặt biến môi trường backend, chạy migration trong thư mục backend rồi `npm run start:prod --prefix backend`. Phục vụ `frontend/dist` bằng web server có SPA fallback và proxy `/api/` đến backend (bỏ tiền tố `/api`). Nếu API ở domain khác, đặt VITE_API_URL trước khi build frontend và FRONTEND_URL tương ứng cho CORS.
 
 Backend đọc `.env` từ working directory hoặc `backend/.env`; production container nhận biến môi trường từ Compose. Không đưa secret vào frontend: biến VITE_* được nhúng vào bundle công khai.

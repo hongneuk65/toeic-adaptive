@@ -31,7 +31,9 @@ npm run infra:up
 npm run db:migrate
 ```
 
-Nếu đã có `.env`, giữ cấu hình hiện tại. Sửa thông tin DB và JWT trước khi dùng; mật khẩu DB trong hai file phải khớp. Chạy hai terminal:
+Hạ tầng local của workspace dùng lại hai container `toeic-postgres` (5432) và `toeic-redis` (6379). `infra:up` chỉ khởi động container có sẵn, không tạo container hoặc volume mới; nếu thiếu container, lệnh sẽ báo lỗi. Compose dành cho triển khai riêng, không chạy song song với hạ tầng local trên cùng cổng.
+
+Nếu đã có `.env`, giữ cấu hình hiện tại. `backend/.env` cần trỏ đúng database và thông tin đăng nhập của PostgreSQL hiện có. Chạy hai terminal:
 
 ```powershell
 npm run dev:backend
@@ -53,6 +55,8 @@ docker compose --env-file .env.example config --quiet
 ```
 
 Xem [hướng dẫn deploy](docs/deployment.md), [kiến trúc](docs/architecture.md), [kết quả kiểm tra trước đây](docs/verification.md) và [RAG](docs/rag-performance.md).
+
+Bản web [TOEIC Compass](https://toeic-compass.up.railway.app) phát hành từ nhánh `main` của GitHub qua Railway, sau khi CI đạt. Chỉnh sửa hoặc commit ở máy chưa cập nhật web; cần push lên `main`. Cấu hình bản production và dữ liệu thư viện được mô tả trong [hướng dẫn production](docs/production-toeic-compass.md). Key và dữ liệu người học chỉ lưu phía server.
 
 
 ## Reading

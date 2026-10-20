@@ -64,7 +64,7 @@ async function testFreshInstall() {
   for (let i = 0; i < 30; i++) {
     questions.push(await db.question.create({ data: {
       part: 5, content: `Test ${i}`, optionA: 'a', optionB: 'b', optionC: 'c', optionD: 'd',
-      correctAnswer: 'A', itemDifficulty: 0, skills: { create: { skillId: skill.id } },
+      correctAnswer: 'A', explanation: '[santa-ednet:integration] Frozen explanation', itemDifficulty: 0, skills: { create: { skillId: skill.id } },
     } }));
   }
   const queued = [];
@@ -78,16 +78,17 @@ async function testFreshInstall() {
   await assert.rejects(exams.getExam(user.id + 1, session.attemptId));
   const answers = [{ questionId: questions[0].id, selectedAnswer: 'A' }];
   const submissions = await Promise.allSettled([1, 2].map(() => exams.submitExam(user.id, { attemptId: session.attemptId, answers })));
-  assert.equal(submissions.filter((r) => r.status === 'fulfilled').length, 1);
+  assert.equal(submissions.filter((r) => r.status === 'fulfilled').length, 2);
+  assert.deepEqual(submissions[0].value, submissions[1].value);
   const review = await exams.getReview(user.id, session.attemptId);
   assert.equal(review.answers.length, 30);
   assert.equal(review.answers.filter((a) => a.selectedAnswer === '').length, 29);
   assert.equal(review.totalScore, 17);
-  assert.equal(queued.length, 1);
+  assert.equal(await db.masteryOutbox.count(), 1);
 
   const blank = await exams.startExam(user.id, { examType: 'PART_5' });
   assert.equal((await exams.submitExam(user.id, { attemptId: blank.attemptId, answers: [] })).totalScore, 0);
-  assert.equal(queued.length, 1);
+  assert.equal(await db.masteryOutbox.count(), 1);
 
   const rollback = await exams.startExam(user.id, { examType: 'PART_5' });
   const failingExams = new ExamService({
@@ -100,7 +101,9 @@ async function testFreshInstall() {
   await assert.rejects(failingExams.submitExam(user.id, { attemptId: rollback.attemptId, answers }), /forced rollback/);
   assert.equal((await db.examAttempt.findUnique({ where: { id: rollback.attemptId } })).submittedAt, null);
   assert.equal(await db.examAnswer.count({ where: { attemptId: rollback.attemptId } }), 0);
-  assert.equal(queued.length, 1);
+  assert.equal(await db.masteryOutbox.count(), 1);
+
+  await testExamReliability(db, user, questions, exams);
 
   const das3h = new Das3hService(db);
   await Promise.all([1, 2].map(() => das3h.recordAndSync(user.id, questions[0].id, true, [skill.id], 'retry-test')));
@@ -118,6 +121,50 @@ async function testFreshInstall() {
   assert.equal((await db.userSkillMastery.findFirst()).practiceCount, 1);
   await testUserSerialization(db, skill.id, questions[2].id, questions[3].id);
   console.log('PASS: fresh migration chain, exam resume/concurrency/blank/review/rollback, DAS3H retry/rollback');
+}
+
+async function testExamReliability(db, user, questions, exams) {
+  const { MasteryOutboxService } = require('../dist/queue/mastery-outbox.service');
+  const session = await exams.startExam(user.id, {examType: 'PART_5'});
+  const answer = {questionId: questions[4].id, selectedAnswer: 'A'};
+  const saved = await exams.saveDraft(user.id, session.attemptId, {revision: 1, answers: [answer]});
+  assert.equal(saved.draftRevision, 1);
+  await assert.rejects(exams.saveDraft(user.id, session.attemptId, {revision: 1, answers: []}), /Bản nháp/);
+  assert.deepEqual((await exams.getExam(user.id, session.attemptId)).draftAnswers, [answer]);
+  await db.question.update({where: {id: answer.questionId}, data: {correctAnswer: 'B', content: 'edited after start'}});
+  const frozen = (await exams.getExam(user.id, session.attemptId)).questions.find(q => q.id === answer.questionId);
+  assert.notEqual(frozen.content, 'edited after start');
+  assert.equal('correctAnswer' in frozen, false);
+  await db.examAttempt.update({where: {id: session.attemptId}, data: {deadlineAt: new Date(0)}});
+  await assert.rejects(exams.saveDraft(user.id, session.attemptId, {revision: 2, answers: []}), /hết thời gian/);
+  const result = await exams.submitExam(user.id, {attemptId: session.attemptId, answers: [{questionId: questions[5].id, selectedAnswer: 'A'}]});
+  assert.equal(result.totalCorrect, 1, 'late edits ignored; frozen A and saved draft are used');
+  assert.deepEqual(await exams.submitExam(user.id, {attemptId: session.attemptId, answers: []}), result);
+  assert.ok((await exams.getExam(user.id, session.attemptId)).submittedAt);
+  // Simulate unavailable learning worker; durable events must remain pending.
+  const worker = new MasteryOutboxService(db, {recordAndSync: async () => {throw new Error('offline');}});
+  await worker.flush();
+  const pending = await db.masteryOutbox.findMany({orderBy: [{createdAt: 'asc'}, {id: 'asc'}]});
+  assert.ok(pending.every(event => !event.processedAt));
+  assert.equal(pending[0].attempts, 1, 'the earliest failed event enters backoff');
+  assert.ok(pending.slice(1).every(event => event.attempts === 0), 'later observations wait behind the failed event');
+  await worker.flush();
+  assert.equal((await db.masteryOutbox.findUnique({where: {id: pending[0].id}})).attempts, 1, 'backoff prevents immediate retry');
+  let deliveries = 0;
+  const deliveredIds = new Set();
+  const reliable = new MasteryOutboxService(db, {recordAndSync: async (...args) => {deliveredIds.add(args[4]); deliveries++;}});
+  await db.masteryOutbox.updateMany({data: {nextAttemptAt: new Date(0)}});
+  await reliable.flush();
+  await reliable.flush();
+  assert.equal(deliveries, pending.length);
+  assert.equal(deliveredIds.size, pending.length);
+  assert.equal(await db.masteryOutbox.count({where: {processedAt: null}}), 0);
+  // Deleting the mutable bank row cannot cascade away exam results or frozen review.
+  await db.question.delete({where: {id: answer.questionId}});
+  const review = await exams.getReview(user.id, session.attemptId);
+  assert.equal(review.answers.find(a => a.questionId === answer.questionId).question.correctAnswer, 'A');
+  assert.equal(review.answers.length, 30);
+  console.log('PASS: frozen content/deletion, authoritative deadline, draft revision, idempotent submit, durable retry outbox');
 }
 
 async function within(promise, message) {
@@ -203,7 +250,7 @@ async function testExistingRagTables() {
   await db.aiChatMessage.create({ data: { userId: user.id, role: 'user', content: 'keep chat' } });
   const q = await db.question.create({ data: {
     part: 5, content: 'legacy', optionA: 'a', optionB: 'b', optionC: 'c', optionD: 'd', correctAnswer: 'A', itemDifficulty: 0,
-  } });
+  }, select: {id: true} });
   await db.$executeRaw`INSERT INTO "ExamAttempt" ("userId", "examType", "submittedAt", "updatedAt") VALUES (${user.id}, 'PART_5', NOW(), NOW()), (${user.id}, 'PART_5', NULL, NOW())`;
   await db.$executeRaw`INSERT INTO "ExamAnswer" ("attemptId", "questionId", "selectedAnswer", "isCorrect") SELECT "id", ${q.id}, 'A', true FROM "ExamAttempt"`;
   await applySql(db, sql);

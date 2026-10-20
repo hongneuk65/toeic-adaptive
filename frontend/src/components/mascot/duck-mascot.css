@@ -1,0 +1,10 @@
+.duck-mascot { display:block; width:100%; height:auto; overflow:visible; }
+.astronaut-duck-head { transform-origin: 120px 135px; animation: astronaut-head-sway 5s ease-in-out infinite; }
+@keyframes astronaut-head-sway { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(4deg); } }
+@media(prefers-reduced-motion:reduce) { .astronaut-duck-head { animation:none; } }
+.duck-mascot-wing { transform-origin:165px 169px; }
+.duck-mascot--hero { animation:duck-entrance 600ms cubic-bezier(.2,.75,.3,1) both; }
+@keyframes duck-entrance { from { opacity:0; transform:translateY(12px) rotate(-3deg); } to { opacity:1; transform:none; } }
+@keyframes duck-wave { 35% { transform:rotate(-16deg); } 70% { transform:rotate(6deg); } }
+@media(hover:hover) and (pointer:fine) { .duck-mascot--hero:hover .duck-mascot-wing,.duck-mascot--interactive:hover .duck-mascot-wing { animation:duck-wave 500ms ease-out; } }
+@media(prefers-reduced-motion:reduce) { .duck-mascot,.duck-mascot-wing { animation:none!important; transform:none!important; } }

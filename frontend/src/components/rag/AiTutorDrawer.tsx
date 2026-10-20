@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api, apiStream } from '../../lib/api';
 import { readJsonSse } from '../../lib/sse';
 import { AiMarkdown } from './AiMarkdown';
+import { DuckMascot } from '../mascot/DuckMascot';
+import './tutor-duck.css';
 import type { ChatMessage } from '../../types/rag';
+import { useDialogFocus } from '../../hooks/useDialogFocus';
 
 const DEFAULT_DRAWER_WIDTH = 720;
 const MIN_DRAWER_WIDTH = 380;
@@ -23,6 +26,8 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
   initialSkillCode,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const dialog = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialog, isOpen, onClose);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -216,7 +221,8 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
 
   return (
     <div
-      className="tutor-enter fixed inset-y-0 right-0 z-50 w-full sm:w-[var(--drawer-width)] sm:max-w-[50vw] bg-paper-white border-l-2 border-paper-kraft shadow-paper-heavy flex flex-col font-body text-base"
+      ref={dialog} role="dialog" aria-modal="true" aria-label="Gia sư AI" tabIndex={-1}
+      className="tutor-enter fixed inset-y-0 right-0 z-50 w-full sm:w-[var(--drawer-width)] sm:max-w-[70vw] bg-paper-white border-l border-paper-kraft flex flex-col font-body text-base"
       style={{ '--drawer-width': `${drawerWidth}px` } as React.CSSProperties}
     >
       {/* Tay nắm kéo rộng/hẹp panel. Trên mobile panel đã full-width nên không cần kéo. */}
@@ -239,17 +245,12 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
       </div>
 
       {/* Header */}
-      <div className="p-4 bg-paper-cream border-b border-paper-kraft flex items-center justify-between">
+      <div className="tutor-duck-header p-4 border-b border-paper-kraft flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded bg-slate-900 text-white flex items-center justify-center font-mono font-bold text-xs">
-            AI
-          </div>
-          <div>
-            <h3 className="font-hand text-xl font-bold text-ink-dark">Trợ Lý AI Tutor</h3>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="font-mono text-[10px] text-ink-light">Kho Tri Thức RAG</span>
-            </div>
+          <span className="tutor-duck-header-avatar"><DuckMascot /></span>
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold text-ink-dark">Gia sư AI</h3>
+            <p className="text-xs text-ink-medium">Hỏi đáp và giải thích bài học</p>
           </div>
         </div>
 
@@ -295,8 +296,9 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
         )}
 
         {!loadingHistory && messages.length === 0 && (
-          <div className="text-center py-6 space-y-3">
-            <p className="font-hand text-lg text-ink-medium">
+          <div className="tutor-duck-intro text-center py-6 space-y-3">
+            <DuckMascot className="tutor-duck-intro-avatar" />
+            <p className="text-base leading-6 text-ink-medium">
               Chào bạn! Hãy hỏi mình bất kỳ thắc mắc nào về TOEIC nhé!
             </p>
             <div className="flex flex-col gap-1.5 pt-2">
@@ -331,8 +333,9 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
                   <span role="status" className="ai-thinking text-ink-light">Đang suy nghĩ<span> · · ·</span></span>
               )}
             </div>
-            <span className="font-mono text-xs text-ink-light mt-0.5 px-1">
-              {m.role === 'user' ? 'Bạn' : 'AI Tutor'}
+            <span className="tutor-duck-author text-xs text-ink-medium mt-0.5 px-1">
+              {m.role !== 'user' && <DuckMascot className="tutor-duck-message-avatar" />}
+              {m.role === 'user' ? 'Bạn' : 'Gia sư AI'}
             </span>
           </div>
         ))}

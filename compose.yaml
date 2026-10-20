@@ -41,6 +41,7 @@ services:
     volumes: ["listening_media:/app/storage/listening", "listening_models:/app/storage/models", "listening_asr_input:/app/storage/asr-input"]
     environment:
       NODE_ENV: production
+      TRUST_PROXY: '1'
       DATABASE_URL: postgresql://${POSTGRES_USER:-toeic}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-toeic}?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379

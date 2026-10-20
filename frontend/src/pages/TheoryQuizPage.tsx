@@ -1,16 +1,14 @@
+import '../styles/prep-knowledge.css';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, getErrorMessage } from '../lib/api';
 import { useAsyncResource } from '../hooks/useAsyncResource';
+import { PageHeader } from '../components/ui/PageHeader';
+import { ExamStimulus } from '../components/exam/ExamStimulus';
+import type { ExamQuestion } from '../types/exam';
+import '../styles/exam-room.css';
 
-interface Question {
-    id: number;
-    content: string;
-    optionA: string;
-    optionB: string;
-    optionC: string;
-    optionD: string;
-}
+type Question = ExamQuestion;
 
 interface QuizResult {
     totalQuestions: number;
@@ -39,12 +37,16 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
     const [answers, setAnswers] = useState<Record<number, string>>({});
     const [result, setResult] = useState<QuizResult | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
+    const [attemptId] = useState(() => crypto.randomUUID());
+    const submittedAnswers = useRef<{ questionId: number; selectedAnswer: string }[] | null>(null);
     const busy = useRef(false);
     const pendingSubmit = useRef<AbortController | null>(null);
     useEffect(() => () => pendingSubmit.current?.abort(), []);
 
     const handleSelect = (qId: number, opt: string) => {
-        if (result || busy.current) return;
+        if (result || busy.current || submittedAnswers.current) return;
+        setSubmitError('');
         setAnswers((prev) => ({ ...prev, [qId]: opt }));
     };
 
@@ -56,23 +58,25 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
         }));
 
         if (list.length < questions.length) {
-            alert('Vui lòng chọn đáp án cho tất cả câu hỏi trước khi nộp bài!');
+            setSubmitError('Chọn đáp án cho các câu còn lại rồi nộp bài.');
             return;
         }
 
+        submittedAnswers.current ??= list;
         busy.current = true;
         const controller = new AbortController();
         pendingSubmit.current = controller;
         setSubmitting(true);
+        setSubmitError('');
         try {
             const res = await api<QuizResult>(`/theory/${lessonId}/quiz/submit`, {
                 method: 'POST',
                 signal: controller.signal,
-                data: { answers: list },
+                data: { answers: submittedAnswers.current, attemptId },
             });
             if (!controller.signal.aborted) setResult(res);
         } catch (err) {
-            if (!controller.signal.aborted) alert(getErrorMessage(err, 'Lỗi khi nộp bài'));
+            if (!controller.signal.aborted) setSubmitError(getErrorMessage(err, 'Chưa nộp được bài. Hãy thử lại.'));
         } finally {
             busy.current = false;
             pendingSubmit.current = null;
@@ -81,44 +85,40 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
     };
 
     return (
-        <div className="w-full space-y-6">
-            {error && <p role="alert" className="text-red-700">{error} <button onClick={reload}>Thử lại</button></p>}
-            {/* Header thanh điều hướng phòng thi */}
-            <div className="bg-white p-4 border border-slate-200 rounded flex justify-between items-center shadow-sm">
-                <button
-                    onClick={() => navigate('/theory')}
-                    className="font-hand text-lg font-bold text-slate-700 hover:text-accent-coral transition"
-                >
-                    Quay lại đọc lý thuyết
-                </button>
-                <h1 className="font-body font-bold text-lg text-slate-800">
-                    Mini-quiz Luyện Tập Củng Cố
-                </h1>
-                {result && (
-                    <span className="font-body font-bold text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded">
-                        Điểm: {result.scorePercentage}% ({result.correctCount}/{result.totalQuestions})
-                    </span>
-                )}
-            </div>
+        <div className="page-stack prep-knowledge-page prep-quiz-page mx-auto w-full max-w-3xl">
+            {submitError && <p role="alert" className="status-message text-rose-800">{submitError}</p>}
+            {error && <p role="alert" className="status-message">{error} <button className="text-action" onClick={reload}>Thử lại</button></p>}
+            <PageHeader variant="compact" title="Quiz củng cố" description={result ? 'Xem lại đáp án và giải thích trước khi học tiếp.' : 'Chọn một đáp án cho mỗi câu rồi nộp bài.'} actions={<button onClick={() => navigate(`/theory?lesson=${lessonId}`)} className="secondary-button">Đọc lại lý thuyết</button>} />
+            {result ? <section role="status" className="prep-quiz-recap flex flex-wrap items-center justify-between gap-4">
+                <div><h2 className="section-title">Đúng {result.correctCount} / {result.totalQuestions} câu</h2><p className="mt-1 text-sm text-ink-medium">Kết quả: {result.scorePercentage}% · đáp án đúng được đánh dấu bên dưới.</p></div>
+                <button className="primary-button" onClick={() => navigate('/recommendations')}>Chọn bài luyện tiếp</button>
+            </section> : !loading && !error && questions.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 border-b border-paper-kraft pb-4"><h2 className="section-title">Câu hỏi</h2><p role="status" className="text-sm text-ink-medium">Đã trả lời {Object.keys(answers).length} / {questions.length} câu</p></div>}
 
             {loading ? (
-                <div className="bg-white p-8 text-center text-slate-400 font-body">Đang tải đề thi...</div>
-            ) : questions.length === 0 ? (
+                <div role="status" className="learning-surface text-sm text-ink-medium">Đang tải câu hỏi…</div>
+            ) : error ? null : questions.length === 0 ? (
                 <div className="bg-white p-8 text-center text-slate-500 font-body">Chưa có câu hỏi cho bài này.</div>
             ) : (
-                <div className="space-y-6">
+                <div className="prep-quiz-sheet space-y-6 rounded-xl bg-paper-white p-5 sm:p-8">
                     {questions.map((q, idx) => {
                         const detail = result?.details.find((d) => d.questionId === q.id);
                         return (
-                            <div key={q.id} className="bg-white p-6 rounded border border-slate-200 shadow-sm space-y-4">
-                                <p className="font-body font-bold text-slate-900 text-base leading-snug">
+                            <fieldset key={q.id} disabled={submitting || !!result} className="min-w-0 border-0 border-b border-paper-kraft/60 pb-6 space-y-4">
+                                <legend className="font-body font-semibold text-ink-dark text-base leading-relaxed pr-2">
                                     <span className="text-blue-700 mr-2">Câu {idx + 1}:</span>
                                     {q.content}
-                                </p>
+                                </legend>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {Boolean(q.audioUrl || q.imageUrl || q.passage || q.stimulus?.documents?.length) && <div className="space-y-4 rounded-lg border border-paper-kraft bg-paper-cream p-4">
+                                    {q.audioUrl && <audio controls preload="none" src={q.audioUrl} className="w-full" aria-label={`Audio câu ${idx + 1}`} />}
+                                    {Boolean(q.imageUrl || q.passage || q.stimulus?.documents?.length) && <ExamStimulus question={q} blankNumbers={{}} />}
+                                </div>}
+
+                                <div className="grid grid-cols-1 gap-2">
                                     {(['A', 'B', 'C', 'D'] as const).map((opt) => {
+                                        if (q.part === 2 && opt === 'D') return null;
                                         const optText = q[`option${opt}` as keyof Question];
+                                        if (!(q.part <= 2) && (typeof optText !== 'string' || !optText.trim())) return null;
                                         const isSelected = answers[q.id] === opt;
 
                                         let btnClass = 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50';
@@ -133,25 +133,21 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
                                         }
 
                                         return (
-                                            <button
-                                                key={opt}
-                                                onClick={() => handleSelect(q.id, opt)}
-                                                className={`p-3 text-left font-body text-sm border rounded transition flex items-start gap-2 ${btnClass}`}
-                                            >
-                                                <span className="font-bold">{opt}.</span>
-                                                <span>{optText}</span>
-                                            </button>
+                                            <label key={opt} className={`min-h-12 p-3 text-left font-body text-sm border rounded-lg transition-colors flex items-start gap-3 cursor-pointer has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-slate-900 has-[:focus-visible]:ring-offset-2 ${btnClass}`}>
+                                                <input type="radio" name={`question-${q.id}`} value={opt} checked={isSelected} onChange={() => handleSelect(q.id, opt)} className="mt-0.5 shrink-0 accent-slate-900" />
+                                                <span className="min-w-0 break-words"><strong>{opt}.</strong> {!(q.part <= 2) && typeof optText === 'string' ? optText : ''}{detail?.correctAnswer === opt && <span className="block mt-1 text-xs font-semibold">Đáp án đúng</span>}{detail && isSelected && !detail.isCorrect && <span className="block mt-1 text-xs font-semibold">Bạn đã chọn</span>}</span>
+                                            </label>
                                         );
                                     })}
                                 </div>
 
                                 {detail && detail.explanation && (
-                                    <div className="font-body text-sm text-slate-700 bg-slate-50 p-3 rounded border border-slate-200">
+                                    <div className="border-l-2 border-accent-sage pl-4 text-sm leading-6 text-ink-medium">
                                         <span className="font-bold text-blue-700">Giải thích: </span>
                                         {detail.explanation}
                                     </div>
                                 )}
-                            </div>
+                            </fieldset>
                         );
                     })}
 
@@ -159,9 +155,9 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
                         <button
                             onClick={handleSubmit}
                             disabled={submitting}
-                            className="w-full py-3.5 bg-blue-700 hover:bg-blue-800 text-white font-body text-base font-bold rounded shadow transition"
+                            className="primary-button w-full sm:w-auto"
                         >
-                            Nộp bài Mini-quiz
+                            {submitting ? 'Đang nộp bài…' : 'Nộp bài quiz'}
                         </button>
                     )}
                 </div>

@@ -6,7 +6,19 @@ export abstract class TranscriptProvider { abstract fetch(videoId: string): Prom
 
 @Injectable()
 export class YoutubeTranscriptProvider extends TranscriptProvider {
-  async fetch(videoId: string) {
+  private readonly recent = new Map<string, { until: number; result: Promise<{ cues: Cue[]; provider: string }> }>();
+  fetch(videoId: string) {
+    const cached = this.recent.get(videoId);
+    if (cached && cached.until > Date.now()) return cached.result;
+    if (this.recent.size >= 64) this.recent.delete(this.recent.keys().next().value!);
+    const entry = { until: Date.now() + 5 * 60000, result: this.fetchFresh(videoId) };
+    this.recent.set(videoId, entry);
+    // A blocked/missing caption track should not cost another network timeout for
+    // every audio segment. Retry after a short cooldown; ASR remains the fallback.
+    void entry.result.catch(() => { entry.until = Date.now() + 60000; });
+    return entry.result;
+  }
+  private async fetchFresh(videoId: string) {
     const signal = AbortSignal.timeout(15000);
     let provider = 'youtube-auto';
     const boundedFetch = async (params: FetchParams) => {

@@ -4,6 +4,28 @@ Listening dùng NestJS, Prisma và BullMQ hiện có. Bài làm nằm trong List
 
 ## Chạy và chuẩn bị ASR
 
+### Cập nhật khoảng nghe và điền từ — 06/10/2026
+
+- Khoảng đang nhập nằm riêng trong form; không gọi API theo từng phím. Chỉ áp dụng khi bấm **Luyện đoạn này**, giữ nguyên trình phát và câu đang học trong lúc nhập/xóa số.
+- Chế độ điền từ dùng input ngay tại dấu gạch, hỗ trợ Tab, không còn textarea riêng. Đáp án gửi theo thứ tự chỗ trống; cần điền đủ để tránh câu trả lời sau bị dồn vào ô trước. Chép cả câu vẫn dùng textarea. Khi sửa câu trả lời, kết quả cũ được ẩn để không nhầm với lần đang sửa.
+- Caption cache trong tiến trình: kết quả 5 phút, lỗi 1 phút, tối đa 64 video; các yêu cầu trùng dùng chung Promise. Metadata audio HTTPS của yt-dlp được tái sử dụng 2 phút, tối đa 32 video; lỗi resolve/download xóa cache. Không lưu URL ký riêng vào log/client.
+- Cache transcript trong DB và giới hạn request vẫn giữ nguyên. Không đổi model, beam size, cách chấm hoặc DAS3H. Lần lấy đầu và thời gian xử lý đoạn dài vẫn phụ thuộc mạng/CPU; không cam kết thời gian cố định.
+- Đã kiểm tra: 23 unit test backend Listening, 3 test frontend inline, lint/build cả hai, integration nhận dạng audio thật và YouTube worker READY. Browser xác nhận iframe `widget10` giữ nguyên khi xóa/nhập các mốc 12–27, focus không mất; Tab chuyển ô, điền đủ mới bật nút chấm. Không nộp lại bài thật để thử UI.
+- Tham khảo bố cục bài nghe theo câu ở [Đậu TOEIC](https://dautoeic.vn/chep-chinh-ta/2972). Bản công khai yêu cầu đăng nhập để luyện; cách điền trực tiếp tại dấu gạch được triển khai theo yêu cầu người dùng.
+
+### Kiểm tra thực tế 06/10/2026 và sửa lỗi
+
+- Whisper cục bộ nhận dạng đủ bốn câu trong `frontend/public/listening-demo.wav`.
+- Luồng trực tiếp yt-dlp → ffmpeg → Whisper chạy thành công với `jNQXAC9IVRw` (0–20 giây) và `gOMypAhVaXE` (0–30 giây, tám cues). Đây là bằng chứng cho các đoạn đã thử, không bảo đảm mọi video luôn truy cập được.
+- Redis đã bị tắt khi kiểm tra: HTTP có thể chạy nhưng tác vụ transcript không tiến triển. Cần bật Docker Desktop và Redis trước khi dùng hàng đợi; `/health/ready` phải trả `ok`.
+- Cấu hình local frontend trỏ cổng 3001 trong khi backend kiểm tra chạy cổng 3000 gây Failed to fetch. Đã thống nhất backend local 3000 và frontend `/api` qua proxy Vite để tránh lệch cổng/CORS; các file `.env` không commit.
+- Sửa trường hợp CC tồn tại nhưng không có câu nằm trọn trong đoạn chọn: chuyển sang ASR thay vì lưu READY với đoạn không luyện được.
+- Bài thất bại ba lần được phép thử lại sau cooldown một giờ, vẫn áp dụng rate limit. Không khóa vĩnh viễn bài cũ từ thời chưa cấu hình ASR.
+- Giao diện chỉ đánh dấu đã cập nhật phiên sau khi tải thành công; yêu cầu bị hủy không làm mất lần cập nhật script tiếp theo.
+- Đường dẫn Python helper được giải theo vị trí module, không phụ thuộc thư mục khởi chạy. Kiểm tra model yêu cầu đủ model.bin/config.json/tokenizer.json.
+- `LISTENING_REQUIRE_YOUTUBE=true node test/listening.integration.cjs` bật kiểm thử strict: YouTube phải READY, mở được câu luyện và giữ script ẩn trước trả lời. Chạy các lượt integration nối tiếp để tránh dùng chung fixtures.
+- Kết quả sau sửa: backend build, 19 kiểm thử Listening, frontend type/build và integration strict đều qua. Integration nhận dạng audio thật, chấm/lưu tiến độ, kiểm tra quyền riêng tư và worker YouTube READY. Trình duyệt đã tải thư viện và hiển thị cả bài có CC lẫn bài nhận dạng audio sẵn sàng luyện. ASR `base.en` vẫn có thể nhận sai từ; chưa đánh giá độ chính xác trên tập audio rộng.
+
 ```powershell
 npm run db:generate --prefix backend
 npm run db:migrate --prefix backend
@@ -56,3 +78,7 @@ docker compose --env-file .env.example config --quiet
 Unit tests kiểm tra ưu tiên CC, đường watch-page, fallback ASR đúng range, lỗi không tạo transcript giả và cache không dùng nhầm đoạn. Integration tạo/dọn tài khoản riêng, kiểm tra phân quyền, script ẩn, chấm bài, lưu tiến độ, xoá/khôi phục, admin publish, Range 206 và DAS3H không đổi. Khi ASR sẵn sàng, test upload audio mẫu thật qua HTTP/BullMQ/Whisper và kiểm tra script được giữ ẩn đến lúc nộp bài.
 
 Kết quả môi trường hiện tại: Whisper thực tế nhận dạng được bốn câu từ WAV mẫu; luồng upload audio đến bài luyện và chấm đáp án chạy thành công. YouTube thật vẫn trả lỗi truy cập CC/audio, nên chưa xác nhận được một link YouTube tự động thành công xuyên suốt. Không coi fixture hoặc audio mẫu là bằng chứng mọi video được hỗ trợ.
+
+### Chống mất đầu câu khi nghe lại
+
+Phát sớm 0,75 giây, chặn thời gian âm; mốc dừng/chấm giữ nguyên. YouTube tạm dừng, tua rồi kiểm tra vị trí trước khi phát (chấp nhận keyframe sớm tối đa 2,5 giây, timeout 5 giây có hướng dẫn thử lại). Không dùng vị trí cũ để tự dừng trong lúc tua. Media native kiểm tra seeking/seeked và chỉ báo đã nghe khi playing. Thu audio để ASR vẫn giữ mốc chính xác và tốc độ 1×, không thêm lead-in. TypeScript/lint/build và 2 test mốc phát đạt; đã thử phát lại YouTube và tự dừng ở cuối câu. Chưa đo trên mạng chậm/thiết bị thật; mốc phụ đề sai vẫn cần chỉnh nguồn.

@@ -1,3 +1,5 @@
+import type { ExamQuestion } from './exam';
+
 export interface SkillMasteryItem {
   skillId: number;
   skillCode: string;
@@ -23,18 +25,7 @@ export interface UserMasteryProfile {
   overallMastery: number;
 }
 
-export interface AdaptiveQuestion {
-  id: number;
-  part: number;
-  content: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  imageUrl?: string | null;
-  audioUrl?: string | null;
-  passage?: string | null;
-}
+export type AdaptiveQuestion = ExamQuestion;
 
 export interface AdaptiveQuestionResponse {
   selectedQuestion: AdaptiveQuestion;

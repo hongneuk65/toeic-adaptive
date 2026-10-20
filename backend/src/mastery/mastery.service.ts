@@ -1,5 +1,7 @@
+import { Das3hService } from '../das3h/das3h.service';
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { groupLearningTopics } from './learning-topics';
 
 @Injectable()
 export class MasteryService {
@@ -23,6 +25,13 @@ export class MasteryService {
         userMasteries.map((m) => [m.skillId, m]),
       );
 
+      const das3h = new Das3hService(this.prisma);
+      const [contributions, user, trainedScores] = await Promise.all([
+        das3h.getSkillContributions(Number(userId), allSkills.map(skill => skill.id)),
+        this.prisma.user.findUnique({ where: { id: Number(userId) }, select: { ability: true } }),
+        das3h.getTrainedSkillScores(Number(userId), allSkills.map(skill => skill.id)),
+      ]);
+
       // 3. Ghép nối dữ liệu kỹ năng
       const skillsProfile = allSkills.map((skill) => {
         const userRecord = masteryMap.get(skill.id);
@@ -32,7 +41,9 @@ export class MasteryService {
           skillName: skill.name,
           category: skill.category,
           part: skill.part ?? 1,
-          masteryScore: userRecord?.masteryScore ?? 0.5,
+          masteryScore: trainedScores.get(skill.id) ?? das3h.sigmoid((user?.ability ?? 0) + (contributions.get(skill.id) ?? 0)),
+          scoreSource: trainedScores.has(skill.id) ? 'trained-own-question-average' : 'legacy-heuristic',
+          evidenceStatus: userRecord?.practiceCount ? 'practiced' : 'unassessed',
           practiceCount: userRecord?.practiceCount ?? 0,
           lastPracticed: userRecord?.lastPracticed ?? null,
         };
@@ -69,11 +80,18 @@ export class MasteryService {
           )
         : 0.5;
 
+      const lessons = await this.prisma.theoryLesson.findMany({
+        select: { id: true, title: true, part: true, skillId: true, skill: { select: { code: true } } },
+        orderBy: { id: 'asc' },
+      });
+
       return {
         userId,
+        model: das3h.getModelStatus(),
         skills: skillsProfile,
         partBreakdown,
         overallMastery,
+        topicGroups: groupLearningTopics(skillsProfile, lessons),
       };
     } catch (error: any) {
       // In chi tiết lỗi thật ra Terminal Backend

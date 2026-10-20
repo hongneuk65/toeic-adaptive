@@ -95,6 +95,13 @@ async function main() {
     await new Promise(done => setTimeout(done, 500));
   } while (Date.now() < deadline);
   assert.ok(['READY', 'FAILED'].includes(youtubeStatus?.status), 'BullMQ worker must finish or report failure within bounded time');
+  if (process.env.LISTENING_REQUIRE_YOUTUBE === 'true') assert.equal(youtubeStatus.status, 'READY', 'Live YouTube transcript must succeed in strict mode');
+  if (youtubeStatus.status === 'READY') {
+    const liveSession = await request(first.token, '/sessions', 'POST', { sourceId: youtube.value.id, start: 0, end: 180 });
+    assert.equal(liveSession.status, 201);
+    assert.ok(liveSession.value.totalUnits > 0, 'Ready transcript must yield usable exercise units');
+    assert.ok(!('text' in liveSession.value.unit), 'Transcript remains hidden before answering');
+  }
   console.log(`YouTube live worker: ${youtubeStatus.status}${youtubeStatus.error ? ` (${youtubeStatus.error})` : ''}`);
   assert.equal((await prisma.studentSkillHistory.count({ where: { userId: first.id } })), 0);
   assert.equal((await prisma.userSkillMastery.count({ where: { userId: first.id } })), 0);

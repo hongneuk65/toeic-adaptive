@@ -1,0 +1,35 @@
+.selection-vocabulary-action{position:fixed;z-index:80;min-height:40px;padding:9px 14px;border:1px solid #004cce;border-radius:9px;background:#0060fd;color:#fff;font-size:12px;font-weight:650;box-shadow:0 5px 18px #18387530;white-space:nowrap}
+.selection-vocabulary-action:hover{background:#004cce}
+.selection-vocabulary-backdrop{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:#18233f70;backdrop-filter:blur(3px)}
+.selection-vocabulary-dialog{width:min(570px,100%);max-height:calc(100dvh - 40px);overflow-y:auto;border:1px solid #d9e3f1;border-radius:18px;background:#fff;box-shadow:0 24px 90px #18233f35;color:#18233f}
+.selection-vocabulary-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:23px 25px;border-bottom:1px solid #d9e3f1}
+.selection-vocabulary-header p{color:#1463e8;font-size:9px;font-weight:750;letter-spacing:.12em}
+.selection-vocabulary-header h2{margin-top:5px;font-size:22px;line-height:1.3;font-weight:700;letter-spacing:-.5px}
+.selection-vocabulary-header>button{display:grid;place-items:center;min-width:36px;min-height:36px;border-radius:50%;background:#f5f8fc;color:#60708c;font-size:24px}
+.selection-vocabulary-body{display:grid;gap:18px;padding:24px 25px;min-width:0}
+.selection-vocabulary-fields{border:0;padding:0;margin:0;display:grid;gap:16px;min-width:0}
+.selection-vocabulary-fields label{display:block;font-size:12px;font-weight:650;color:#354867}
+.selection-vocabulary-fields :is(input,textarea,select){display:block;width:100%;min-width:0;margin-top:7px;border:1px solid #d9e3f1;border-radius:9px;background:#fff;padding:10px 12px;color:#18233f;font-size:14px;font-weight:400;line-height:1.6}
+.selection-vocabulary-fields textarea{resize:vertical}
+.selection-vocabulary-lookup{display:flex;align-items:stretch;gap:9px;margin-top:7px;min-width:0}
+.selection-vocabulary-lookup>input{margin:0;flex:1}
+.selection-vocabulary-lookup>button{flex:none;border:1px solid #d9e3f1;border-radius:9px;padding:8px 13px;background:#edf5ff;color:#1657ae;font-size:12px;font-weight:650}
+.selection-vocabulary-note{padding:11px 13px;border-radius:9px;background:#f5f8fc;color:#60708c;font-size:12px;line-height:1.75}
+.selection-vocabulary-optional{font-size:11px;font-weight:400;color:#60708c}
+.selection-vocabulary-entries{display:grid;gap:8px}
+.selection-vocabulary-entries>button{display:grid;gap:4px;text-align:left;border:1px solid #d9e3f1;border-radius:10px;background:#f5f8fc;padding:12px 14px;overflow-wrap:anywhere}
+.selection-vocabulary-entries>button:hover{border-color:#1463e8;background:#edf5ff}
+.selection-vocabulary-entries span{color:#60708c;font-size:10px;font-weight:500}
+.selection-vocabulary-entries strong{font-size:13px;font-weight:600;line-height:1.7}
+.selection-vocabulary-entries small{color:#1463e8;font-size:10px;font-weight:650}
+.selection-vocabulary-ai{justify-self:start;color:#1463e8;font-size:12px;font-weight:650;text-decoration:underline;text-underline-offset:3px}
+.selection-vocabulary-footer{display:flex;justify-content:flex-end;gap:10px;padding:17px 25px;border-top:1px solid #d9e3f1;background:#f5f8fc}
+.selection-vocabulary-success{padding:18px;border:1px solid #bddfc9;background:#edf8f0;border-radius:11px;font-size:14px;color:#176845;overflow-wrap:anywhere}
+.selection-vocabulary-success p{font-size:13px;margin-top:7px;line-height:1.7}
+.selection-vocabulary-error{color:#9f2944;font-size:12px;line-height:1.7}
+.selection-vocabulary-dialog :is(button,a,input,textarea,select):focus-visible,.selection-vocabulary-action:focus-visible{outline:3px solid #1463e8;outline-offset:3px}
+.selection-vocabulary-dialog button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:520px){.selection-vocabulary-backdrop{padding:12px}.selection-vocabulary-dialog{max-height:calc(100dvh - 24px);border-radius:14px}.selection-vocabulary-header{padding:18px}.selection-vocabulary-header h2{font-size:20px}.selection-vocabulary-body{padding:18px;gap:15px}.selection-vocabulary-footer{padding:14px 18px}.selection-vocabulary-fields :is(input,textarea,select){font-size:16px}}
+
+/* Dictionary is a reading surface, with the chosen sense clearly marked. */
+.selection-vocabulary-dialog{border-radius:18px;border-color:#d9e3f1}.selection-vocabulary-header{background:#edf5ff;border-color:#d9e3f1;padding:24px 25px}.selection-vocabulary-header p{color:#1463e8;font-size:10px}.selection-vocabulary-header h2{color:#233876;font-size:24px}.selection-vocabulary-header>button{background:#fff;color:#233876}.selection-vocabulary-fields label{font-size:13px}.selection-vocabulary-entries>button{background:#fff;border-color:#d9e3f1;padding:14px 16px}.selection-vocabulary-entries>button[aria-pressed=true]{border-color:#1463e8;background:#edf5ff;box-shadow:inset 3px 0 #1463e8}.selection-vocabulary-entries>button:hover{border-color:#1463e8;background:#edf5ff}.selection-vocabulary-entries span{font-size:11px;color:#60708c}.selection-vocabulary-entries strong{font-size:14px;color:#18233f}.selection-vocabulary-entries em{font-size:12px;font-style:normal;color:#60708c;line-height:1.6}.selection-vocabulary-entries small{font-size:11px;color:#1463e8}.selection-vocabulary-note{background:#f5f8fc;color:#60708c}.selection-vocabulary-note a{text-decoration:underline;text-underline-offset:3px;color:#233876}.selection-vocabulary-footer{background:#f5f8fc}.selection-vocabulary-footer .primary-button{background:#1463e8;border-radius:9px}.selection-vocabulary-footer .secondary-button{background:white;color:#52657a;border:1px solid #dce2ea;border-radius:9px}

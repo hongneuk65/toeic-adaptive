@@ -47,6 +47,7 @@ export function validateQuestions(
   text: string,
   value: unknown,
   maximum = 5,
+  options: { sourceCrawl?: boolean } = {},
 ): ReadingQuestion[] {
   if (!Array.isArray(value) || !value.length || value.length > maximum)
     throw new Error('Số câu hỏi không hợp lệ.');
@@ -68,7 +69,7 @@ export function validateQuestions(
       q.answer > 3 ||
       !bounded(q.explanation, 2000) ||
       !Array.isArray(q.evidence) ||
-      !q.evidence.length ||
+      (!q.evidence.length && (!options.sourceCrawl || q.evidenceRequired)) ||
       q.evidence.length > 5
     )
       throw new Error(
@@ -84,7 +85,7 @@ export function validateQuestions(
       evidence: q.evidence.map((item) => evidenceAt(text, item)),
     };
   });
-  if (result[0].type !== 'MAIN')
+  if (!options.sourceCrawl && result[0].type !== 'MAIN')
     throw new Error('Câu đầu tiên cần kiểm tra ý chính.');
   if (
     new Set(result.map((q) => q.prompt.trim().toLowerCase())).size !==

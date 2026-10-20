@@ -7,21 +7,25 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "node --test test/exam-session.test.mjs test/sse.test.mjs test/ai-markdown.test.mjs",
-    "preview": "vite preview"
+    "test": "node --test test/exam-session.test.mjs test/exam-navigation.test.mjs test/exam-listening.test.mjs test/exam-pacing.test.mjs test/exam-stimulus.test.mjs test/sse.test.mjs test/ai-markdown.test.mjs test/reading-editor.test.mjs test/listening-cloze.test.mjs test/listening-playback.test.mjs test/admin-question.test.mjs test/reading-clauses.test.mjs test/selection-vocabulary.test.mjs test/review-explanation.test.mjs test/auth-recovery.test.mjs",
+    "preview": "vite preview",
+    "test:browser": "playwright test"
   },
   "dependencies": {
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.18.3",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^6.1.0",
     "autoprefixer": "^10.5.4",
     "eslint": "^10.9.0",

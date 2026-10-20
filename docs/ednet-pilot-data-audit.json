@@ -1,0 +1,72 @@
+{
+  "train": {
+    "n": 144908,
+    "correct_rate": 0.6374803323488006,
+    "parts": {
+      "1": 16109,
+      "2": 31160,
+      "3": 5542,
+      "4": 3973,
+      "5": 76616,
+      "6": 8155,
+      "7": 3353
+    },
+    "oov_questions": 0,
+    "events_with_oov_tags": 0,
+    "multi_skill_events": 63024
+  },
+  "validation": {
+    "n": 31803,
+    "correct_rate": 0.6601578467440179,
+    "parts": {
+      "1": 2762,
+      "2": 6579,
+      "3": 1697,
+      "4": 1097,
+      "5": 16519,
+      "6": 2085,
+      "7": 1064
+    },
+    "oov_questions": 391,
+    "events_with_oov_tags": 0,
+    "multi_skill_events": 13945
+  },
+  "test": {
+    "n": 32997,
+    "correct_rate": 0.6504227657059732,
+    "parts": {
+      "1": 2503,
+      "2": 6942,
+      "3": 1647,
+      "4": 1299,
+      "5": 16877,
+      "6": 2630,
+      "7": 1099
+    },
+    "oov_questions": 398,
+    "events_with_oov_tags": 0,
+    "multi_skill_events": 14451
+  },
+  "bundle_sizes": {
+    "1": 186289,
+    "2": 310,
+    "3": 3267,
+    "4": 2432,
+    "5": 654
+  },
+  "bundles_per_user_quantiles": [
+    20.0,
+    31.0,
+    67.0,
+    191.25,
+    200.0
+  ],
+  "previous_bundle_gap_seconds_quantiles": [
+    0.0,
+    20.814,
+    309.17119995299225,
+    369625.07225317595,
+    33167949.374000005
+  ],
+  "all_user_splits_ordered_and_bundles_intact": true
+}

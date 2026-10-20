@@ -28,7 +28,8 @@ interface RequestUser {
   user: { id: number };
 }
 @Controller('reading')
-@UseGuards(AuthGuard('jwt'))
+@Roles(Role.USER)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class ReadingController {
   constructor(private readonly service: ReadingService) {}
   @Get() list(@Req() req: RequestUser) {

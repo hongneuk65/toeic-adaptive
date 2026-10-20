@@ -1,7 +1,11 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import '../styles/prep-knowledge.css';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, getErrorMessage } from '../lib/api';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 import { useAsyncResource } from '../hooks/useAsyncResource';
+import { FlashcardRecall, type RecallAttempt } from '../components/FlashcardRecall';
+import { PageHeader } from '../components/ui/PageHeader';
 
 interface Flashcard {
   id: number;
@@ -23,6 +27,8 @@ interface FolderDetail {
   isOwner: boolean;
 }
 
+interface CardReview { cardId: number; known: boolean; reviewCount: number; dueAt?: string; intervalDays?: number; schedulingSource?: string }
+
 export const FlashcardStudyPage: React.FC = () => {
   const { topic: folderId } = useParams<{ topic: string }>();
   return <FlashcardStudy key={folderId} folderId={folderId} />;
@@ -35,33 +41,57 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
     const [folder, cards, reviews] = await Promise.all([
       api<FolderDetail>(`/flashcards/folders/${folderId}`, { signal }),
       api<Flashcard[]>(`/flashcards/folders/${folderId}/cards`, { signal }),
-      api<{ cardId: number; known: boolean; reviewCount: number }[]>(`/flashcards/folders/${folderId}/reviews`, { signal }),
+      api<CardReview[]>(`/flashcards/folders/${folderId}/reviews`, { signal }),
     ]);
     return { folder, cards, reviews };
   }, [folderId]);
   const { data, loading, error, reload: loadData } = useAsyncResource(load);
   const folder = data?.folder;
   const [search, setSearch] = useState('');
+  const [reviewFilter, setReviewFilter] = useState<'all' | 'needed' | 'known' | 'due'>('due');
+  const [sessionReviewed, setSessionReviewed] = useState<number[]>([]);
+  const [sessionActive, setSessionActive] = useState(false);
+  const [dueTime, setDueTime] = useState(() => Date.now());
+  useEffect(() => {
+    const refresh = () => setDueTime(new Date().getTime());
+    const timer = window.setInterval(refresh, 30000);
+    window.addEventListener('focus', refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh); };
+  }, []);
   const filtered = useMemo(() => {
     const query = search.toLowerCase().trim();
-    return (data?.cards ?? []).filter((card) =>
-      card.word.toLowerCase().includes(query) || card.meaning.toLowerCase().includes(query));
-  }, [data, search]);
+    const known = new Set((data?.reviews ?? []).filter(review => review.known).map(review => review.cardId));
+    const reviews = new Map((data?.reviews ?? []).map(review => [review.cardId, review]));
+    return (data?.cards ?? []).filter(card =>
+      (card.word.toLowerCase().includes(query) || card.meaning.toLowerCase().includes(query)) &&
+      (reviewFilter === 'all' || (reviewFilter === 'due' ? !reviews.get(card.id)?.dueAt || Date.parse(reviews.get(card.id)!.dueAt!) <= dueTime : reviewFilter === 'known' ? known.has(card.id) : !known.has(card.id))) &&
+      (!sessionActive || !sessionReviewed.includes(card.id)));
+  }, [data, search, reviewFilter, sessionActive, sessionReviewed, dueTime]);
 
   // Quản lý trạng thái lật thẻ cho từng thẻ
   const [flippedIds, setFlippedIds] = useState<Record<number, boolean>>({});
 
   // Chế độ xem: 'grid' hoặc 'focus'
-  const [viewMode, setViewMode] = useState<'grid' | 'focus'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'focus'>('focus');
   const [focusIndex, setFocusIndex] = useState(0);
+  const [visibleCards, setVisibleCards] = useState(24);
 
   // Modal thêm từ
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const dialog = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialog, isModalOpen, () => setIsModalOpen(false));
   const [newWord, setNewWord] = useState('');
   const [newPhonetic, setNewPhonetic] = useState('');
   const [newMeaning, setNewMeaning] = useState('');
   const [newExample, setNewExample] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [reviewingId, setReviewingId] = useState<number | null>(null);
+  const [retryingId, setRetryingId] = useState<number | null>(null);
+  const navigationLocked = reviewingId !== null || retryingId !== null;
+  const reviewBusy = useRef(false);
+  const pendingReviews = useRef(new Map<number, { known: boolean; attempt: RecallAttempt }>());
 
   // Đổi chế độ: Tự động lật về mặt chính
   const handleSwitchViewMode = (mode: 'grid' | 'focus') => {
@@ -84,11 +114,25 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
     }
   };
 
-  const reviewCard = async (id: number, known: boolean) => {
+  const reviewCard = async (id: number, known: boolean, recall?: RecallAttempt): Promise<boolean> => {
+    if (reviewBusy.current) return false;
+    const payload = pendingReviews.current.get(id) ?? { known, attempt: recall ?? { attemptId: crypto.randomUUID(), recallMode: 'self_report' as const } };
+    pendingReviews.current.set(id, payload);
+    reviewBusy.current = true;
+    setReviewingId(id);
+    setActionError('');
     try {
-      await api(`/flashcards/cards/${id}/review`, { method: 'PATCH', data: { known } });
+      const result = await api<CardReview>(`/flashcards/cards/${id}/review`, { method: 'PATCH', data: { known: payload.known, ...payload.attempt } });
+      pendingReviews.current.delete(id);
+      setRetryingId(null);
+      if (sessionActive) { setSessionReviewed(ids => [...ids, id]); setFocusIndex(0); setFlippedIds({}); }
+      const scheduleLabel = result.schedulingSource === 'hlr-prior-experimental' ? 'Lịch cá nhân hóa thử nghiệm' : result.schedulingSource?.startsWith('hlr-trained:') ? 'Lịch cá nhân hóa từ dữ liệu ôn' : 'Lịch ôn cố định';
+      setNotice(`${result.known ? 'Đã nhớ' : 'Cần ôn thêm'}${result.dueAt ? ` · Ôn tiếp: ${new Date(result.dueAt).toLocaleString('vi-VN')}` : ''} · ${scheduleLabel}.`);
+      setDueTime(new Date().getTime());
       loadData();
-    } catch (cause) { alert(getErrorMessage(cause)); }
+      return true;
+    } catch (cause) { setRetryingId(id); setActionError(`${getErrorMessage(cause)} Lượt ôn chưa được xác nhận. Nhấn lưu lại để thử lại cùng lượt.`); return false; }
+    finally { reviewBusy.current = false; setReviewingId(null); }
   };
   const reviewControls = (card: Flashcard) => {
     const review = data?.reviews.find(item => item.cardId === card.id);
@@ -96,7 +140,9 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
       {card.sourceVersionId && <p className="text-ink-medium">Nguồn: {card.topic || 'Reading'} · bản {card.sourceVersionId}</p>}
       {card.notes && <p className="text-ink-medium">{card.notes}</p>}
       <p>{review?.known ? 'Đã nhớ' : 'Cần ôn'} · {review?.reviewCount || 0} lượt ôn của bạn</p>
-      <div className="flex gap-2 justify-center"><button className="px-2 py-1 border rounded" onClick={() => void reviewCard(card.id, false)}>Cần ôn</button><button className="px-2 py-1 border rounded" onClick={() => void reviewCard(card.id, true)}>Đã nhớ</button></div>
+      {review?.dueAt && <p className="text-ink-medium">Ôn tiếp: {new Date(review.dueAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}</p>}
+      <p className="text-ink-medium">Xem thẻ: kết quả dưới đây do bạn tự đánh giá, không phải kiểm tra gõ đáp án.</p>
+      <div className="flex gap-2 justify-center"><button disabled={reviewingId !== null || (retryingId !== null && retryingId !== card.id)} className="secondary-button text-xs" onClick={() => void reviewCard(card.id, false)}>Cần ôn</button><button disabled={reviewingId !== null || (retryingId !== null && retryingId !== card.id)} className="secondary-button text-xs" onClick={() => void reviewCard(card.id, true)}>Đã nhớ</button></div>
     </div>;
   };
 
@@ -108,7 +154,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
   const playAudio = (word: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!('speechSynthesis' in window)) {
-      alert('Trình duyệt chưa hỗ trợ phát âm.');
+      setActionError('Trình duyệt chưa hỗ trợ phát âm. Bạn vẫn có thể ôn nghĩa của từ.');
       return;
     }
     window.speechSynthesis.cancel();
@@ -122,11 +168,12 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
   const handleCreateWord = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWord.trim() || !newMeaning.trim()) {
-      alert('Vui lòng điền đầy đủ từ vựng và nghĩa tiếng Việt.');
+      setActionError('Nhập từ và nghĩa tiếng Việt để tiếp tục.');
       return;
     }
 
     setSubmitting(true);
+    setActionError('');
     try {
       await api(`/flashcards/folders/${folderId}/cards`, {
         method: 'POST',
@@ -145,15 +192,17 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
       setIsModalOpen(false);
       loadData();
     } catch (err) {
-      alert(getErrorMessage(err, 'Lỗi khi thêm từ'));
+      setActionError(getErrorMessage(err, 'Chưa thêm được từ. Hãy thử lại.'));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="w-full space-y-6">
-      {error && <p role="alert" className="text-red-700">{error} <button onClick={loadData}>Thử lại</button></p>}
+    <div className={`page-stack prep-knowledge-page prep-flashcard-page ${viewMode === 'focus' ? 'prep-flashcard-focus mx-auto w-full max-w-3xl' : 'prep-flashcard-library'}`}>
+      {notice && <p role="status" className="status-message">{notice}</p>}
+      {actionError && <p role="alert" className="status-message text-rose-800">{actionError}</p>}
+      {error && <p role="alert" className="status-message">{error} <button className="text-action" onClick={loadData}>Thử lại</button></p>}
       
       {/* CSS 3D chuẩn xác */}
       <style>{`
@@ -165,7 +214,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
           position: relative;
           width: 100%;
           height: 100%;
-          transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           transform-style: preserve-3d;
           -webkit-transform-style: preserve-3d;
         }
@@ -181,7 +230,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
           -webkit-backface-visibility: hidden !important;
           backface-visibility: hidden !important;
           border-radius: 2px;
-          overflow: hidden;
+          overflow-y: auto;
         }
         .flip-card-front {
           transform: rotateY(0deg) translateZ(1px);
@@ -199,124 +248,68 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
         .flip-card-inner.flipped .flip-card-back {
           z-index: 2;
         }
+        @media (prefers-reduced-motion: reduce) {
+          .flip-card-inner { transition: none; }
+        }
       `}</style>
 
-      {/* 1. Header & Điều hướng */}
-      <div className="w-full bg-paper-white p-6 border-2 border-paper-kraft shadow-paper-subtle rounded-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/flashcards')}
-            className="px-4 py-2 bg-paper-cream hover:bg-paper-kraft-light/50 border border-paper-kraft text-ink-dark font-hand text-lg font-bold rounded-sm transition"
-          >
-            TRỞ VỀ TỦ FOLDER
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-accent-coral uppercase">
-                THƯ MỤC: {folder?.name || 'Đang tải...'}
-              </span>
-              {folder && (
-                <span
-                  className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-xs uppercase ${
-                    folder.isOwner
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-paper-cream text-ink-medium border border-paper-kraft'
-                  }`}
-                >
-                  {folder.isOwner ? 'BẠN LÀ CHỦ SỞ HỮU' : `TÁC GIẢ: ${folder.authorName}`}
-                </span>
-              )}
-            </div>
-            <h1 className="font-display text-4xl font-bold text-ink-dark mt-0.5">
-              Kho Thẻ Flashcard ({filtered.length} từ)
-            </h1>
-          </div>
-        </div>
+      <div className="prep-flashcard-heading space-y-3">
+        <button onClick={() => navigate('/flashcards')} className="text-action text-sm">Thư mục từ vựng</button>
+        <PageHeader variant={viewMode === 'focus' ? 'compact' : 'feature'} title={folder?.name || 'Từ vựng'} description={folder?.description}  />
+      </div>
+      <div className="grid grid-cols-1 gap-3 border-b border-paper-kraft pb-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div role="group" aria-label="Chế độ ôn từ vựng" className="prep-knowledge-tabs flex w-fit rounded-lg bg-paper-cream p-1"><button aria-pressed={viewMode === 'focus'} disabled={navigationLocked} onClick={() => handleSwitchViewMode('focus')} className={`min-h-11 rounded-lg px-3 text-sm font-semibold ${viewMode === 'focus' ? 'bg-paper-white text-ink-dark shadow-sm' : 'text-ink-medium'}`}>Ôn tập trung</button><button aria-pressed={viewMode === 'grid'} disabled={navigationLocked} onClick={() => handleSwitchViewMode('grid')} className={`min-h-11 rounded-lg px-3 text-sm font-semibold ${viewMode === 'grid' ? 'bg-paper-white text-ink-dark shadow-sm' : 'text-ink-medium'}`}>Tất cả thẻ</button></div>
+        <div className="flex w-full items-center gap-3 sm:col-span-2 sm:row-start-2"><input type="search" disabled={navigationLocked} value={search} onChange={event => { setSearch(event.target.value); setFocusIndex(0); setVisibleCards(24); setFlippedIds({}); }} aria-label="Tìm từ vựng" placeholder="Tìm từ hoặc nghĩa…" className="min-w-0 flex-1 rounded-lg border border-paper-kraft bg-paper-white px-3 py-2.5 text-sm" /><span className="shrink-0 text-xs text-ink-medium">{filtered.length} từ</span></div>
+        {folder?.isOwner && <button onClick={() => setIsModalOpen(true)} className="secondary-button justify-self-start sm:col-start-2 sm:row-start-1 sm:justify-self-end">Thêm từ</button>}
+      </div>
 
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setFocusIndex(0); setFlippedIds({}); }}
-            placeholder="Tìm kiếm từ vựng..."
-            className="px-4 py-2 bg-paper-cream border border-paper-kraft font-body text-xs text-ink-dark rounded-sm focus:outline-none focus:border-slate-900 w-full sm:w-56"
-          />
-
-          <div className="flex bg-paper-cream border border-paper-kraft rounded-sm p-0.5">
-            <button
-              onClick={() => handleSwitchViewMode('grid')}
-              className={`px-3 py-1.5 font-hand text-base font-bold rounded-sm transition ${
-                viewMode === 'grid'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-ink-medium hover:text-ink-dark'
-              }`}
-            >
-              LƯỚI Ô THẺ
-            </button>
-            <button
-              onClick={() => handleSwitchViewMode('focus')}
-              className={`px-3 py-1.5 font-hand text-base font-bold rounded-sm transition ${
-                viewMode === 'focus'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-ink-medium hover:text-ink-dark'
-              }`}
-            >
-              LẬT THẺ TO
-            </button>
-          </div>
-
-          {folder?.isOwner && (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="px-5 py-2 bg-accent-coral hover:bg-[#c9664c] text-white font-hand text-lg font-bold rounded-sm shadow-paper-subtle transition uppercase"
-            >
-              + THÊM TỪ VÀO SỔ
-            </button>
-          )}
-        </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="text-sm text-ink-medium">Lọc thẻ <select disabled={navigationLocked} aria-label="Lọc trạng thái ghi nhớ" value={reviewFilter} onChange={event => { setReviewFilter(event.target.value as 'all' | 'needed' | 'known' | 'due'); setFocusIndex(0); setFlippedIds({}); setSessionActive(false); }} className="min-h-11 rounded-lg border border-paper-kraft bg-paper-white px-3 ml-2"><option value="due">Đến hạn ôn</option><option value="needed">Cần ôn</option><option value="known">Đã nhớ</option><option value="all">Tất cả</option></select></label>
+        <button className="secondary-button" disabled={navigationLocked || (!sessionActive && filtered.length === 0)} onClick={() => { setSessionReviewed([]); setSessionActive(value => !value); setFocusIndex(0); setFlippedIds({}); }}>{sessionActive ? 'Kết thúc buổi ôn' : 'Bắt đầu buổi ôn'}</button>
+        {sessionActive && <p role="status" className="text-sm text-ink-medium">Đã ôn {sessionReviewed.length} thẻ · còn {filtered.length} thẻ. Mỗi thẻ chỉ xuất hiện một lần trong buổi.</p>}
       </div>
 
       {/* 2. Danh sách thẻ */}
-      {loading ? (
-        <div className="w-full bg-paper-white p-16 border-2 border-paper-kraft text-center font-hand text-2xl text-ink-light">
-          Đang lật tìm hồ sơ từ vựng...
+      {loading && !data ? (
+        <div role="status" className="learning-surface text-sm text-ink-medium">
+          Đang tải từ vựng…
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="w-full bg-paper-white p-16 text-center border-2 border-dashed border-paper-kraft rounded-sm space-y-3">
-          <p className="font-hand text-2xl text-ink-medium">Thư mục này chưa có từ vựng nào.</p>
-          {folder?.isOwner && (
+      ) : error && !data ? null : filtered.length === 0 ? (
+        <div className="w-full rounded-xl bg-paper-white px-5 py-10 text-center space-y-3">
+          <p className="text-base font-medium text-ink-medium">{sessionActive ? 'Bạn đã hoàn thành các thẻ trong buổi ôn này.' : search ? 'Không có từ khớp với tìm kiếm.' : reviewFilter === 'due' ? 'Chưa có thẻ đến hạn. Chọn Tất cả để học thêm.' : reviewFilter === 'needed' ? 'Không còn thẻ cần ôn. Chọn Tất cả để xem thư mục.' : reviewFilter === 'known' ? 'Chưa có thẻ được đánh dấu đã nhớ.' : 'Thư mục này chưa có từ vựng nào.'}</p>
+          {search && <button className="secondary-button" onClick={() => { setSearch(''); setFocusIndex(0); }}>Xóa tìm kiếm</button>}
+          {folder?.isOwner && !search && !sessionActive && data?.cards.length === 0 && (
             <button
               onClick={() => setIsModalOpen(true)}
-              className="px-6 py-2 bg-slate-900 text-white font-hand text-lg font-bold rounded"
+              className="primary-button"
             >
-              + THÊM TỪ ĐẦU TIÊN
+              Thêm từ đầu tiên
             </button>
           )}
         </div>
       ) : viewMode === 'grid' ? (
         /* Lưới ô thẻ */
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-          {filtered.map((card, idx) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          {filtered.slice(0, visibleCards).map((card, idx) => {
             const isFlipped = !!flippedIds[card.id];
             return (
               <div
                 key={card.id}
-                onClick={() => toggleFlip(card.id)}
-                className="perspective-container h-64 w-full cursor-pointer select-none"
+                tabIndex={0} role="group" aria-label={`Thẻ ${card.word}. Nhấn Enter hoặc phím cách để lật.`} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); toggleFlip(card.id); } }} onClick={() => toggleFlip(card.id)}
+                className="perspective-container h-80 w-full rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 cursor-pointer"
               >
                 <div className={`flip-card-inner ${isFlipped ? 'flipped' : ''}`}>
                   
                   {/* Mặt trước */}
-                  <div className="flip-card-front bg-paper-white border-2 border-paper-kraft p-4 flex flex-col justify-between shadow-paper-subtle hover:shadow-paper-medium transition-shadow">
+                  <div inert={isFlipped} aria-hidden={isFlipped} className="flip-card-front bg-paper-white border border-paper-kraft p-5 flex flex-col justify-between">
                     <div className="flex justify-between items-center">
-                      <div className="staple top-2 left-2" />
                       <span className="font-mono text-[10px] text-ink-light uppercase ml-auto">
                         #{String(idx + 1).padStart(2, '0')}
                       </span>
                     </div>
 
                     <div className="text-center my-auto px-1 space-y-1">
-                      <h3 className="font-display text-3xl md:text-4xl font-bold text-ink-dark leading-tight break-words">
+                      <h3 className="text-2xl font-bold text-ink-dark leading-tight break-words">
                         {card.word}
                       </h3>
                       {card.phonetic && (
@@ -328,26 +321,25 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
                       <button
                         type="button"
                         onClick={(e) => playAudio(card.word, e)}
-                        className="mt-3 px-3 py-1 bg-paper-cream hover:bg-paper-kraft-light/50 border border-paper-kraft text-ink-dark font-mono text-[11px] font-bold rounded transition uppercase"
+                        className="secondary-button mt-3"
                       >
-                        [ PHÁT ÂM ]
+                        Phát âm
                       </button>
                     </div>
 
-                    <p className="font-hand text-xs text-ink-pencil text-center">
-                      (Chạm để xem nghĩa ↩)
+                    <p className="text-xs text-ink-pencil text-center">
+                      Nhấn để xem nghĩa
                     </p>
                   </div>
 
                   {/* Mặt sau */}
-                  <div className="flip-card-back bg-paper-cream border-2 border-accent-sage p-4 flex flex-col justify-between text-left shadow-paper-medium">
-                    <div className="tape tape-mint w-14 top-[-6px] right-3" />
+                  <div inert={!isFlipped} aria-hidden={!isFlipped} className="flip-card-back bg-paper-cream border border-paper-kraft p-5 flex flex-col justify-between text-left">
                     
                     <div className="pt-2 overflow-y-auto max-h-[180px] pr-1">
                       <span className="text-[10px] font-mono font-bold text-accent-sage uppercase block">
                         NGHĨA TIẾNG VIỆT:
                       </span>
-                      <p className="font-hand text-2xl font-bold text-ink-dark mt-1 leading-snug break-words">
+                      <p className="text-base font-medium font-bold text-ink-dark mt-1 leading-snug break-words">
                         {card.meaning}
                       </p>
                       {card.example && (
@@ -358,7 +350,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
                     </div>
 
                     {reviewControls(card)}
-                    <p className="font-hand text-[11px] text-ink-pencil text-center mt-2">
+                    <p className="text-xs text-ink-pencil text-center mt-2">
                       (Chạm để lật lại mặt trước)
                     </p>
                   </div>
@@ -367,97 +359,34 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
               </div>
             );
           })}
+          {filtered.length > visibleCards && <div className="col-span-full flex flex-wrap items-center justify-center gap-3 py-4"><span className="text-sm text-ink-medium">Đang hiện {visibleCards} / {filtered.length} từ</span><button className="secondary-button" onClick={() => setVisibleCards(count => count + 24)}>Xem thêm 24 từ</button></div>}
         </div>
       ) : (
         /* Chế độ Focus */
         <div className="w-full space-y-4">
           {(() => {
             const card = filtered[focusIndex] || filtered[0];
-            const isFlipped = !!flippedIds[card.id];
             return (
               <>
-                <div
-                  onClick={() => toggleFlip(card.id)}
-                  className="perspective-container h-[360px] w-full cursor-pointer select-none"
-                >
-                  <div className={`flip-card-inner ${isFlipped ? 'flipped' : ''}`}>
-                    
-                    {/* Mặt trước to */}
-                    <div className="flip-card-front bg-paper-white border-2 border-paper-kraft p-8 flex flex-col justify-center items-center text-center shadow-paper-heavy">
-                      <div className="tape tape-pink w-24 top-[-10px] left-1/2 -translate-x-1/2" />
-                      
-                      <span className="font-mono text-xs font-bold text-ink-light uppercase mb-2">
-                        THƯ MỤC: {folder?.name}
-                      </span>
-                      <h2 className="w-full px-4 font-display text-5xl md:text-6xl font-bold text-ink-dark break-words">
-                        {card.word}
-                      </h2>
-                      {card.phonetic && (
-                        <p className="font-mono text-xl text-accent-navy mt-1">
-                          {card.phonetic}
-                        </p>
-                      )}
+                <FlashcardRecall key={card.id} card={card} pending={reviewingId !== null} onReview={reviewCard} />
 
-                      <button
-                        type="button"
-                        onClick={(e) => playAudio(card.word, e)}
-                        className="mt-6 px-6 py-2 bg-paper-cream hover:bg-paper-kraft-light/50 border-2 border-paper-kraft text-ink-dark font-mono text-xs font-bold rounded uppercase transition"
-                      >
-                        [ NGHE PHÁT ÂM CHUẨN ]
-                      </button>
-
-                      <p className="font-hand text-base text-ink-pencil mt-5">
-                        (Chạm vào thẻ để lật xem giải nghĩa ↩)
-                      </p>
-                    </div>
-
-                    {/* Mặt sau to */}
-                    <div className="flip-card-back bg-paper-cream border-2 border-accent-sage p-8 flex flex-col justify-center items-center text-center shadow-paper-heavy">
-                      <div className="tape tape-mint w-24 top-[-10px] left-1/2 -translate-x-1/2" />
-                      
-                      <span className="font-mono text-xs font-bold text-accent-sage uppercase block mb-1">
-                        GIẢI THÍCH CHI TIẾT
-                      </span>
-                      <p className="w-full px-4 font-hand text-3xl md:text-4xl font-bold text-ink-dark break-words">
-                        {card.meaning}
-                      </p>
-                      {card.example && (
-                        <div className="bg-white/90 p-4 border-l-4 border-accent-coral rounded-r max-w-md text-left mt-5 overflow-y-auto max-h-32">
-                          <span className="text-[10px] font-mono font-bold text-ink-light uppercase block mb-0.5">
-                            VÍ DỤ NGỮ CẢNH:
-                          </span>
-                          <p className="font-body text-sm text-ink-dark italic break-words">
-                            "{card.example}"
-                          </p>
-                        </div>
-                      )}
-
-                      {reviewControls(card)}
-                      <p className="font-hand text-sm text-ink-pencil mt-4">
-                        (Chạm để quay lại mặt từ tiếng Anh)
-                      </p>
-                    </div>
-
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center bg-paper-white p-3 border-2 border-paper-kraft rounded-sm shadow-paper-subtle">
+                <div className="flex justify-between items-center gap-2 max-w-3xl mx-auto text-sm">
                   <button
                     onClick={handlePrevCard}
-                    disabled={focusIndex === 0}
-                    className="px-5 py-1.5 bg-paper-cream border border-paper-kraft font-hand text-lg font-bold text-ink-dark rounded disabled:opacity-30 transition hover:bg-paper-kraft-light/40"
+                    disabled={navigationLocked || focusIndex === 0}
+                    className="secondary-button px-3 sm:px-5"
                   >
-                    THẺ TRƯỚC
+                    Thẻ trước
                   </button>
-                  <span className="font-hand text-xl font-bold text-ink-dark">
-                    {focusIndex + 1} / {filtered.length}
+                  <span role="status" className="text-sm font-semibold text-ink-dark shrink-0">
+                    {Math.min(focusIndex + 1, filtered.length)} / {filtered.length}
                   </span>
                   <button
                     onClick={handleNextCard}
-                    disabled={focusIndex === filtered.length - 1}
-                    className="px-5 py-1.5 bg-paper-cream border border-paper-kraft font-hand text-lg font-bold text-ink-dark rounded disabled:opacity-30 transition hover:bg-paper-kraft-light/40"
+                    disabled={navigationLocked || focusIndex === filtered.length - 1}
+                    className="secondary-button px-3 sm:px-5"
                   >
-                    THẺ KẾ TIẾP
+                    Thẻ tiếp
                   </button>
                 </div>
               </>
@@ -469,17 +398,15 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
       {/* 3. Modal thêm từ */}
       {isModalOpen && folder?.isOwner && (
         <div className="modal-backdrop fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-lg bg-paper-white border-2 border-paper-kraft shadow-paper-heavy rounded-sm p-8 relative">
-            <div className="staple top-3 left-6" />
-            <div className="tape tape-mint w-24 top-[-10px] right-10" />
+          <div ref={dialog} role="dialog" aria-modal="true" aria-label="Thêm từ vựng" tabIndex={-1} className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-paper-white border border-paper-kraft rounded p-5 sm:p-8 relative">
 
             <div className="flex justify-between items-center border-b-2 border-paper-kraft pb-3 mb-6">
               <div>
                 <span className="font-mono text-xs font-bold text-accent-coral uppercase">
-                  THÊM THẺ VÀO: {folder.name}
+                  Thư mục: {folder.name}
                 </span>
                 <h2 className="font-display text-3xl font-bold text-ink-dark">
-                  Ghi Chép Từ Vựng
+                  Thêm từ vựng
                 </h2>
               </div>
               <button
@@ -487,13 +414,14 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
                 onClick={() => setIsModalOpen(false)}
                 className="text-ink-pencil hover:text-ink-dark font-mono text-base font-bold"
               >
-                [ ĐÓNG ]
+                Đóng
               </button>
             </div>
 
             <form onSubmit={handleCreateWord} className="space-y-4">
+              {actionError && <p role="alert" className="text-sm text-rose-800">{actionError}</p>}
               <div>
-                <label className="block font-hand text-lg text-ink-dark mb-0.5">
+                <label className="block text-sm font-medium text-ink-dark mb-0.5">
                   Từ tiếng Anh *
                 </label>
                 <input
@@ -501,18 +429,18 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
                   required
                   value={newWord}
                   onChange={(e) => setNewWord(e.target.value)}
-                  placeholder="Ví dụ: Negotiation"
+                  aria-label="Từ tiếng Anh" placeholder="Ví dụ: Negotiation"
                   className="w-full px-3 py-2 bg-paper-cream border-2 border-paper-kraft text-ink-dark font-body text-sm rounded-sm focus:outline-none focus:border-slate-900"
                 />
               </div>
 
               <div>
-                <label className="block font-hand text-lg text-ink-dark mb-0.5">
+                <label className="block text-sm font-medium text-ink-dark mb-0.5">
                   Phiên âm IPA
                 </label>
                 <input
                   type="text"
-                  value={newPhonetic}
+                  aria-label="Phiên âm IPA" value={newPhonetic}
                   onChange={(e) => setNewPhonetic(e.target.value)}
                   placeholder="/nɪˌɡoʊ.ʃiˈeɪ.ʃən/"
                   className="w-full px-3 py-2 bg-paper-cream border-2 border-paper-kraft text-ink-dark font-body text-sm rounded-sm focus:outline-none focus:border-slate-900"
@@ -520,13 +448,13 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
               </div>
 
               <div>
-                <label className="block font-hand text-lg text-ink-dark mb-0.5">
+                <label className="block text-sm font-medium text-ink-dark mb-0.5">
                   Nghĩa tiếng Việt *
                 </label>
                 <input
                   type="text"
                   required
-                  value={newMeaning}
+                  aria-label="Nghĩa tiếng Việt" value={newMeaning}
                   onChange={(e) => setNewMeaning(e.target.value)}
                   placeholder="Ví dụ: Sự thương lượng, đàm phán"
                   className="w-full px-3 py-2 bg-paper-cream border-2 border-paper-kraft text-ink-dark font-body text-sm rounded-sm focus:outline-none focus:border-slate-900"
@@ -534,12 +462,12 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
               </div>
 
               <div>
-                <label className="block font-hand text-lg text-ink-dark mb-0.5">
+                <label className="block text-sm font-medium text-ink-dark mb-0.5">
                   Câu ví dụ ngữ cảnh
                 </label>
                 <textarea
                   rows={2}
-                  value={newExample}
+                  aria-label="Câu ví dụ ngữ cảnh" value={newExample}
                   onChange={(e) => setNewExample(e.target.value)}
                   placeholder="Ví dụ: The contract is under negotiation."
                   className="w-full px-3 py-2 bg-paper-cream border-2 border-paper-kraft text-ink-dark font-body text-sm rounded-sm focus:outline-none focus:border-slate-900 resize-none"
@@ -550,16 +478,16 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2 bg-paper-cream border border-paper-kraft font-hand text-lg font-bold text-ink-medium rounded"
+                  className="secondary-button"
                 >
-                  HỦY BỎ
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-2 bg-slate-900 hover:bg-slate-800 text-white font-hand text-lg font-bold rounded shadow transition disabled:opacity-50"
+                  className="primary-button"
                 >
-                  {submitting ? 'ĐANG LƯU...' : 'LƯU VÀO SỔ'}
+                  {submitting ? 'Đang lưu…' : 'Lưu từ'}
                 </button>
               </div>
             </form>

@@ -40,8 +40,7 @@ export const RegisterPage: React.FC = () => {
       });
 
       // Đăng ký thành công -> Chuyển về trang đăng nhập kèm thông báo
-      alert('Đăng ký tài khoản thành công! Hãy đăng nhập để bắt đầu học.');
-      navigate('/login');
+      navigate('/login', { state: { registered: true } });
     } catch (err) {
       setError(getErrorMessage(err, 'Đăng ký thất bại. Email có thể đã được sử dụng.'));
     } finally {

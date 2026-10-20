@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayNotEmpty, ArrayUnique, IsArray, IsIn, IsInt, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayNotEmpty, ArrayUnique, IsArray, IsIn, IsInt, IsUUID, Min, ValidateNested } from 'class-validator';
 
 export class AnswerItemDto {
   @IsInt()
@@ -11,6 +11,9 @@ export class AnswerItemDto {
 }
 
 export class SubmitQuizDto {
+  @IsUUID()
+  attemptId: string;
+
   @IsArray()
   @ArrayMaxSize(5)
   @ArrayUnique((answer: AnswerItemDto) => answer.questionId)

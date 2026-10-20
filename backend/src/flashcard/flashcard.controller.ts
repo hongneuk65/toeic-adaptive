@@ -1,3 +1,6 @@
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '@prisma/client';
 import {
   Controller,
   Get,
@@ -14,8 +17,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { FlashcardService } from './flashcard.service';
 import { getUserId } from '../common/user-id';
 import { ReviewFlashcardDto } from './dto/review-flashcard.dto';
+import { CreateFlashcardDto, CreateFolderDto } from './dto/create-flashcard.dto';
 
 @Controller('flashcards')
+@Roles(Role.USER)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class FlashcardController {
   constructor(private readonly flashcardService: FlashcardService) {}
   @Get('folders/:id/reviews')
@@ -23,7 +29,7 @@ export class FlashcardController {
   reviews(@Req() req: any, @Param('id', ParseIntPipe) id: number) { return this.flashcardService.reviews(getUserId(req), id); }
   @Patch('cards/:id/review')
   @UseGuards(AuthGuard('jwt'))
-  review(@Req() req: any, @Param('id', ParseIntPipe) id: number, @Body() dto: ReviewFlashcardDto) { return this.flashcardService.review(getUserId(req), id, dto.known); }
+  review(@Req() req: any, @Param('id', ParseIntPipe) id: number, @Body() dto: ReviewFlashcardDto) { return this.flashcardService.review(getUserId(req), id, dto.known, dto); }
 
   // 1. Xem danh sách Folder (Công khai, tự nhận diện token nếu có)
   @Get('folders')
@@ -37,7 +43,7 @@ export class FlashcardController {
   @UseGuards(AuthGuard('jwt'))
   async createFolder(
     @Req() req: any,
-    @Body() body: { name: string; description?: string },
+    @Body() body: CreateFolderDto,
   ) {
     return this.flashcardService.createFolder(getUserId(req, 'Không tìm thấy thông tin định danh.'), body);
   }
@@ -65,7 +71,7 @@ export class FlashcardController {
   async addCard(
     @Req() req: any,
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: any,
+    @Body() body: CreateFlashcardDto,
   ) {
     return this.flashcardService.addCardToFolder(getUserId(req, 'Không tìm thấy thông tin định danh.'), id, body);
   }

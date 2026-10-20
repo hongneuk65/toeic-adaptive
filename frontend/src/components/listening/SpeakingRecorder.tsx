@@ -29,7 +29,7 @@ export function SpeakingRecorder({ maximumSeconds, onRecorded }: { maximumSecond
     finally { if (active.current) setRequesting(false); }
   };
   return <div className="space-y-3">
-    <p className="text-sm text-ink-medium">Ghi âm để tự đối chiếu · chưa có ASR và chấm phát âm. Bản ghi chỉ ở trình duyệt, tự bỏ khi rời bài.</p>
+    <p className="text-sm text-ink-medium">Ghi âm để tự đối chiếu · không chấm phát âm tự động. Bản ghi chỉ ở trình duyệt, tự bỏ khi rời bài.</p>
     <button disabled={requesting} className="primary-button" onClick={() => recording ? recorder.current?.stop() : void record()}>{requesting ? 'Đang mở microphone...' : recording ? `Dừng ghi · ${seconds}/${maximumSeconds}s` : url ? 'Ghi âm lại' : 'Bắt đầu ghi âm'}</button>
     {url && <audio src={url} controls className="w-full" />}
     {error && <p role="alert" className="text-sm text-rose-800">{error}</p>}

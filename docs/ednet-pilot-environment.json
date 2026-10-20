@@ -1,0 +1,28 @@
+{
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "sklearn": "1.9.1",
+  "torch": "2.14.0+cpu",
+  "cuda": false,
+  "args": {
+    "data": "D:/NEU/KHOA_LUAN/DAS3H&BKT&SAKT/data/ednet_kt4/KT4.zip",
+    "questions": "D:/NEU/KHOA_LUAN/DAS3H&BKT&SAKT/data/ednet_kt4/contents/contents/questions.csv",
+    "output": "experiments/ednet/artifacts/pilot-2000",
+    "users": 2000,
+    "min_bundles": 20,
+    "max_bundles": 200,
+    "sample_seed": 20261017,
+    "seeds": [
+      11,
+      22,
+      33
+    ],
+    "epochs": 12,
+    "patience": 3,
+    "batch_size": 32,
+    "threads": 4
+  },
+  "script_sha256": "3e72e5039846b093fa54299f50cfa39b73f9120e6a917e97e5fe3ab7100ca93a"
+}

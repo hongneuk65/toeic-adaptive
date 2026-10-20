@@ -35,6 +35,7 @@ export class MasteryQueueService {
             });
         } catch (error) {
             this.logger.error('Lỗi khi đẩy job vào BullMQ:', error);
+            throw error;
         }
     }
 
@@ -61,6 +62,7 @@ export class MasteryQueueService {
             this.logger.log(`Đã đẩy ${jobs.length} câu hỏi vào hàng đợi nền.`);
         } catch (error) {
             this.logger.error('Lỗi khi đẩy bulk jobs vào BullMQ:', error);
+            throw error;
         }
     }
 }

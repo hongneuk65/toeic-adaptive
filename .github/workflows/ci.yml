@@ -5,6 +5,22 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: toeic
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U ci -d toeic" --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/toeic
+      REDIS_HOST: localhost
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,5 +34,19 @@ jobs:
         env:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/toeic
       - run: npm run check
+      - run: node test/reliability.integration.cjs
+        working-directory: backend
+      - run: node test/http-reliability.integration.cjs
+        working-directory: backend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run test:browser
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-regression-evidence
+          path: frontend/test-results
+          retention-days: 7
       - run: docker compose --env-file .env.example config --quiet
       - run: docker compose --env-file .env.example build
