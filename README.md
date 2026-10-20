@@ -56,7 +56,7 @@ docker compose --env-file .env.example config --quiet
 
 Xem [hướng dẫn deploy](docs/deployment.md), [kiến trúc](docs/architecture.md), [kết quả kiểm tra trước đây](docs/verification.md) và [RAG](docs/rag-performance.md).
 
-Bản web [TOEIC Compass](https://toeic-compass.up.railway.app) dùng nguồn nhánh `main` của GitHub trên Railway. Chỉnh sửa hoặc commit ở máy chưa cập nhật web; cần push lên `main`. Tự động phát hành sau CI cần cấp quyền GitHub cho Railway; trạng thái kết nối và dữ liệu thư viện được mô tả trong [hướng dẫn production](docs/production-toeic-compass.md). Key và dữ liệu người học chỉ lưu phía server.
+Bản web [TOEIC Compass](https://toeic-compass.up.railway.app) tự động phát hành từ nhánh `main` của GitHub qua Railway sau khi CI đạt. Chỉnh sửa hoặc commit ở máy chưa cập nhật web; cần push lên `main`. Cấu hình production và dữ liệu thư viện được mô tả trong [hướng dẫn production](docs/production-toeic-compass.md). Key và dữ liệu người học chỉ lưu phía server.
 
 
 ## Reading
