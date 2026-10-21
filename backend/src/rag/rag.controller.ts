@@ -37,6 +37,7 @@ export class RagController {
   @Post('explain-error-stream')
   async streamExplanation(@Req() req: any, @Body() dto: ExplainErrorDto, @Res() response: Response) {
     const userId = getUserId(req, 'Không tìm thấy thông tin định danh người dùng trong Token.');
+    await this.ragService.authorizeTutor(userId, dto);
     return this.sendStream(response, async (signal, send) => {
       const result = await this.ragService.streamExplanation(userId, dto, signal, (chunk) => send({ chunk }));
       send({ result });
@@ -63,6 +64,7 @@ export class RagController {
     @Res() response: Response,
   ) {
     const userId = getUserId(req, 'Không tìm thấy thông tin định danh người dùng trong Token.');
+    await this.ragService.authorizeTutor(userId);
     return this.sendStream(response, async (signal, send) => {
       for await (const chunk of this.ragService.streamChatWithTutor(userId, dto, signal)) send({ chunk });
     });

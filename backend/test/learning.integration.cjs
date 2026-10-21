@@ -245,8 +245,9 @@ async function testExistingRagTables() {
   }
   const sql = readFileSync(resolve(migrations, latest, 'migration.sql'), 'utf8');
   await applySql(db, statements(sql).filter((s) => /^CREATE (TABLE|INDEX).*"(KnowledgeChunk|AiChatMessage)/.test(s)).join(';'));
-  await db.knowledgeChunk.create({ data: { part: 5, category: 'test', title: 'keep', content: 'keep', keywords: [] } });
-  const user = await db.user.create({ data: { email: 'legacy@example.test', passwordHash: 'not-a-login' } });
+  // These rows intentionally predate later columns; select only fields present at this migration stage.
+  await db.$executeRaw`INSERT INTO "KnowledgeChunk" ("part", "category", "title", "content", "keywords", "updatedAt") VALUES (5, 'test', 'keep', 'keep', ARRAY[]::TEXT[], NOW())`;
+  const user = await db.user.create({ data: { email: 'legacy@example.test', passwordHash: 'not-a-login' }, select: { id: true } });
   await db.aiChatMessage.create({ data: { userId: user.id, role: 'user', content: 'keep chat' } });
   const q = await db.question.create({ data: {
     part: 5, content: 'legacy', optionA: 'a', optionB: 'b', optionC: 'c', optionD: 'd', correctAnswer: 'A', itemDifficulty: 0,

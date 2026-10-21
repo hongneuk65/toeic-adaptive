@@ -379,6 +379,12 @@ model KnowledgeChunk {
   content     String
   keywords    String[]
   lessonId    Int?
+  reviewStatus String @default("DRAFT")
+  sourceUri String?
+  sourceVersion String?
+  reviewedAt DateTime?
+  reviewedBy String?
+  approvedContentHash String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

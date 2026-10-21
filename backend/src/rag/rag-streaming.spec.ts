@@ -8,12 +8,12 @@ import { RagLlmService } from './rag-llm.service';
 import { RagRetrieverService } from './rag-retriever.service';
 import { RagController } from './rag.controller';
 import { RagService } from './rag.service';
+import { TutorContextService } from './tutor-context.service';
+import { LearnerEvidenceService } from './learner-evidence.service';
+import { TutorKnowledgeService } from './tutor-knowledge.service';
 
 const text = [
-  '### 1. Phân tích nguyên nhân chọn sai và bẫy tư duy\nMisconception\n',
-  '### 2. Phân tích cặn kẽ đáp án đúng\nCorrect\n',
-  '### 3. Quy tắc cốt lõi cần ghi nhớ\nRule\n',
-  '### 4. Lộ trình khắc phục đề xuất\nPractice',
+  JSON.stringify({ sections: { misconceptionAnalysis: 'Misconception', correctAnswerExplanation: 'Correct', keyTakeawayRule: 'Rule', recommendedAction: 'Practice' }, citations: [] }),
 ];
 const question = { id: 1, part: 5, content: 'Example', correctAnswer: 'A', optionA: 'A', optionB: 'B', optionC: 'C', optionD: 'D', skills: [{ skill: { id: 7, code: 'GRAMMAR', name: 'Grammar', category: 'Grammar' } }] };
 
@@ -49,15 +49,20 @@ describe('RAG preparation and streaming', () => {
     retriever.retrieveContext.mockResolvedValue([]);
     llm.streamText.mockImplementation(async function* () { yield* text; });
     const args = [db as unknown as PrismaService, retriever as unknown as RagRetrieverService, llm as unknown as RagLlmService] as const;
-    explainer = new RagExplainerService(...args);
+    const evidence = { get: async () => {
+      const [user, mastery] = await Promise.all([db.user.findUnique(), db.userSkillMastery.findUnique()]);
+      return [{ id: 7, code: 'GRAMMAR', name: 'Grammar', predictedSuccess: 1 / (1 + Math.exp(-user.ability)), attempts: mastery?.practiceCount ?? 0, distinctQuestions: 0, recentAttempts: 0, lastPracticed: null, status: 'insufficient' as const }];
+    } };
+    explainer = new RagExplainerService(db as unknown as PrismaService, new TutorContextService(db as unknown as PrismaService), evidence as unknown as LearnerEvidenceService,
+      { retrieve: () => retriever.retrieveContext() } as unknown as TutorKnowledgeService, llm as unknown as RagLlmService);
     chat = new RagChatService(...args);
   });
 
-  it('streams text before the final result while preserving mastery and all four sections', async () => {
+  it('emits validated text before the final result while preserving all four sections', async () => {
     const chunks: string[] = [];
     const result = await explainer.explainError({ userId: 2, questionId: 1, selectedAnswer: 'B', onChunk: (chunk) => chunks.push(chunk) });
-    expect(chunks).toEqual(text);
-    expect(result.explanation).toBe(text.join(''));
+    expect(chunks).toEqual([result.explanation]);
+    expect(result.generationStatus).toBe('generated');
     expect(result.learnerMastery?.masteryScore).toBeCloseTo(0.3);
     expect(result.sections).toEqual({ misconceptionAnalysis: 'Misconception', correctAnswerExplanation: 'Correct', keyTakeawayRule: 'Rule', recommendedAction: 'Practice' });
     expect(result.isCorrect).toBe(false);
@@ -73,11 +78,28 @@ describe('RAG preparation and streaming', () => {
     expect(b.isCorrect).toBe(true);
   });
 
+  it('does not emit malformed model output as a trustworthy explanation', async () => {
+    llm.streamText.mockImplementation(async function* () { yield 'unsupported provider claim'; });
+    const chunks: string[] = [];
+    const result = await explainer.explainError({ userId: 2, questionId: 1, selectedAnswer: 'B', onChunk: chunk => chunks.push(chunk) });
+    expect(result.generationStatus).toBe('stored_only');
+    expect(result.grounding).toBe('insufficient');
+    expect(chunks.join('')).not.toContain('unsupported provider claim');
+    expect(result.correctAnswer).toBe('A');
+  });
+
+  it('rechecks exam access after generation before publishing any answer', async () => {
+    db.examAttempt.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(null).mockResolvedValueOnce({ id: 99 });
+    const chunks: string[] = [];
+    await expect(explainer.explainError({ userId: 2, questionId: 1, selectedAnswer: 'B', onChunk: chunk => chunks.push(chunk) })).rejects.toThrow('Nộp bài thi');
+    expect(chunks).toEqual([]);
+  });
+
   it('labels cold-start skill evidence separately from a probability estimate', async () => {
     db.userSkillMastery.findUnique.mockResolvedValue(null);
     const result = await explainer.explainError({ userId: 2, questionId: 1, selectedAnswer: 'CHƯA_CHỌN' });
     expect(result.learnerMastery?.evidenceStatus).toBe('unassessed');
-    expect(result.learnerMastery?.levelDescription).toBe('Chưa đủ dữ liệu đánh giá kỹ năng');
+    expect(result.learnerMastery?.levelDescription).toBe('Giải thích rõ ràng, chưa kết luận trình độ');
     expect(result.isCorrect).toBe(false);
   });
 
@@ -144,8 +166,17 @@ describe('RAG SSE controller', () => {
     });
   }
 
+  it('rejects access before sending SSE headers or text', async () => {
+    const service = { authorizeTutor: jest.fn(async () => { throw new Error('forbidden'); }), streamExplanation: jest.fn() };
+    const controller = new RagController(service as unknown as RagService);
+    const res = response();
+    await expect(controller.streamExplanation({ user: { userId: 2 } }, { questionId: 1, selectedAnswer: 'A', attemptId: 4 }, res as unknown as Response)).rejects.toThrow('forbidden');
+    expect(res.setHeader).not.toHaveBeenCalled(); expect(res.write).not.toHaveBeenCalled();
+    expect(service.streamExplanation).not.toHaveBeenCalled();
+  });
+
   it('writes chunks then result then DONE with proxy buffering disabled', async () => {
-    const service = { streamExplanation: jest.fn(async (_user, _dto, _signal, send: (chunk: string) => void) => {
+    const service = { authorizeTutor: jest.fn(async () => {}), streamExplanation: jest.fn(async (_user, _dto, _signal, send: (chunk: string) => void) => {
       send('first');
       return { questionId: 1 };
     }) };
@@ -160,13 +191,14 @@ describe('RAG SSE controller', () => {
 
   it('aborts upstream when the client disconnects and writes nothing afterward', async () => {
     let signal!: AbortSignal;
-    const service = { streamExplanation: jest.fn((_user, _dto, value: AbortSignal) => {
+    const service = { authorizeTutor: jest.fn(async () => {}), streamExplanation: jest.fn((_user, _dto, value: AbortSignal) => {
       signal = value;
       return new Promise((_resolve, reject) => value.addEventListener('abort', () => reject(value.reason), { once: true }));
     }) };
     const controller = new RagController(service as unknown as RagService);
     const res = response();
     const pending = controller.streamExplanation({ user: { userId: 2 } }, { questionId: 1, selectedAnswer: 'B' }, res as unknown as Response);
+    await new Promise(resolve => setImmediate(resolve));
     res.emit('close');
     await pending;
     expect(signal.aborted).toBe(true);

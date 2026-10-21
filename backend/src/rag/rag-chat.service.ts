@@ -1,4 +1,5 @@
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { assertTutorHelpAccessible } from './tutor-access.policy';
 import { assertQuestionAnswersAccessible } from '../common/exam-answer-access';
 import { PrismaService } from '../prisma/prisma.service';
 import { RagRetrieverService } from './rag-retriever.service';
@@ -108,14 +109,7 @@ export class RagChatService {
     params.signal?.throwIfAborted();
     const { userId, message, questionId, skillCode } = params;
     // Even a free-form prompt must not become a tutor during a timed exam.
-    const now = new Date();
-    const openExam = await this.prisma.examAttempt.findFirst({ where: { userId, submittedAt: null, OR: [
-      { deadlineAt: { gt: now } },
-      { deadlineAt: null, startedAt: { gte: new Date(now.getTime() - 120 * 60_000) } },
-    ] }, select: { id: true } });
-    if (openExam) {
-      throw new ForbiddenException('Nộp bài thi đang làm trước khi sử dụng gia sư AI.');
-    }
+    await assertTutorHelpAccessible(this.prisma, userId);
     if (questionId) await assertQuestionAnswersAccessible(this.prisma, userId, [questionId]);
     let questionContext = '';
     let partForRetriever: number | undefined;

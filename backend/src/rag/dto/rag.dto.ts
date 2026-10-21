@@ -1,6 +1,16 @@
 import { IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, Min, IsIn } from 'class-validator';
+import { EXPLANATION_MODES, type ExplanationMode } from '../explanation.policy';
 
 export class ExplainErrorDto {
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  attemptId?: number;
+
+  @IsOptional()
+  @IsIn(EXPLANATION_MODES)
+  mode?: ExplanationMode;
+
   @IsInt()
   @Min(1)
   @IsNotEmpty()

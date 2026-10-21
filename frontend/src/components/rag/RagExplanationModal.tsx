@@ -12,6 +12,7 @@ interface RagExplanationModalProps {
   onClose: () => void;
   questionId: number | null;
   selectedAnswer: string;
+  attemptId?: number;
   onAskTutor?: (questionId: number, skillCode?: string) => void;
 }
 
@@ -20,18 +21,22 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
   onClose,
   questionId,
   selectedAnswer,
+  attemptId,
   onAskTutor,
 }) => {
   const navigate = useNavigate();
   const dialog = useRef<HTMLDivElement>(null);
   useDialogFocus(dialog, isOpen, onClose);
-  const requestKey = useMemo(() => ({ isOpen, questionId, selectedAnswer }), [isOpen, questionId, selectedAnswer]);
+  const [preference, setPreference] = useState<{ questionId: number | null; mode: 'auto' | 'simpler' | 'example' | 'deeper' }>({ questionId: null, mode: 'auto' });
+  const mode = preference.questionId === questionId ? preference.mode : 'auto';
+  const requestKey = useMemo(() => ({ isOpen, questionId, selectedAnswer, attemptId, mode }), [isOpen, questionId, selectedAnswer, attemptId, mode]);
   const [progress, setProgress] = useState<{ key: typeof requestKey; text: string }>();
   const load = useCallback(async (signal: AbortSignal) => {
     if (!requestKey.isOpen || !requestKey.questionId) return null;
     setProgress({ key: requestKey, text: '' });
     const response = await apiStream('/rag/explain-error-stream', {
       questionId: requestKey.questionId, selectedAnswer: requestKey.selectedAnswer || 'CHƯA_CHỌN',
+      attemptId: requestKey.attemptId, mode: requestKey.mode,
     }, signal);
     let text = '';
     let result: PersonalizedExplanationResult | undefined;
@@ -52,9 +57,9 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
   if (!isOpen || !questionId) return null;
 
   const displaySelected =
-    !selectedAnswer || selectedAnswer === 'CHƯA_CHỌN'
+    !(data?.selectedAnswer ?? selectedAnswer) || (data?.selectedAnswer ?? selectedAnswer) === 'CHƯA_CHỌN'
       ? 'Chưa chọn'
-      : `Đáp án (${selectedAnswer})`;
+      : `Đáp án (${data?.selectedAnswer ?? selectedAnswer})`;
 
   return (
     <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -81,11 +86,15 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
 
         {/* Content Body */}
         <div className="p-5 overflow-y-auto space-y-4 flex-1 font-body">
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Điều chỉnh cách giải thích">
+            {([{ mode: 'auto', label: 'Tự động' }, { mode: 'simpler', label: 'Giải thích dễ hơn' }, { mode: 'example', label: 'Cho ví dụ' }, { mode: 'deeper', label: 'Giải thích sâu hơn' }] as const).map(item => <button key={item.mode} type="button" aria-pressed={mode === item.mode} disabled={loading} onClick={() => setPreference({ questionId, mode: item.mode })} className="rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 hover:bg-slate-100 aria-pressed:bg-slate-800 aria-pressed:text-white disabled:opacity-50">{item.label}</button>)}
+          </div>
+          <p className="text-xs text-slate-500">Chỉ thay đổi cách giải thích, không cập nhật năng lực hay điểm học tập.</p>
           {loading && !partialText && (
             <div className="py-16 text-center space-y-3">
               <div className="inline-block w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
               <p className="font-hand text-lg text-ink-medium">
-                Đang chuẩn bị lời giải…
+                Đang chuẩn bị và kiểm tra lời giải…
               </p>
             </div>
           )}
@@ -107,6 +116,14 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
 
           {data && !loading && (
             <>
+              <div role="status" className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-relaxed text-slate-700">
+                <p>{data.presentation?.description}</p>
+                <p>{data.knowledgeNotice}</p>
+                {data.generationStatus === 'stored_only' && <p>AI chưa cung cấp được phản hồi hợp lệ. Đang hiển thị thông tin và lời giải lưu sẵn, chưa được thẩm định.</p>}
+                {data.answerOrigin === 'practice_input' && <p>Đây là lựa chọn ở chế độ luyện tập, chưa xác thực từ một bài thi đã nộp.</p>}
+                {data.contextWarnings?.map(warning => <p key={warning}>{warning}</p>)}
+                {!!data.learnerEvidence?.length && <details className="mt-2"><summary className="cursor-pointer font-semibold">Căn cứ điều chỉnh cách giải thích</summary><p>DAS3H là dự đoán, không phải kết luận trình độ đã được kiểm chứng.</p><ul className="mt-1 space-y-1">{data.learnerEvidence.map(skill => <li key={skill.id}>{skill.name}: {skill.attempts} lượt / {skill.distinctQuestions} câu khác nhau trong 30 ngày; {skill.recentAttempts} lượt trong 14 ngày. {skill.status === 'sufficient' ? 'Đủ điều kiện của quy tắc trình bày thử nghiệm.' : skill.status === 'stale' ? 'Lịch sử chưa đủ gần đây.' : 'Chưa đủ dữ liệu để điều chỉnh tự động.'}</li>)}</ul></details>}
+              </div>
               <div className="p-2.5 bg-amber-50/90 border border-amber-200 rounded flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-bold text-amber-900">Part {data.part}</span>
@@ -141,7 +158,7 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
               <div className="space-y-3 text-xs leading-relaxed">
                 <div className="p-3 bg-paper-white border border-rose-200 rounded space-y-1">
                   <h3 className="font-bold text-rose-950 text-xs">
-                    1. Phân tích nguyên nhân & bẫy tư duy
+                    1. Lựa chọn và điểm cần đối chiếu
                   </h3>
                   <div className="text-ink-dark leading-relaxed">
                     <AiMarkdown content={data.sections.misconceptionAnalysis} />
@@ -150,7 +167,7 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
 
                 <div className="p-3 bg-paper-white border border-emerald-200 rounded space-y-1">
                   <h3 className="font-bold text-emerald-950 text-xs">
-                    2. Phân tích cặn kẽ đáp án đúng
+                    2. Giải thích đáp án
                   </h3>
                   <div className="text-ink-dark leading-relaxed">
                     <AiMarkdown content={data.sections.correctAnswerExplanation} />
@@ -159,7 +176,7 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
 
                 <div className="p-3 bg-paper-white border border-indigo-200 rounded space-y-1">
                   <h3 className="font-bold text-indigo-950 text-xs">
-                    3. Quy tắc cốt lõi cần nhớ
+                    3. Quy tắc và ví dụ
                   </h3>
                   <div className="text-ink-dark leading-relaxed">
                     <AiMarkdown content={data.sections.keyTakeawayRule} />
@@ -168,7 +185,7 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
 
                 <div className="p-3 bg-paper-white border border-slate-300 rounded space-y-1">
                   <h3 className="font-bold text-slate-950 text-xs">
-                    4. Lộ trình khắc phục đề xuất
+                    4. Bước học tiếp theo
                   </h3>
                   <div className="text-ink-dark leading-relaxed">
                     <AiMarkdown content={data.sections.recommendedAction} />
@@ -189,6 +206,8 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
                       >
                         <span className="text-ink-light font-bold">•</span>
                         <span>{s.title}</span>
+                        {s.version && <span className="text-ink-light">· {s.version}</span>}
+                        {s.sourceUri?.startsWith('https://') && <a href={s.sourceUri} target="_blank" rel="noopener noreferrer" className="underline">Nguồn</a>}
                         <span className="text-[10px] text-ink-light font-mono">[{s.category}]</span>
                         {s.lessonId && (
                           <button
@@ -212,7 +231,7 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
 
         {/* Footer Actions */}
         <div className="p-3 border-t border-paper-kraft bg-paper-cream flex items-center justify-between gap-3">
-          <button
+          {onAskTutor && <button
             onClick={() => {
               if (onAskTutor && questionId) {
                 onAskTutor(questionId, data?.learnerMastery?.skillCode);
@@ -222,7 +241,7 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
             className="px-3.5 py-1.5 border border-slate-700 bg-white hover:bg-paper-cream text-slate-900 font-body text-xs font-bold rounded shadow-sm"
           >
             Hỏi Trợ lý AI Tutor
-          </button>
+          </button>}
 
           <button
             onClick={onClose}

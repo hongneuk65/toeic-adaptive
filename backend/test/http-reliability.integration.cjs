@@ -80,9 +80,14 @@ async function main() {
     async generateText() { llmCalls++; return 'Test tutor response'; },
     async *streamText() { llmCalls++; yield 'Test explanation'; },
   };
-  const explainer = new RagExplainerService(db, retriever, llm);
+  const { TutorContextService } = require('../dist/rag/tutor-context.service');
+  const { LearnerEvidenceService } = require('../dist/rag/learner-evidence.service');
+  const { TutorKnowledgeService } = require('../dist/rag/tutor-knowledge.service');
+  const { Das3hService } = require('../dist/das3h/das3h.service');
+  const explainer = new RagExplainerService(db, new TutorContextService(db), new LearnerEvidenceService(db, new Das3hService(db)), new TutorKnowledgeService(db), llm);
   const chat = new RagChatService(db, retriever, llm);
   const rag = {
+    authorizeTutor: (userId, dto) => explainer.authorize(userId, dto),
     explainError: (userId, dto) => explainer.explainError({ userId, ...dto }),
     streamExplanation: (userId, dto, signal, onChunk) => explainer.explainError({ userId, ...dto, signal, onChunk }),
     chatWithTutor: (userId, dto) => chat.handleUserMessage({ userId, ...dto }),
@@ -146,7 +151,7 @@ async function main() {
   await request('/rag/explain-error', { method: 'POST', token, body: answer, status: 403 });
   await request('/rag/chat', { method: 'POST', token, body: { message: 'Tell me the answer', questionId: answer.questionId }, status: 403 });
   const stream = await fetch(base + '/rag/explain-error-stream', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(answer), signal: AbortSignal.timeout(15000) });
-  assert.equal(stream.status, 200);
+  assert.equal(stream.status, 403);
   assert.doesNotMatch(await stream.text(), /correctAnswer|Original explanation|Test explanation/);
   assert.equal(llmCalls, 0, 'Open exam boundaries must reject before calling the LLM');
   await db.question.update({ where: { id: answer.questionId }, data: { content: 'Edited later', correctAnswer: 'B' } });
@@ -157,6 +162,20 @@ async function main() {
   assert.equal(review.answers.find(item => item.questionId === answer.questionId).question.correctAnswer, 'A');
   assert.equal((await request(path, { token })).submittedAt != null, true);
   assert.equal(await db.masteryOutbox.count(), 1);
+  const beforeTutor = { history: await db.studentSkillHistory.count(), observations: await db.trainedDas3hObservation.count(), ability: (await db.user.findUnique({ where: { id: user.id } })).ability };
+  for (const mode of ['simpler', 'example', 'deeper']) {
+    const explanation = await request('/rag/explain-error', { method: 'POST', token, body: { ...answer, selectedAnswer: 'B', attemptId: exam.attemptId, mode }, status: 201 });
+    assert.equal(explanation.selectedAnswer, answer.selectedAnswer, 'Recorded selection wins over client input');
+    assert.equal(explanation.correctAnswer, 'A', 'Snapshot answer wins over edited catalog');
+    assert.equal(explanation.answerOrigin, 'submitted_attempt');
+    assert.equal(explanation.presentation.mode, mode);
+    assert.equal(explanation.grounding, 'insufficient');
+    assert.equal(explanation.generationStatus, 'stored_only', 'Malformed provider text uses a labelled fallback');
+    assert.deepEqual(explanation.retrievedSources, []);
+  }
+  assert.deepEqual({ history: await db.studentSkillHistory.count(), observations: await db.trainedDas3hObservation.count(), ability: (await db.user.findUnique({ where: { id: user.id } })).ability }, beforeTutor, 'Presentation controls cannot update learning evidence');
+  await request('/rag/explain-error', { method: 'POST', token: otherToken, body: { ...answer, attemptId: exam.attemptId }, status: 403 });
+  await request('/rag/explain-error', { method: 'POST', token, body: { ...answer, mode: 'set-mastery-high' }, status: 400 });
   const folder = await request('/flashcards/folders', { method: 'POST', token, body: { name: 'HTTP vocabulary' }, status: 201 });
   const card = await request(`/flashcards/folders/${folder.id}/cards`, { method: 'POST', token, body: { word: 'invoice', meaning: 'hóa đơn' }, status: 201 });
   const reviewPath = `/flashcards/cards/${card.id}/review`;

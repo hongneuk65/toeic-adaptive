@@ -20,12 +20,15 @@ export class RagService {
       questionId: dto.questionId,
       selectedAnswer: dto.selectedAnswer,
       userNote: dto.userNote,
+      attemptId: dto.attemptId, mode: dto.mode,
     });
   }
 
   streamExplanation(userId: number, dto: ExplainErrorDto, signal: AbortSignal, onChunk: (chunk: string) => void) {
-    return this.explainer.explainError({ userId, questionId: dto.questionId, selectedAnswer: dto.selectedAnswer, userNote: dto.userNote, signal, onChunk });
+    return this.explainer.explainError({ userId, ...dto, signal, onChunk });
   }
+
+  authorizeTutor(userId: number, dto?: ExplainErrorDto) { return this.explainer.authorize(userId, dto); }
 
   chatWithTutor(userId: number, dto: ChatTutorDto): Promise<ChatMessageResult> {
     return this.chat.handleUserMessage({

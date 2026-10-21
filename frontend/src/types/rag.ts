@@ -1,4 +1,8 @@
 export interface RetrievedSource {
+  id?: string;
+  sourceUri?: string;
+  version?: string;
+  contentHash?: string;
   title: string;
   category: string;
   sourceType: string;
@@ -14,11 +18,18 @@ export interface PersonalizedExplanationResult {
   learnerMastery: {
     skillCode: string;
     skillName: string;
-    masteryScore: number;
+    masteryScore: number | null;
     evidenceStatus?: 'practiced' | 'unassessed';
     levelDescription: string;
   } | null;
   explanation: string;
+  presentation?: { mode: 'auto' | 'simpler' | 'example' | 'deeper'; style: string; description: string; version: string };
+  answerOrigin?: 'submitted_attempt' | 'practice_input';
+  grounding?: 'approved_sources' | 'insufficient';
+  knowledgeNotice?: string;
+  generationStatus?: 'generated' | 'stored_only';
+  contextWarnings?: string[];
+  learnerEvidence?: { id: number; name: string; attempts: number; distinctQuestions: number; recentAttempts: number; status: 'insufficient' | 'stale' | 'sufficient' }[];
   sections: {
     misconceptionAnalysis: string;
     correctAnswerExplanation: string;

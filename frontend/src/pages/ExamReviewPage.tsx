@@ -90,6 +90,6 @@ function ExamReview({review}:{review:ReviewResponse}) {
       </div>
       <button className="exam-nav-button" disabled={groupIndex===groups.length-1} onClick={()=>setGroupIndex(value=>value+1)}>Nhóm tiếp</button>
     </footer>
-    {aiQuestion&&<RagExplanationModal isOpen questionId={aiQuestion.questionId} selectedAnswer={aiQuestion.selectedAnswer||'CHƯA_CHỌN'} onClose={()=>setAiQuestion(null)}/>}
+    {aiQuestion&&<RagExplanationModal isOpen attemptId={review.id} questionId={aiQuestion.questionId} selectedAnswer={aiQuestion.selectedAnswer||'CHƯA_CHỌN'} onClose={()=>setAiQuestion(null)}/>}
   </div>;
 }
