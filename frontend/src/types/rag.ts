@@ -29,6 +29,8 @@ export interface PersonalizedExplanationResult {
   knowledgeNotice?: string;
   generationStatus?: 'generated' | 'stored_only';
   contextWarnings?: string[];
+  nextPractice?: { skillId: number; skillName: string; part: number; excludeQuestionId: number } | null;
+  recommendedLesson?: { id: number; title: string } | null;
   learnerEvidence?: { id: number; name: string; attempts: number; distinctQuestions: number; recentAttempts: number; status: 'insufficient' | 'stale' | 'sufficient' }[];
   sections: {
     misconceptionAnalysis: string;

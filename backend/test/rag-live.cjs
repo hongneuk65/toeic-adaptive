@@ -1,0 +1,45 @@
+// Explicit bounded provider smoke, public authored question + disposable learner only.
+require('../dist/config/environment');
+const assert = require('node:assert/strict');
+const { randomUUID } = require('node:crypto');
+const { PrismaClient } = require('@prisma/client');
+const { KnowledgeEmbeddingService } = require('../dist/rag/knowledge-embedding.service');
+const { TutorKnowledgeService } = require('../dist/rag/tutor-knowledge.service');
+const { RagRetrieverService } = require('../dist/rag/rag-retriever.service');
+const { RagLlmService } = require('../dist/rag/rag-llm.service');
+const { RagChatService } = require('../dist/rag/rag-chat.service');
+const { RagExplainerService } = require('../dist/rag/rag-explainer.service');
+const { TutorContextService } = require('../dist/rag/tutor-context.service');
+const { LearnerEvidenceService } = require('../dist/rag/learner-evidence.service');
+const { Das3hService } = require('../dist/das3h/das3h.service');
+const db = new PrismaClient();
+let user, question;
+(async () => {
+  assert.ok(process.argv.includes('--live'), 'Pass --live to authorize bounded provider requests');
+  assert.ok(['localhost', '127.0.0.1'].includes(new URL(process.env.DATABASE_URL).hostname));
+  const embeddings = new KnowledgeEmbeddingService(db);
+  const knowledge = new TutorKnowledgeService(db, embeddings);
+  const llm = new RagLlmService();
+  const skill = await db.skill.findUniqueOrThrow({ where: { code: 'P5_CONNECTORS_CONJ' } });
+  user = await db.user.create({ data: { email: `rag-smoke-${randomUUID()}@example.invalid`, passwordHash: 'disposable-no-login' } });
+  question = await db.question.create({ data: { part: 5, itemDifficulty: 0, content: '_____ the delivery was late, the manager accepted it.', optionA: 'Although', optionB: 'Despite', optionC: 'During', optionD: 'Because of', correctAnswer: 'A', explanation: 'Although introduces a clause with a subject and a verb. The other options require a different following structure.', skills: { create: { skillId: skill.id } } } });
+  const chat = new RagChatService(db, new RagRetrieverService(knowledge), llm);
+  const start = Date.now();
+  let content = '';
+  for await (const chunk of chat.streamUserMessage({ userId: user.id, message: 'Although khác despite thế nào?' })) content += chunk;
+  assert.match(content, /https:\/\/learnenglish\.britishcouncil\.org/);
+  const out = await chat.handleUserMessage({ userId: user.id, message: 'thời tiết Hà Nội' });
+  assert.match(out.content, /Chưa có tài liệu/);
+  const explainer = new RagExplainerService(db, new TutorContextService(db), new LearnerEvidenceService(db, new Das3hService(db)), knowledge, llm);
+  const result = await explainer.explainError({ userId: user.id, questionId: question.id, selectedAnswer: 'B' });
+  assert.equal(result.correctAnswer, 'A');
+  assert.equal(result.generationStatus, 'generated');
+  assert.equal(result.grounding, 'approved_sources');
+  assert.equal(result.nextPractice.skillId, skill.id);
+  assert.equal(result.presentation.style, 'neutral');
+  console.log(JSON.stringify({ passed: true, embeddingEnabled: embeddings.enabled, chatHasSources: true, outOfDomainAbstained: true, explanationGenerated: true, sourceCount: result.retrievedSources.length, coldStartNeutral: true, nextPractice: true, elapsedMs: Date.now() - start }));
+})().catch(error => { console.error(error.message); process.exitCode = 1; }).finally(async () => {
+  if (question) await db.question.deleteMany({ where: { id: question.id } });
+  if (user) await db.user.deleteMany({ where: { id: user.id } });
+  await db.$disconnect();
+});

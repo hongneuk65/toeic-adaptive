@@ -6,6 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "rag:import": "node scripts/import-tutor-corpus.cjs",
+    "rag:index": "node scripts/index-tutor-knowledge.cjs",
+    "rag:evaluate": "node scripts/evaluate-tutor-retrieval.cjs",
     "build": "nest build",
     "deploy": "nest deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

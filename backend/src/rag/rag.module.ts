@@ -12,12 +12,13 @@ import { Das3hModule } from '../das3h/das3h.module';
 import { TutorContextService } from './tutor-context.service';
 import { TutorKnowledgeService } from './tutor-knowledge.service';
 import { LearnerEvidenceService } from './learner-evidence.service';
+import { KnowledgeEmbeddingService } from './knowledge-embedding.service';
 
 @Module({
   imports: [PrismaModule, RequestBudgetModule, Das3hModule],
   controllers: [RagController],
   providers: [
-    TutorContextService, TutorKnowledgeService, LearnerEvidenceService,
+    TutorContextService, TutorKnowledgeService, LearnerEvidenceService, KnowledgeEmbeddingService,
     RagService,
     RagRetrieverService,
     RagLlmService,
