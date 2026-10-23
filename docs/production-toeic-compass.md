@@ -38,7 +38,7 @@ Initial GitHub build: commit `99d3bac` deployed successfully as `0938e79a-3ed9-4
 
 Before pushing, run `npm run check`. GitHub CI additionally runs database/HTTP integration checks, browser regression checks and the Compose build. Check CI and the exact Railway deployment commit before treating a release as complete.
 
-The compressed public library is versioned at `backend/prisma/public-library.json.gz`; its provenance and checksum are documented in `backend/prisma/PUBLIC_LIBRARY.md`. Boot applies migrations and imports this library only when content is empty. Existing production learner records remain in Postgres. Secrets are configured in Railway variables and must never be added to GitHub.
+The compressed library at `backend/prisma/public-library.json.gz` and the media manifest at `deploy/media-release-manifest.json` are private build inputs, excluded from Git. Provision both through a private build context before a release; a fresh GitHub checkout alone cannot build the current production image. Keep provenance and checksums with the private artifacts; see `backend/prisma/PUBLIC_LIBRARY.md`. Boot applies migrations and imports this library only when content is empty. Existing production learner records remain in Postgres. Secrets are configured in Railway variables and must never be added to GitHub.
 
 The commands below describe the original manual bootstrap. Normal updates use the GitHub flow above; no staging directory or manual upload is required.
 
