@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { questionSelect } from '../common/question-select';
 import { importedQuestions } from '../common/imported-questions';
 import { PrismaService } from '../prisma/prisma.service';
@@ -20,15 +20,19 @@ export class AdaptiveSchedulerService {
    * Chọn câu hỏi tối ưu nhất cho học sinh theo kỹ năng
    */
   async getNextAdaptiveQuestion(userId: number, skillId: number) {
+    if (!Number.isSafeInteger(skillId) || skillId <= 0) {
+      throw new BadRequestException('Kỹ năng không hợp lệ.');
+    }
     // 1. Lấy danh sách câu hỏi đã làm gần đây (tránh lặp lại liên tục)
     const recentHistories = await this.prisma.studentSkillHistory.findMany({
-      where: { userId: Number(userId), skillId: Number(skillId) },
+      // A question may cover several skills: rotating skill must not repeat it.
+      where: { userId: Number(userId) },
       select: { questionId: true },
       orderBy: { createdAt: 'desc' },
-      take: 20,
+      take: 100,
     });
 
-    const excludedIds = recentHistories.map((h) => h.questionId);
+    const excludedIds = [...new Set(recentHistories.map((h) => h.questionId))].slice(0, 20);
 
     // Sample evenly across difficulty strata, with a random offset in every stratum.
     // Fetch only lightweight metadata across the bank before loading selected stimuli.
@@ -37,11 +41,19 @@ export class AdaptiveSchedulerService {
       select: { id: true, itemDifficulty: true },
       orderBy: [{ itemDifficulty: 'asc' }, { id: 'asc' }],
     });
+    const reusingRecentQuestions = !eligible.length;
     if (!eligible.length) eligible = await this.prisma.question.findMany({
       where: { ...importedQuestions, skills: { some: { skillId: Number(skillId) } } },
       select: { id: true, itemDifficulty: true },
       orderBy: [{ itemDifficulty: 'asc' }, { id: 'asc' }],
     });
+    // A small bank can be exhausted. Reintroduce only the least recently seen
+    // question(s), rather than immediately repeating the question just answered.
+    if (reusingRecentQuestions && eligible.length) {
+      const positions = new Map(excludedIds.map((id, index) => [id, index]));
+      const oldest = Math.max(...eligible.map(q => positions.get(q.id) ?? excludedIds.length));
+      eligible = eligible.filter(q => (positions.get(q.id) ?? excludedIds.length) === oldest);
+    }
     const count = Math.min(this.CANDIDATE_LIMIT, eligible.length);
     const sampledIds = Array.from({ length: count }, (_, i) => {
       const start = Math.floor(i * eligible.length / count);
@@ -98,6 +110,10 @@ export class AdaptiveSchedulerService {
       isExploration,
       predictionSource: selected.predictionSource,
       modelVersion: selected.modelVersion,
+      selectionReason: isExploration
+        ? 'Thử một câu khác để hiểu rõ hơn mức độ phù hợp với bạn.'
+        : 'Ưu tiên câu có độ thử thách gần mục tiêu của buổi luyện.',
+      reusingRecentQuestions,
     };
   }
 }

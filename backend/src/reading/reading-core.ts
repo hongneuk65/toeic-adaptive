@@ -1,3 +1,5 @@
+import { type ReadingLearning, validateLearning } from './reading-generation.policy';
+
 export const QUESTION_TYPES = [
   'MAIN',
   'DETAIL',
@@ -11,6 +13,7 @@ export interface Evidence {
   text: string;
 }
 export interface ReadingQuestion {
+  learning?: ReadingLearning;
   type: string;
   prompt: string;
   options: string[];
@@ -76,6 +79,7 @@ export function validateQuestions(
         'Cấu trúc câu hỏi, lựa chọn, đáp án hoặc lời giải không hợp lệ.',
       );
     return {
+      ...(q.learning === undefined ? {} : { learning: validateLearning(q.learning) }),
       type: q.type,
       prompt: q.prompt,
       options: q.options,
@@ -163,7 +167,8 @@ export function validateAnswers(
   return result;
 }
 export function publicQuestions(questions: ReadingQuestion[]) {
-  return questions.map(({ type, prompt, options, evidenceRequired }) => ({
+  return questions.map(({ type, prompt, options, evidenceRequired, learning }) => ({
+    ...(learning ? { learningLevel: learning.level } : {}),
     type,
     prompt,
     options,

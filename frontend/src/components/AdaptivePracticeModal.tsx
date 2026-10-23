@@ -5,6 +5,7 @@ import { useDialogFocus } from '../hooks/useDialogFocus';
 import { api, getErrorMessage } from '../lib/api';
 import { useAsyncResource } from '../hooks/useAsyncResource';
 import { RagExplanationModal } from './rag/RagExplanationModal';
+import { PracticeSupport } from './PracticeSupport';
 import type {
   SkillMasteryItem,
   AdaptiveQuestion,
@@ -40,12 +41,14 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
 
   const loadQuestion = () => {
     if (pendingAnswer.current) return;
+    dialog.current?.focus();
     setSelectedOpt(null);
     setPracticeAttemptId(crypto.randomUUID());
     answerPayload.current = null;
     setAnswerLocked(false);
     setAnswerResult(null);
     setShowRagModal(false);
+    setSubmitError('');
     reload();
   };
 
@@ -178,8 +181,8 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
             </div>
 
             {answerResult && (
-              <div role="status" className={`p-4 rounded border ${answerResult.isCorrect ? 'bg-emerald-50 border-emerald-300' : 'bg-rose-50 border-rose-300'} space-y-2`}>
-                <div className="flex flex-wrap items-center gap-2">
+              <div className={`p-4 rounded border ${answerResult.isCorrect ? 'bg-emerald-50 border-emerald-300' : 'bg-rose-50 border-rose-300'} space-y-2`}>
+                <div role="status" className="flex flex-wrap items-center gap-2">
                   <span className="text-lg font-semibold">
                     {answerResult.isCorrect ? 'Chính xác' : 'Chưa chính xác'}
                   </span>
@@ -209,6 +212,14 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
                 </div>
               </div>
             )}
+
+            {answerResult && !answerResult.isCorrect && <PracticeSupport
+              key={practiceAttemptId}
+              questionId={adaptiveData.selectedQuestion.id}
+              skillId={skill.skillId}
+              attemptId={practiceAttemptId}
+              onPracticeAgain={loadQuestion}
+            />}
 
             <div className="flex flex-col items-stretch gap-3 pt-4 border-t border-paper-kraft sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
               {!answerResult ? (

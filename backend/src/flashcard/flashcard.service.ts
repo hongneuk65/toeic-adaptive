@@ -11,6 +11,7 @@ import { nextReview } from './review-schedule';
 import { createHash, randomUUID } from 'node:crypto';
 import { HLR_PRIOR, hlrSchedule, loadHlrModel, normalizeRecall, recallProbability } from './hlr';
 import { ReviewFlashcardDto } from './dto/review-flashcard.dto';
+import { memoryState } from './memory-state';
 
 @Injectable()
 export class FlashcardService {
@@ -109,7 +110,12 @@ export class FlashcardService {
   }
   async reviews(userId: number, folderId: number) {
     await this.getFolderDetail(folderId, userId);
-    return this.prisma.flashcardReview.findMany({ where: { userId, card: { folderId } }, select: { cardId: true, known: true, reviewCount: true, intervalDays: true, dueAt: true, schedulingSource: true } });
+    const rows = await this.prisma.flashcardReview.findMany({ where: { userId, card: { folderId } },
+      include: { card: { select: { word: true, meaning: true } } } });
+    const now = new Date();
+    return rows.map(row => ({ cardId: row.cardId, known: row.known, reviewCount: row.reviewCount,
+      intervalDays: row.intervalDays, dueAt: row.dueAt, schedulingSource: row.schedulingSource,
+      memory: memoryState(row, row.card, this.hlrModel, now) }));
   }
   async review(userId: number, cardId: number, known: boolean, input: Partial<ReviewFlashcardDto> = {}) {
     const mode = input.recallMode ?? 'self_report';

@@ -2,6 +2,8 @@
 
 Reading có dữ liệu và kết quả riêng, không cập nhật DAS3H hoặc sửa trọng số. Listening giữ module/API hiện có.
 
+Luồng tạo bài từ văn bản đã bổ sung mục tiêu học, thẻ nguồn và kiểm tra AI ba lượt. Xem [phạm vi, giới hạn và kiểm chứng](reading-source-generation.md).
+
 ## Cài đặt
 
 Dùng Node 24, PostgreSQL và Redis theo cấu hình đang có. Từ thư mục backend:

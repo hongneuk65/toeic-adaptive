@@ -1,3 +1,4 @@
+import { ActivitySuggestions } from '../components/ActivitySuggestions';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, getErrorMessage } from "../lib/api";
@@ -20,6 +21,11 @@ const levels: Record<string, string> = {
   EASY: "Dễ",
   MEDIUM: "Vừa",
   HARD: "Khó",
+};
+const learningLevels = {
+  UNDERSTAND: "Hiểu nội dung",
+  REMEMBER: "Nhớ thông tin",
+  ANALYZE: "Phân tích",
 };
 const kinds: Record<string, string> = {
   EMAIL: "Email",
@@ -76,6 +82,7 @@ function ReadingWorkspace({
   const version = attempt.version;
   const question = version.questions[index];
   const submitted = !!attempt.submittedAt;
+  const learningLevel = question.learningLevel ?? (submitted ? question.learning?.level : undefined);
   useEffect(() => {
     started.current = performance.now();
     live.current = true;
@@ -270,9 +277,9 @@ function ReadingWorkspace({
           {version.topic} · {kinds[version.kind]} · {levels[version.difficulty]}{" "}
           (ước lượng) ·{" "}
           {version.origin === "AI"
-            ? "Bài AI cá nhân · chưa duyệt, chỉ luyện tập"
+            ? "Bài AI cá nhân · chưa duyệt chuyên môn, chỉ luyện tập"
             : version.origin === "AI_DRAFT"
-              ? "AI hỗ trợ · đã biên tập"
+              ? version.reviewed ? "AI hỗ trợ · đã biên tập" : "AI hỗ trợ · chưa duyệt chuyên môn, chỉ luyện tập"
               : version.origin === "CRAWL" ? "Đề TOEIC đã nhập · Giữ nguyên nội dung nguồn" : "Bài thư viện hệ thống"}
         </p>
       </div>
@@ -345,6 +352,13 @@ function ReadingWorkspace({
               <span className="text-xs text-ink-medium">{saving}</span>
             </div>
             <p className="text-base leading-relaxed">{question.prompt}</p>
+            {learningLevel && learningLevels[learningLevel] && (
+              <p className="text-xs text-ink-medium">
+                <span className="rounded-full border border-paper-kraft px-3 py-1">
+                  Mục tiêu luyện tập: {learningLevels[learningLevel]}
+                </span>
+              </p>
+            )}
             <fieldset className="space-y-2" disabled={submitted || busy}>
               <legend className="sr-only">Chọn đáp án</legend>
               {question.options.map((option, i) => (
@@ -836,6 +850,7 @@ export function ReadingPage() {
             actions={<button className="secondary-button" onClick={() => setParams({practice:"clauses"})}>Luyện tìm mệnh đề chính</button>}
             description="Chọn bài đọc, trả lời câu hỏi và đối chiếu bằng chứng để hiểu sâu hơn."
           />
+          <ActivitySuggestions section="reading" />
           <div className="prep-library-layout reading-library-layout grid items-start gap-6">
           <section aria-label="Thư viện bài đọc" className="min-w-0 space-y-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wider text-accent-navy">Thư viện Reading</p><h2 className="section-title mt-1">Bài luyện dành cho bạn</h2></div><span className="rounded-full bg-paper-cream px-3 py-1 text-sm text-ink-medium">{filtered.length} bài phù hợp</span></div><div className="prep-library-filters grid gap-3 sm:grid-cols-2 2xl:grid-cols-5">
             <select
@@ -969,9 +984,10 @@ export function ReadingPage() {
               <p className="text-sm">
                 Dán văn bản tiếng Anh từ 40 từ, tối đa{" "}
                 {catalog.data?.limits.maxText || 10000} ký tự. AI tạo tối đa{" "}
-                {catalog.data?.limits.maxQuestions || 5} câu dựa trên bài, không
-                đổi văn bản gốc. Bài cá nhân riêng tư, chưa duyệt và chỉ dùng
-                luyện tập.
+                {catalog.data?.limits.maxQuestions || 5} câu dựa trên bài, giữ nguyên
+                văn bản gốc và trích dẫn bằng chứng nguyên văn. AI kiểm tra lại
+                câu hỏi trước khi lưu; nội dung vẫn do AI tạo, chưa duyệt chuyên
+                môn và chỉ dùng luyện tập. Bài cá nhân riêng tư.
               </p>
               <input
                 aria-label="Tên bài Reading cá nhân"

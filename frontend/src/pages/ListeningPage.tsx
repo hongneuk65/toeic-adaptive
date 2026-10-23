@@ -1,3 +1,4 @@
+import { ActivitySuggestions } from '../components/ActivitySuggestions';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, apiUpload, getErrorMessage } from '../lib/api';
@@ -61,7 +62,10 @@ function Exercise({ session, play, change, act, busy, heard }: { session: Listen
 
 export function ListeningPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [initialSessionId] = useState(() => Number(searchParams.get('session')) || null);
+  const sessionParam = searchParams.get('session');
+  const initialSessionId = sessionParam && /^[1-9]\d*$/.test(sessionParam) && Number.isSafeInteger(Number(sessionParam)) ? Number(sessionParam) : null;
+  const sourceParam = searchParams.get('source');
+  const requestedSource = sourceParam && /^[1-9]\d*$/.test(sourceParam) && Number.isSafeInteger(Number(sourceParam)) ? Number(sourceParam) : null;
   const restoreController = useRef<AbortController | null>(null);
   const { token } = useAuth(); let admin = false;
   try { admin = JSON.parse(atob(token!.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).role === 'ADMIN'; } catch { /* Server guards remain authoritative. */ }
@@ -88,6 +92,18 @@ export function ListeningPage() {
     }).catch(cause => { if (!controller.signal.aborted) setError(getErrorMessage(cause)); }).finally(() => { if (!controller.signal.aborted) setRestoring(false); });
     return () => controller.abort();
   }, [initialSessionId]);
+  useEffect(() => {
+    if (initialSessionId || !requestedSource || !catalog.data) return;
+    const controller = new AbortController();
+    const defaultEnd = catalog.data.settings.defaultSegmentSeconds || 180;
+    void api<SourceStatus>(`/listening/sources/${requestedSource}`, { signal: controller.signal }).then(() => {
+      if (controller.signal.aborted) return;
+      restoreController.current?.abort();
+      setRestoring(false); setSelectedId(requestedSource); setSession(null);
+      setStart(0); setEnd(defaultEnd); setNotice(''); setError(''); setAudioFile(null);
+    }).catch(cause => { if (!controller.signal.aborted) setError(getErrorMessage(cause)); });
+    return () => controller.abort();
+  }, [initialSessionId, requestedSource, catalog.data]);
   const status = useAsyncResource(useCallback((signal: AbortSignal) => selectedId ? api<SourceStatus>(`/listening/sources/${selectedId}${end > start ? `?start=${start}&end=${end}` : ''}`, { signal }) : Promise.resolve(null), [selectedId, start, end]));
   const source = session?.source || status.data?.source; const reloadStatus = status.reload;
   useEffect(() => { if (!['PENDING', 'PROCESSING'].includes(status.data?.transcript?.status || '')) return; const timer = window.setTimeout(reloadStatus, 2500); return () => clearTimeout(timer); }, [status.data, reloadStatus]);
@@ -114,6 +130,7 @@ export function ListeningPage() {
   });
   return <div className={`page-stack prep-learning-page ${source || restoring || selectedId ? "prep-learning-study" : "prep-learning-library"}`}>
     <PageHeader eyebrow={source || restoring || selectedId ? undefined : "LISTENING LIBRARY / NGHE & PHẢN XẠ"} variant={source || restoring || selectedId ? "compact" : "feature"} title={source ? "Luyện nghe theo từng câu" : "Luyện nghe"} description={source ? undefined : "Chọn bài nghe, luyện từng câu và tiếp tục từ đoạn bạn đã lưu."} />
+    {!source && !restoring && !selectedId && <ActivitySuggestions section="listening" />}
     {(error || catalog.error || status.error) && <p role="alert" className="prep-learning-error rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error || catalog.error || status.error} <button onClick={() => { catalog.reload(); status.reload(); }} className="underline">Tải lại</button></p>}
     {notice && <p role="status" className="text-sm text-ink-medium">{notice} {removedId && <button disabled={busy} className="ml-2 underline" onClick={() => void act(async () => { await api(`/listening/sources/${removedId}/restore`, { method: 'POST' }); setRemovedId(null); setNotice('Đã khôi phục bài nghe.'); catalog.reload(); })}>Hoàn tác xoá</button>}</p>}
     <div className="grid gap-5">

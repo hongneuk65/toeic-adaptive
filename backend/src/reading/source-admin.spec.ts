@@ -32,6 +32,13 @@ describe('source-aware reading admin validation', () => {
     expect(result.version.origin).toBe('CRAWL');
     expect(prisma.readingVersion.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ origin: 'CRAWL', questions }) }));
   });
+  it('does not carry generated task annotations into a manually changed revision', async () => {
+    const { service } = setup();
+    const annotated = questions.map(q => ({ ...q, learning: { level: 'REMEMBER', objective: 'Old AI objective', sourceCardIds: ['source-1'] } }));
+    const result = await service.draft(1, { title: 'Edited', topic: 'Business', text, kind: 'EMAIL', difficulty: 'MEDIUM', questions: annotated }, 1);
+    expect((result.version.questions as unknown as object[])[0]).not.toHaveProperty('learning');
+    expect(result.version.origin).toBe('CRAWL');
+  });
   it('accepts short authentic source notices but rejects empty source and short SYSTEM text', async () => {
     const crawl = setup();
     await expect(crawl.service.draft(1, { title: 'Notice', topic: 'Business', text: 'Office closed Friday.', kind: 'NOTICE', difficulty: 'EASY', questions }, 1)).resolves.toMatchObject({ articleId: 1 });
