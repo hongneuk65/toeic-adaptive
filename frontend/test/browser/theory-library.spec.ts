@@ -10,8 +10,12 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname.replace(/^\/api/, '');
     if (path === '/auth/me') return route.fulfill({ json: { id: 1, role: 'USER', email: 'test@example.invalid' } });
+    if (path === '/auth/google/config') return route.fulfill({ json: { enabled: false } });
+    if (path === '/mastery/activities') return route.fulfill({ json: { generatedAt: '2026-10-24T00:00:00Z', sections: { theory: [], vocabulary: [], reading: [], listening: [] } } });
     if (path === '/theory/catalog') return route.fulfill({ json: lessons });
-    if (path === '/theory/1') return route.fulfill({ json: { ...lessons[0], content: '## Vị trí danh từ\nDanh từ có thể đứng sau mạo từ.' } });
+    if (path === '/theory/1') return route.fulfill({ json: { ...lessons[0], content: `## Vị trí danh từ
+
+Danh từ có thể đứng sau mạo từ.` } });
     if (path === '/theory/1/quiz') return route.fulfill({ json: [] });
     return route.fulfill({ json: [] });
   });

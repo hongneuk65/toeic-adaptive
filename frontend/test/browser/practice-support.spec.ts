@@ -56,7 +56,7 @@ test('wrong answer offers lazy progressive support and repeats the same skill in
   await expect(support.getByRole('heading', { name: 'Đối chiếu động từ', exact: true })).toBeFocused();
   expect(await state.dialog.evaluate(el => el.contains(document.activeElement))).toBeTruthy();
   await expect(support.getByRole('button', { name: 'Bước tiếp theo', exact: true })).toHaveCount(0);
-  await expect(support.getByRole('link', { name: 'Ôn lý thuyết: Hòa hợp chủ vị →' })).toHaveAttribute('href', '/theory?lesson=17');
+  await expect(support.getByRole('link', { name: 'Ôn kiến thức: Hòa hợp chủ vị →' })).toHaveAttribute('href', '/theory?lesson=17');
   expect(state.supports.length).toBeGreaterThan(0);
   expect(state.supports.every(request => JSON.stringify(request) === JSON.stringify({ questionId: state.answers[0].questionId, skillId: 1, attemptId: state.answers[0].attemptId }))).toBeTruthy();
   await page.screenshot({ path: testInfo.outputPath('practice-support.png'), fullPage: true });

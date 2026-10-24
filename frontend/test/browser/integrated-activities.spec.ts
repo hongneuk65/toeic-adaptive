@@ -34,7 +34,10 @@ for (const [route, section] of [['/theory','theory'],['/flashcards','vocabulary'
  test('module recommendations '+section, async ({page}) => {
   await fixture(page); await page.goto(route);
   await expect(page.getByRole('heading',{name:'Gợi ý học cho bạn',exact:true})).toBeVisible();
-  await expect(page.getByText('Củng cố nền tảng',{exact:true})).toBeVisible();
+  const compact = section === 'reading' || section === 'listening';
+  if (compact) await expect(page.getByText('Củng cố nền tảng',{exact:true})).toHaveCount(0);
+  else await expect(page.getByText('Củng cố nền tảng',{exact:true})).toBeVisible();
+  await expect(page.getByRole('link',{name:new RegExp('^'+section+' suggestion ')})).toHaveCount(compact ? 2 : 3);
   await expect(page.getByRole('link',{name:section+' suggestion 0',exact:true})).toBeVisible();
   await expect(page.getByRole('link',{name:section+' suggestion 3',exact:true})).toHaveCount(0);
   await expect(page.getByRole('link',{name:section+' suggestion 0',exact:true})).toHaveAttribute('href', /\//);
