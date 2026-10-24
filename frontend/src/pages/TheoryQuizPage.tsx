@@ -1,3 +1,5 @@
+import { ActivitySuggestions } from '../components/ActivitySuggestions';
+import { notifyLearningProgress } from '../lib/learning-progress';
 import '../styles/prep-knowledge.css';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -74,7 +76,7 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
                 signal: controller.signal,
                 data: { answers: submittedAnswers.current, attemptId },
             });
-            if (!controller.signal.aborted) setResult(res);
+            if (!controller.signal.aborted) { setResult(res); notifyLearningProgress(); }
         } catch (err) {
             if (!controller.signal.aborted) setSubmitError(getErrorMessage(err, 'Chưa nộp được bài. Hãy thử lại.'));
         } finally {
@@ -88,7 +90,7 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
         <div className="page-stack prep-knowledge-page prep-quiz-page mx-auto w-full max-w-3xl">
             {submitError && <p role="alert" className="status-message text-rose-800">{submitError}</p>}
             {error && <p role="alert" className="status-message">{error} <button className="text-action" onClick={reload}>Thử lại</button></p>}
-            <PageHeader variant="compact" title="Quiz củng cố" description={result ? 'Xem lại đáp án và giải thích trước khi học tiếp.' : 'Chọn một đáp án cho mỗi câu rồi nộp bài.'} actions={<button onClick={() => navigate(`/theory?lesson=${lessonId}`)} className="secondary-button">Đọc lại lý thuyết</button>} />
+            <PageHeader variant="compact" title="Quiz củng cố" description={result ? 'Xem lại đáp án và giải thích trước khi học tiếp.' : 'Chọn một đáp án cho mỗi câu rồi nộp bài.'} actions={<button onClick={() => navigate(`/theory?lesson=${lessonId}`)} className="secondary-button">Đọc lại kiến thức</button>} />
             {result ? <section role="status" className="prep-quiz-recap flex flex-wrap items-center justify-between gap-4">
                 <div><h2 className="section-title">Đúng {result.correctCount} / {result.totalQuestions} câu</h2><p className="mt-1 text-sm text-ink-medium">Kết quả: {result.scorePercentage}% · đáp án đúng được đánh dấu bên dưới.</p></div>
                 <button className="primary-button" onClick={() => navigate('/recommendations')}>Chọn bài luyện tiếp</button>
@@ -162,6 +164,7 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
                     )}
                 </div>
             )}
+            {result && <ActivitySuggestions section="theory" compact excludeHref={`/theory?lesson=${lessonId}`} />}
         </div>
     );
 };

@@ -2,6 +2,12 @@
 
 Listening dùng NestJS, Prisma và BullMQ hiện có. Bài làm nằm trong ListeningSession/ListeningAnswer; không gọi DAS3H hoặc cập nhật năng lực.
 
+## Lối vào học và thêm nội dung
+
+Đầu trang có hai lựa chọn ngang hàng: **Bài nghe có sẵn** và **Thêm video của bạn**. Lựa chọn thứ hai mở form dán link YouTube ngay phía trên, thay cho form bị thu gọn ở cuối trang. Chuyển lựa chọn không tự tạo nguồn hoặc phiên học; chỉ gửi khi nộp form. Bài đang luyện và câu trả lời đang nhập được giữ khi mở form hoặc xem thư viện. Trong lúc gửi/ghi âm, thao tác chuyển bị khóa để tránh ngắt tác vụ.
+
+Chép lời, điền từ và Shadowing là các chế độ bên trong bài nghe, không phải hai nguồn nội dung nói trên. Các đường dẫn source/session và API hiện có được giữ nguyên. Thay đổi giao diện local chưa tự cập nhật web production.
+
 ## Chạy và chuẩn bị ASR
 
 ### Cập nhật khoảng nghe và điền từ — 06/10/2026

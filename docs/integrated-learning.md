@@ -1,5 +1,9 @@
 # Gợi ý xuyên các phần học và đường cong ghi nhớ
 
+Tên hiển thị của mục bài học hiện là **Kiến thức** trong menu và **Kiến thức TOEIC** ở đầu trang, bao quát cả nội dung hướng dẫn lẫn quiz củng cố. Đường dẫn `/theory`, API, dữ liệu và tên model không đổi. Reading đưa **Đọc hiểu / Tìm mệnh đề chính** lên đầu; Listening đưa **Bài nghe có sẵn / Thêm video của bạn** lên đầu để hai chức năng chính không bị che bởi gợi ý hoặc sidebar.
+
+Thay đổi điều hướng này đã qua 22 lượt browser desktop/mobile (gồm kiểm tra hai lựa chọn trong viewport đầu, chuyển qua lại, giữ bản nháp và focus), 65 frontend tests, lint/build và review giao diện độc lập bằng agent thay thế các vai trò cấu hình không có trong phiên. Desktop dùng hai cột, mobile xếp dọc; dùng button có trạng thái chọn/mở và focus bàn phím, không thêm hiệu ứng chuyển động. API/form validation giữ nguyên. Chưa commit hoặc phát hành thay đổi này.
+
 Ngày 23/10/2026, nhánh `codex/integrated-learning` bổ sung gợi ý tại thư viện Lý thuyết, Từ vựng, Luyện nghe, Luyện đọc và tổng hợp tại trang gợi ý. Mỗi mục mở bài/thư mục/phiên học thật, có lý do cụ thể. Không cần migration hoặc huấn luyện lại để dùng phần giao diện mới.
 
 ## Phối hợp HLR với DAS3H
@@ -38,6 +42,18 @@ Luồng trên đã được mở rộng: chưa có lịch sử riêng của từ
 Các mục starter có `evidence=starter`, `priority=diagnostic`, không khẳng định người dùng yếu. Catalog bổ sung giới hạn 100 thư mục và 100 nguồn nghe; điều kiện quyền áp dụng ngay trong truy vấn.
 
 Kiểm chứng bản mở rộng: 11 unit tests liên quan stage/activities đạt, lint và build backend/frontend đạt, 30 lượt browser desktop/mobile đạt, PostgreSQL integration đạt cả người đã luyện và người mới hoàn toàn. Review độc lập kiểm tra quyền và việc giữ ưu tiên focus/review trước starter; đã sửa assertion cũ không còn khớp danh sách được bổ sung. Chưa phát hành lên web đang chạy.
+
+### Kiểm tra contract và tích hợp thêm ngày 24/10/2026
+
+- Trained DAS3H dùng đúng artifact `d=0`: không cộng online learner intercept ngoài mô hình đã đánh giá. Các dòng `TrainedDas3hState` cũ được giữ nhưng không còn đọc/ghi trong nhánh trained. Như vậy đáp án cùng timestamp hoặc kết quả xảy ra sau không lọt vào dự đoán qua ability; vẫn cá nhân hóa bằng lịch sử kỹ năng trước thời điểm cần dự đoán. Heuristic dự phòng tiếp tục có contract riêng, chưa được coi tương đương nhánh trained.
+- Admin thay audio/hình/passage đặt cờ bền vững trong stimulus để câu đó không dùng hệ số trained cũ. Bản sửa bảo vệ các thay đổi về sau; không tự phát hiện được mọi chỉnh sửa media xảy ra trước khi có cờ này. Fingerprint artifact cũ vẫn kiểm tra phần văn bản/lựa chọn/đáp án.
+- Listening bổ sung liên kết chính xác giữa URL audio của câu hỏi có gắn kỹ năng yếu và URL của nguồn nghe được phép xem, có transcript tiếng Anh READY. Không suy đoán qua tên nguồn. Tối đa 1.000 câu hỏi làm cầu nối và 100 nguồn khớp được xét; nguồn nghe native cần củng cố vẫn ưu tiên trước, sau đó đến gợi ý DAS3H rồi starter. Đây là liên kết nội dung liên quan, không khẳng định lỗi bài nghe xuất phát duy nhất từ kỹ năng đó.
+- Gợi ý gọn xuất hiện thêm sau phần đọc lý thuyết, sau quiz hoàn tất, dưới khu vực ôn thẻ, sau bài Reading đã nộp và dưới phiên Listening. Loại URL hoạt động hiện tại; Listening loại cả URL source và session. Bài quiz/Reading chưa hoàn thành và bài thi có thời gian không bị chen gợi ý.
+- Sự kiện tiến độ được phát sau response lưu kết quả thành công, không phát khi lưu nháp hoặc lỗi. Quiz/thi có outbox bất đồng bộ nên tải lại ngay có thể còn dùng mastery cũ trong vài giây; chưa có cam kết đồng bộ tức thời. Focus hoặc lần mở lại tiếp theo sẽ lấy hồ sơ mới.
+
+`node test/das3h-health.cjs` từ backend sau build kiểm tra cấu hình local và database trong transaction READ ONLY, chỉ in số tổng hợp. Lượt kiểm tra local đạt: trained đang bật, khoảng 72% câu hỏi trong kho đủ bridge, 31/42 kỹ năng của hồ sơ mẫu dùng điểm trained, 11 còn lại dùng fallback; outbox không có sự kiện chờ. Đây không phải xác minh môi trường production hoặc chứng minh hiệu quả học tập.
+
+Kiểm chứng sửa đổi: `npm run check` đạt, nhóm kiểm thử core/activities/admin đạt, PostgreSQL integration trong schema tạm đạt cả kiểm tra d=0, cùng timestamp, tương lai và stimulus invalidation. Có 12 lượt browser desktop/mobile cho trang học chi tiết/kết quả đạt; thêm 2 lượt loại phiên Listening hiện tại đạt, lint/build frontend sau sửa cuối đạt. Review độc lập xác nhận hai lỗi core đã sửa, không thấy major/blocker mới trong phạm vi đó. Bộ acceptance riêng `trained-das3h.integration.cjs` đã cập nhật theo d=0 nhưng chưa khởi chạy trong lượt này do auto-review quyền hết thời gian ở cả lượt đầu và thử lại; không ghi nhận là test pass. Chưa commit/push hoặc triển khai các sửa đổi ngày 24/10.
 
 ## Giới hạn và riêng tư
 

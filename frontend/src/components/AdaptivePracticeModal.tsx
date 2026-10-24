@@ -1,3 +1,4 @@
+import { notifyLearningProgress } from '../lib/learning-progress';
 import '../styles/exam-room.css';
 import { ExamStimulus } from './exam/ExamStimulus';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
@@ -74,6 +75,7 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
       });
 
       if (!controller.signal.aborted) {
+        notifyLearningProgress();
         setAnswerResult(res);
         onAnswerRecorded();
       }

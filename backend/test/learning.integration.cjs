@@ -2,7 +2,7 @@
 // Run after building: node test/learning.integration.cjs
 const assert = require('node:assert/strict');
 const { randomUUID, randomInt } = require('node:crypto');
-const { readFileSync, readdirSync } = require('node:fs');
+const { readFileSync, readdirSync, mkdirSync, writeFileSync, unlinkSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { PrismaClient } = require('@prisma/client');
@@ -123,7 +123,45 @@ async function testFreshInstall() {
   await testPracticeSupport(db);
   await testReadingGeneration(db);
   await testIntegratedActivities(db);
+  await testTrainedD0Causality(db);
   console.log('PASS: fresh migration chain, exam resume/concurrency/blank/review/rollback, DAS3H retry/rollback');
+}
+
+async function testTrainedD0Causality(db) {
+  const { TrainedDas3h, questionFingerprint, WINDOWS_MS } = require('../dist/das3h/trained-das3h');
+  const user = await db.user.create({ data: { email: 'd0-causality@example.test', passwordHash: 'not-a-login' } });
+  const question = await db.question.create({ data: { part: 5, content: 'Fixture', optionA: 'a', optionB: 'b', optionC: 'c', optionD: 'd', correctAnswer: 'A', explanation: '[santa-ednet:q99999999]', itemDifficulty: 0 } });
+  const model = { schemaVersion: 1, featureContract: 'own-das3h-d0-cumulative-v1', version: 'own-das3h-1111111111111111', intercept: -.4,
+    windowsMs: WINDOWS_MS, questions: { q99999999: { bias: .1, tags: ['TEST'], part: 5, correctAnswer: 'A' } },
+    skills: { TEST: { bias: .2, wins: [.2, .2, .2, .2, .2], attempts: [-.1, -.1, -.1, -.1, -.1] } },
+    applicationBridge: { q99999999: questionFingerprint(question) }, releaseGatePassed: true, sourceHashes: { catalog: 'causality-fixture' }, metrics: {}, cohort: {}, mappingStatus: 'fixture' };
+  const directory = resolve(root, 'storage');
+  mkdirSync(directory, { recursive: true });
+  const path = resolve(directory, `d0-test-${randomUUID()}.json`);
+  const previous = process.env.DAS3H_MODEL_PATH;
+  writeFileSync(path, JSON.stringify(model));
+  process.env.DAS3H_MODEL_PATH = path;
+  try {
+    const service = new TrainedDas3h(db);
+    const now = new Date('2026-10-24T00:00:00Z');
+    await db.trainedDas3hState.create({ data: { userId: user.id, modelVersion: model.version, ability: 3.5 } });
+    const initial = (await service.predictMany(user.id, [question.id], now)).get(question.id);
+    assert.ok(Math.abs(initial - 1 / (1 + Math.exp(.1))) < 1e-12, 'd=0 must ignore an old online intercept');
+    await service.recordAbility(user.id, question.id, true, now, `d0-first-${randomUUID()}`);
+    assert.equal((await service.predictMany(user.id, [question.id], now)).get(question.id), initial, 'Sibling outcome must stay invisible at same timestamp');
+    const after = new Date(now.getTime() + 1000);
+    const updated = (await service.predictMany(user.id, [question.id], after)).get(question.id);
+    assert.ok(updated > initial, 'Earlier skill evidence must personalize later predictions');
+    await service.recordAbility(user.id, question.id, false, new Date(now.getTime() + 86400000), `d0-future-${randomUUID()}`);
+    assert.equal((await service.predictMany(user.id, [question.id], after)).get(question.id), updated, 'Future record cannot affect a historical prediction');
+    await db.question.update({ where: { id: question.id }, data: { stimulus: { _trainedItemInvalidated: true } } });
+    assert.equal((await service.predictMany(user.id, [question.id], after)).size, 0);
+    assert.equal((await db.trainedDas3hState.findUnique({ where: { userId_modelVersion: { userId: user.id, modelVersion: model.version } } })).ability, 3.5, 'Old state is preserved, not silently rewritten');
+    console.log('PASS: trained d0 matches released intercept, observes past skills only, rejects edited stimulus and preserves inactive legacy state');
+  } finally {
+    if (previous === undefined) delete process.env.DAS3H_MODEL_PATH; else process.env.DAS3H_MODEL_PATH = previous;
+    unlinkSync(path);
+  }
 }
 
 async function testIntegratedActivities(db) {

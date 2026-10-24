@@ -9,6 +9,7 @@ describe('cross-module activities', () => {
     theoryLesson: { findMany: jest.fn<any>() }, flashcardReview: { findMany: jest.fn<any>() },
     listeningAnswer: { findMany: jest.fn<any>() }, readingAttempt: { findMany: jest.fn<any>() }, readingArticle: { findMany: jest.fn<any>() }, readingVersion: { findMany: jest.fn<any>() },
     flashcardFolder: { findMany: jest.fn<any>() }, listeningSource: { findMany: jest.fn<any>() },
+    question: { findMany: jest.fn<any>() },
   };
   const mastery = { getUserMasteryProfile: jest.fn<any>() };
   const service = new ActivitiesService(db as unknown as PrismaService, mastery as unknown as MasteryService);
@@ -108,6 +109,25 @@ describe('cross-module activities', () => {
     expect(result.sections.listening[0].href).toBe('/listening?source=9');
     expect(db.flashcardFolder.findMany.mock.calls[0][0].where.OR).toEqual([{ userId: 7 }, { private: false }]);
     expect(db.listeningSource.findMany.mock.calls[0][0].where).toMatchObject({ deletedAt: null, OR: [{ ownerId: 7 }, { published: true }] });
+  });
+  it('links a DAS3H listening weakness through exact shared audio before native listening history', async () => {
+    mastery.getUserMasteryProfile.mockResolvedValue({ skills: [{ ...skill('P3_DETAIL_LOOKUP'), part: 3, skillName: 'Nghe chi tiết' }] });
+    db.question.findMany.mockResolvedValue([{ audioUrl: '/api/audio/exact.mp3', skills: [{ skillId: 1 }] }]);
+    db.listeningSource.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: 9, title: 'Related talk', url: '/api/audio/exact.mp3' }]);
+    const result = await service.forUser(7);
+    expect(result.sections.listening[0]).toMatchObject({ href: '/listening?source=9', evidence: 'das3h', priority: 'focus' });
+    const query = db.listeningSource.findMany.mock.calls[1][0];
+    expect(query.where).toMatchObject({ deletedAt: null, OR: [{ ownerId: 7 }, { published: true }], url: { in: ['/api/audio/exact.mp3'] } });
+    expect(query.where.transcripts.some.status).toBe('READY');
+  });
+  it('does not infer an audio relationship from source titles or unpracticed model priors', async () => {
+    mastery.getUserMasteryProfile.mockResolvedValue({ skills: [{ ...skill('P3_DETAIL_LOOKUP'), part: 3, practiceCount: 0 }] });
+    await service.forUser(7);
+    expect(db.question.findMany).not.toHaveBeenCalled();
+    mastery.getUserMasteryProfile.mockResolvedValue({ skills: [{ ...skill('P3_DETAIL_LOOKUP'), part: 3 }] });
+    db.question.findMany.mockResolvedValue([]);
+    expect((await service.forUser(7)).sections.listening).toEqual([]);
+    expect(db.listeningSource.findMany).toHaveBeenCalledTimes(2);
   });
 
   it('prefers declared Reading difficulty from observed reading skills, not grammar-only readiness', async () => {

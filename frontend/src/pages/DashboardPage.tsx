@@ -73,7 +73,7 @@ export const DashboardPage = () => {
     <HomeTechnology />
     <HomeJourney />
     <section className="prep-home-final-cta"><h2>Buổi học tiếp theo<br />bắt đầu từ đây.</h2><p>Chọn một nội dung và dành thời gian cho mục tiêu TOEIC của bạn.</p><Link to="/reading" className="prep-home-white-button">Bắt đầu luyện tập</Link></section>
-    <footer className="prep-home-footer"><div><Link to="/dashboard" className="prep-home-footer-brand">TOEIC Adaptive</Link><p>Không gian luyện TOEIC theo nhịp của bạn.</p></div><nav aria-label="Nội dung học"><h2>Luyện tập</h2><Link to="/reading">Luyện đọc</Link><Link to="/listening">Luyện nghe</Link><Link to="/exam">Thi thử</Link></nav><nav aria-label="Ôn tập"><h2>Ôn tập</h2><Link to="/theory">Lý thuyết</Link><Link to="/flashcards">Từ vựng</Link><Link to="/recommendations">Gợi ý học tiếp</Link></nav></footer>
+    <footer className="prep-home-footer"><div><Link to="/dashboard" className="prep-home-footer-brand">TOEIC Adaptive</Link><p>Không gian luyện TOEIC theo nhịp của bạn.</p></div><nav aria-label="Nội dung học"><h2>Luyện tập</h2><Link to="/reading">Luyện đọc</Link><Link to="/listening">Luyện nghe</Link><Link to="/exam">Thi thử</Link></nav><nav aria-label="Ôn tập"><h2>Ôn tập</h2><Link to="/theory">Kiến thức</Link><Link to="/flashcards">Từ vựng</Link><Link to="/recommendations">Gợi ý học tiếp</Link></nav></footer>
   </div>;
 };
 

@@ -38,7 +38,7 @@ No claim that these prediction metrics establish improved TOEIC learning outcome
 
 ## Runtime feature contract
 
-`sigmoid(intercept + item_bias + online_ability + Σ skill_bias +
+`sigmoid(intercept + item_bias + Σ skill_bias +
 Σ theta_win × log1p(wins) + Σ theta_attempt × log1p(attempts))`.
 
 Windows are `[all history, 30 days, 7 days, 1 day, 1 hour]`, with strict bounds
@@ -70,7 +70,9 @@ Part 1 coverage alone does not establish a question-level bridge.
   exist. `scoreSource=trained-own-question-average` identifies this projection;
   it is not a directly validated percentage of skill mastery. No observed
   responses still means `evidenceStatus=unassessed`.
-- `TrainedDas3hState` keeps online ability per user and model version. Legacy
+- The released d=0 contract uses no online learner intercept. Previously stored
+  `TrainedDas3hState` rows are retained but ignored; otherwise same-submit siblings
+  or delayed events could leak outcomes through that intercept. Legacy
   `User.ability` continues updating separately for fallback/rollback.
 - `TrainedDas3hObservation` stores one response per actual event, independent of
   how many app micro-skills a question has. New direct answers and durable outbox
@@ -112,11 +114,11 @@ Rerunning it skips existing observations. Docker includes the model directory;
 another environment must regenerate/verify its own bank bridge.
 
 To roll back, clear `DAS3H_MODEL_PATH` and restart. Do not drop learning tables or
-overwrite the old coefficients. New weight versions start with a separate online
-ability state while retaining compatible source-catalog observations.
+overwrite the old coefficients. New weight versions retain compatible source-catalog
+observations; an online learner intercept requires its own evaluated contract.
 
 Validation: 221 backend unit tests passed, including six new inference-contract
 cases. The live PostgreSQL acceptance test uses an isolated schema and checks
-trained prediction, initial ability isolation, single-response counting,
+trained prediction, fixed-zero d=0 intercept, single-response counting,
 idempotent retries, skill-profile projection, outbox consumption, edited-content
 fallback and rollback. It drops only its randomly named test schema.

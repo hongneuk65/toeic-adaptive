@@ -51,7 +51,7 @@ export function TheoryReadingPage() {
   }
   const selectedSummary = lessons.find(item => item.id === lessonId);
   return <div className="page-stack theory-library">
-    <PageHeader eyebrow="HIỂU KIẾN THỨC · LUYỆN ĐÚNG TRỌNG TÂM" title="Lý thuyết" description="Tìm bài theo chủ đề kiến thức, rồi lọc Part khi cần. Đọc từng bài và kiểm tra lại bằng quiz." />
+    <PageHeader eyebrow="HIỂU KIẾN THỨC · LUYỆN ĐÚNG TRỌNG TÂM" title="Kiến thức TOEIC" description="Tìm bài theo chủ đề kiến thức, rồi lọc Part khi cần. Đọc từng bài và kiểm tra lại bằng quiz." />
     {!lessonId && <ActivitySuggestions section="theory" />}
     {lessonId ? <section className="theory-reader" aria-label="Nội dung bài học">
       <button className="theory-back" onClick={() => changeFilter('lesson', '')}>← Thư viện bài học</button>
@@ -80,5 +80,6 @@ export function TheoryReadingPage() {
         </section>
       </>}
     </>}
+    {lessonId > 0 && detail.data && <ActivitySuggestions section="theory" compact excludeHref={`/theory?lesson=${lessonId}`} />}
   </div>;
 }

@@ -186,7 +186,7 @@ test('learning sections have top navigation and distinct task layouts', async ({
   await expect(page.locator('.study-navigation')).toHaveCount(0);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  for (const [path, heading] of [['reading', 'Luyện đọc'], ['listening', 'Luyện nghe'], ['theory', 'Lý thuyết'], ['flashcards', 'Thư mục từ vựng'], ['recommendations', 'Gợi ý học tiếp']]) {
+  for (const [path, heading] of [['reading', 'Luyện đọc'], ['listening', 'Luyện nghe'], ['theory', 'Kiến thức TOEIC'], ['flashcards', 'Thư mục từ vựng'], ['recommendations', 'Gợi ý học tiếp']]) {
     await page.goto(`/${path}`);
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
     await expect(page.locator('.app-content [role="alert"]')).toHaveCount(0);

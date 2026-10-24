@@ -1,3 +1,5 @@
+import { ActivitySuggestions } from '../components/ActivitySuggestions';
+import { notifyLearningProgress } from '../lib/learning-progress';
 import { VocabularyMemory, type VocabularyMemoryEstimate } from '../components/VocabularyMemory';
 import '../styles/prep-knowledge.css';
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
@@ -124,6 +126,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
     setActionError('');
     try {
       const result = await api<CardReview>(`/flashcards/cards/${id}/review`, { method: 'PATCH', data: { known: payload.known, ...payload.attempt } });
+      notifyLearningProgress();
       pendingReviews.current.delete(id);
       setRetryingId(null);
       if (sessionActive) { setSessionReviewed(ids => [...ids, id]); setFocusIndex(0); setFlippedIds({}); }
@@ -396,6 +399,8 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
           })()}
         </div>
       )}
+
+      {!loading && data && <ActivitySuggestions section="vocabulary" compact excludeHref={`/flashcards/${folderId}`} />}
 
       {/* 3. Modal thêm từ */}
       {isModalOpen && folder?.isOwner && (

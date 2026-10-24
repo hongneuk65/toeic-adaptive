@@ -360,7 +360,9 @@ export class AdminService {
     }
     // Source documents and measured duration are derived from the original media.
     const stimulus = current.stimulus;
-    const derived = stimulus && typeof stimulus === 'object' && !Array.isArray(stimulus) ? { ...stimulus } : undefined;
+    let derived = stimulus && typeof stimulus === 'object' && !Array.isArray(stimulus) ? { ...stimulus } : undefined;
+    const stimulusChanged = (['audioUrl', 'imageUrl', 'passage'] as const).some(field => dto[field] !== undefined && dto[field] !== current[field]);
+    if (stimulusChanged) derived = { ...derived, _trainedItemInvalidated: true };
     if (derived) {
       if ((dto.passage !== undefined && dto.passage !== current.passage) || (dto.imageUrl !== undefined && dto.imageUrl !== current.imageUrl) || part !== current.part) derived.documents = [];
       if (dto.audioUrl !== undefined && dto.audioUrl !== current.audioUrl) delete derived.audioDurationSeconds;

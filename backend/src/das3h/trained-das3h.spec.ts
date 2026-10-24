@@ -52,12 +52,24 @@ describe('fitted OWN DAS3H inference contract', () => {
     expect((await new TrainedDas3h(db as unknown as Prisma.TransactionClient).predictMany(1,[11],now)).size).toBe(0);
     expect(db.trainedDas3hObservation.findMany).not.toHaveBeenCalled();
   });
-  it('writes one OWN observation and an isolated versioned ability correction', async () => {
+  it('writes one OWN observation without adding an unfitted learner intercept', async () => {
     await new TrainedDas3h(db as unknown as Prisma.TransactionClient).recordAbility(1,11,true,now,'answer-id');
     expect(db.trainedDas3hObservation.create).toHaveBeenCalledTimes(1);
     expect(db.trainedDas3hObservation.create.mock.calls[0][0].data).toEqual({ id:'answer-id', userId:1, sourceQuestionId:'q11', catalogHash:'catalog-fixture', isCorrect:true, occurredAt:now });
-    expect(db.trainedDas3hState.upsert.mock.calls[0][0].create.ability).toBeGreaterThan(0);
-    expect(db.trainedDas3hState.upsert.mock.calls[0][0].where.userId_modelVersion.modelVersion).toBe(fixture().version);
+    expect(db.trainedDas3hState.upsert).not.toHaveBeenCalled();
+  });
+  it('ignores old online ability even when it contains same-time or future outcomes', async () => {
+    db.trainedDas3hState.findUnique.mockResolvedValue({ ability: 3.5, updatedAt: new Date('2030-01-01') });
+    const scores = await new TrainedDas3h(db as unknown as Prisma.TransactionClient).predictMany(1, [11], now);
+    expect(scores.get(11)).toBeCloseTo(modelProbability(fixture(), 'q11', new Map()), 14);
+    expect(db.trainedDas3hState.findUnique).not.toHaveBeenCalled();
+  });
+  it('refuses trained coefficients after media or passage invalidation', async () => {
+    db.question.findMany.mockResolvedValue([{ ...question, stimulus: { _trainedItemInvalidated: true } }]);
+    expect((await new TrainedDas3h(db as unknown as Prisma.TransactionClient).predictMany(1, [11], now)).size).toBe(0);
+    db.question.findUnique.mockResolvedValue({ ...question, stimulus: { _trainedItemInvalidated: true } });
+    await new TrainedDas3h(db as unknown as Prisma.TransactionClient).recordAbility(1, 11, true, now, 'invalidated');
+    expect(db.trainedDas3hObservation.create).not.toHaveBeenCalled();
   });
   it('rejects a different feature formula, bad coefficients, and an unreleased artifact', () => {
     expect(()=>validateModel({ ...fixture(), featureContract:'disjoint-wins-losses' })).toThrow();

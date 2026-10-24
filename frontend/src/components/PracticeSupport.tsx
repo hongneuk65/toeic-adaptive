@@ -34,7 +34,7 @@ function SupportSteps({ questionId, skillId, attemptId }: Omit<Props, 'onPractic
       <p role="status" className="text-xs text-ink-medium">Đã mở {Math.min(visibleSteps, data.steps.length)} / {data.steps.length} bước</p>
       {visibleSteps < data.steps.length && <button className="secondary-button" onClick={() => setVisibleSteps(value => value + 1)}>Bước tiếp theo</button>}
     </> : <p className="text-sm">Chưa có hướng dẫn từng bước cho kỹ năng này. Bạn có thể xem lời giải hoặc luyện thêm.</p>}
-    {data.lesson && <Link className="block underline min-h-11 py-2 text-sm" to={`/theory?lesson=${data.lesson.id}`}>Ôn lý thuyết: {data.lesson.title} →</Link>}
+    {data.lesson && <Link className="block underline min-h-11 py-2 text-sm" to={`/theory?lesson=${data.lesson.id}`}>Ôn kiến thức: {data.lesson.title} →</Link>}
   </div>;
 }
 

@@ -5,6 +5,7 @@ import { topicForLesson, topicForSkill } from './learning-topics';
 import { loadHlrModel } from '../flashcard/hlr';
 import { memoryState } from '../flashcard/memory-state';
 import { learnerStage } from './learner-stage';
+import { importedQuestions } from '../common/imported-questions';
 
 export interface LearningActivity {
   id: string; title: string; href: string; reason: string;
@@ -120,6 +121,26 @@ export class ActivitiesService {
         reason: `Mức khớp văn bản trung bình ${Math.round(s.total / s.count * 100)}% trên ${s.count} đoạn gần đây. Ôn lại nguồn nghe này.`,
         evidence: 'listening-practice', priority: 'focus',
       }));
+    // A shared exact audio URL is an explicit content link, not a guessed topic.
+    // This also works before the learner has made a native Listening attempt.
+    const listeningSkills = weak.filter(s => s.part >= 1 && s.part <= 4);
+    if (listeningSkills.length && sections.listening.length < 3) {
+      const questions = await this.prisma.question.findMany({ where: { ...importedQuestions,
+        part: { in: [1, 2, 3, 4] }, audioUrl: { not: null }, skills: { some: { skillId: { in: listeningSkills.map(s => s.skillId) } } } },
+        select: { audioUrl: true, skills: { select: { skillId: true } } }, orderBy: { id: 'asc' }, take: 1000 });
+      const urls = [...new Set(questions.flatMap(q => q.audioUrl ? [q.audioUrl] : []))];
+      const linked = urls.length ? await this.prisma.listeningSource.findMany({ where: { ...accessSource, url: { in: urls },
+        transcripts: { some: { status: 'READY', language: 'en', units: { some: {} } } } },
+        select: { id: true, title: true, url: true }, orderBy: { id: 'asc' }, take: 100 }) : [];
+      for (const skill of listeningSkills) {
+        const matchingUrls = new Set(questions.filter(q => q.skills.some(s => s.skillId === skill.skillId)).map(q => q.audioUrl));
+        const source = linked.find(s => matchingUrls.has(s.url) && !sections.listening.some(a => a.id === `listening:${s.id}`));
+        if (source) sections.listening.push({ id: `listening:${source.id}`, title: source.title, href: `/listening?source=${source.id}`,
+          reason: `Audio này cũng được dùng trong câu hỏi gắn kỹ năng ${skill.skillName} đang cần củng cố theo DAS3H. Luyện lại nguồn nghe có liên quan.`,
+          evidence: 'das3h', priority: 'focus' });
+        if (sections.listening.length === 3) break;
+      }
+    }
     if (sections.listening.length < 3) {
       const candidates = listeningCatalog.map(source => ({ source, length: source.transcripts[0]?.units[0] ? source.transcripts[0].units[0].end - source.transcripts[0].units[0].start : Infinity }))
         .filter(c => c.length > 0 && Number.isFinite(c.length)).sort((a, b) => a.length - b.length || a.source.id - b.source.id);
