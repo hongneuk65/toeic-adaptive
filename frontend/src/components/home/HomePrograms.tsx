@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const programs = [
   { title: 'Reading', subtitle: 'Đọc hiểu, hiểu sâu.', description: 'Luyện tìm thông tin, đọc bài và trả lời câu hỏi theo từng phần TOEIC.', path: '/reading', color: 'sky' },
   { title: 'Listening', subtitle: 'Nghe rõ, tự tin hơn.', description: 'Luyện nghe theo từng đoạn, chép chính tả và kiểm tra câu trả lời.', path: '/listening', color: 'blue' },
-  { title: 'Lý thuyết', subtitle: 'Nắm chắc nền tảng.', description: 'Ôn kiến thức theo Part và kiểm tra mức độ hiểu qua bài quiz.', path: '/theory', color: 'green' },
+  { title: 'Kiến thức', subtitle: 'Nắm chắc nền tảng.', description: 'Ôn kiến thức theo Part và kiểm tra mức độ hiểu qua bài quiz.', path: '/theory', color: 'green' },
   { title: 'Từ vựng', subtitle: 'Ghi nhớ từng ngày.', description: 'Học và ôn từ vựng trong những bộ flashcard của bạn.', path: '/flashcards', color: 'orange' },
   { title: 'Thi thử', subtitle: 'Sẵn sàng cho kỳ thi.', description: 'Làm đề có thời gian, xem kết quả và học từ những câu trả lời.', path: '/exam', color: 'violet' },
 ];

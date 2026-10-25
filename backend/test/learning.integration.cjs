@@ -2,7 +2,7 @@
 // Run after building: node test/learning.integration.cjs
 const assert = require('node:assert/strict');
 const { randomUUID, randomInt } = require('node:crypto');
-const { readFileSync, readdirSync } = require('node:fs');
+const { readFileSync, readdirSync, mkdirSync, writeFileSync, unlinkSync } = require('node:fs');
 const { resolve } = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { PrismaClient } = require('@prisma/client');
@@ -120,7 +120,178 @@ async function testFreshInstall() {
   assert.equal((await db.question.findUnique({ where: { id: questions[1].id } })).totalAttempts, 0);
   assert.equal((await db.userSkillMastery.findFirst()).practiceCount, 1);
   await testUserSerialization(db, skill.id, questions[2].id, questions[3].id);
+  await testPracticeSupport(db);
+  await testReadingGeneration(db);
+  await testIntegratedActivities(db);
+  await testTrainedD0Causality(db);
   console.log('PASS: fresh migration chain, exam resume/concurrency/blank/review/rollback, DAS3H retry/rollback');
+}
+
+async function testTrainedD0Causality(db) {
+  const { TrainedDas3h, questionFingerprint, WINDOWS_MS } = require('../dist/das3h/trained-das3h');
+  const user = await db.user.create({ data: { email: 'd0-causality@example.test', passwordHash: 'not-a-login' } });
+  const question = await db.question.create({ data: { part: 5, content: 'Fixture', optionA: 'a', optionB: 'b', optionC: 'c', optionD: 'd', correctAnswer: 'A', explanation: '[santa-ednet:q99999999]', itemDifficulty: 0 } });
+  const model = { schemaVersion: 1, featureContract: 'own-das3h-d0-cumulative-v1', version: 'own-das3h-1111111111111111', intercept: -.4,
+    windowsMs: WINDOWS_MS, questions: { q99999999: { bias: .1, tags: ['TEST'], part: 5, correctAnswer: 'A' } },
+    skills: { TEST: { bias: .2, wins: [.2, .2, .2, .2, .2], attempts: [-.1, -.1, -.1, -.1, -.1] } },
+    applicationBridge: { q99999999: questionFingerprint(question) }, releaseGatePassed: true, sourceHashes: { catalog: 'causality-fixture' }, metrics: {}, cohort: {}, mappingStatus: 'fixture' };
+  const directory = resolve(root, 'storage');
+  mkdirSync(directory, { recursive: true });
+  const path = resolve(directory, `d0-test-${randomUUID()}.json`);
+  const previous = process.env.DAS3H_MODEL_PATH;
+  writeFileSync(path, JSON.stringify(model));
+  process.env.DAS3H_MODEL_PATH = path;
+  try {
+    const service = new TrainedDas3h(db);
+    const now = new Date('2026-10-24T00:00:00Z');
+    await db.trainedDas3hState.create({ data: { userId: user.id, modelVersion: model.version, ability: 3.5 } });
+    const initial = (await service.predictMany(user.id, [question.id], now)).get(question.id);
+    assert.ok(Math.abs(initial - 1 / (1 + Math.exp(.1))) < 1e-12, 'd=0 must ignore an old online intercept');
+    await service.recordAbility(user.id, question.id, true, now, `d0-first-${randomUUID()}`);
+    assert.equal((await service.predictMany(user.id, [question.id], now)).get(question.id), initial, 'Sibling outcome must stay invisible at same timestamp');
+    const after = new Date(now.getTime() + 1000);
+    const updated = (await service.predictMany(user.id, [question.id], after)).get(question.id);
+    assert.ok(updated > initial, 'Earlier skill evidence must personalize later predictions');
+    await service.recordAbility(user.id, question.id, false, new Date(now.getTime() + 86400000), `d0-future-${randomUUID()}`);
+    assert.equal((await service.predictMany(user.id, [question.id], after)).get(question.id), updated, 'Future record cannot affect a historical prediction');
+    await db.question.update({ where: { id: question.id }, data: { stimulus: { _trainedItemInvalidated: true } } });
+    assert.equal((await service.predictMany(user.id, [question.id], after)).size, 0);
+    assert.equal((await db.trainedDas3hState.findUnique({ where: { userId_modelVersion: { userId: user.id, modelVersion: model.version } } })).ability, 3.5, 'Old state is preserved, not silently rewritten');
+    console.log('PASS: trained d0 matches released intercept, observes past skills only, rejects edited stimulus and preserves inactive legacy state');
+  } finally {
+    if (previous === undefined) delete process.env.DAS3H_MODEL_PATH; else process.env.DAS3H_MODEL_PATH = previous;
+    unlinkSync(path);
+  }
+}
+
+async function testIntegratedActivities(db) {
+  const { ActivitiesService } = require('../dist/mastery/activities.service');
+  const { FlashcardService } = require('../dist/flashcard/flashcard.service');
+  const { createHash } = require('node:crypto');
+  const user = await db.user.create({ data: { email: 'activities@example.test', passwordHash: 'not-a-login' } });
+  const other = await db.user.create({ data: { email: 'private-activities@example.test', passwordHash: 'not-a-login' } });
+  const skill = await db.skill.create({ data: { code: 'P5_SUBJECT_VERB_AGREE', name: 'Hòa hợp chủ vị', category: 'grammar', part: 5 } });
+  const lesson = await db.theoryLesson.create({ data: { title: 'Từ loại', content: 'Fixture', part: 5, skillId: skill.id } });
+  const folder = await db.flashcardFolder.create({ data: { name: 'Due words', userId: user.id, private: true } });
+  const hidden = await db.flashcardFolder.create({ data: { name: 'Hidden words', userId: other.id, private: true } });
+  for (const item of [folder, hidden]) {
+    const card = await db.flashcard.create({ data: { folderId: item.id, word: 'meeting', meaning: 'cuộc họp' } });
+    const hash = createHash('sha256').update(JSON.stringify([card.word, card.meaning])).digest('hex');
+    await db.flashcardReview.create({ data: { userId: user.id, cardId: card.id, dueAt: new Date('2020-01-01'),
+      recallWins: 1, lastPracticedAt: new Date('2020-01-01'), schedulingSource: 'hlr-prior-experimental', contentHash: hash } });
+  }
+  const source = await db.listeningSource.create({ data: { title: 'Practice talk', kind: 'AUDIO', url: 'https://example.test/audio', published: true } });
+  const transcript = await db.listeningTranscript.create({ data: { sourceId: source.id, version: 'fixture', provider: 'fixture', status: 'READY' } });
+  const session = await db.listeningSession.create({ data: { userId: user.id, sourceId: source.id, transcriptId: transcript.id, start: 0, end: 30 } });
+  for (let index = 0; index < 3; index++) {
+    const unit = await db.listeningUnit.create({ data: { transcriptId: transcript.id, position: index, start: index * 10, end: (index + 1) * 10, text: 'Fixture text' } });
+    await db.listeningAnswer.create({ data: { sessionId: session.id, unitId: unit.id, mode: 'DICTATION', difficulty: 'MEDIUM', submitted: 'fixture', score: .2, feedback: {} } });
+  }
+  const article = await db.readingArticle.create({ data: { key: 'activities-fixture', title: 'Email', originalText: 'Fixture', status: 'PUBLISHED' } });
+  const qs = [0, 1, 2].map(() => ({ type: 'DETAIL', answer: 0 }));
+  const version = await db.readingVersion.create({ data: { articleId: article.id, revision: 1, title: 'Email', text: 'Fixture', topic: 'Work', kind: 'EMAIL', difficulty: 'EASY', origin: 'MANUAL', questions: qs } });
+  await db.readingArticle.update({ where: { id: article.id }, data: { publishedVersionId: version.id } });
+  await db.readingAttempt.create({ data: { userId: user.id, versionId: version.id, tryNumber: 1, submittedAt: new Date(), answers: { '0': { selected: 1 }, '1': { selected: 1 }, '2': { selected: 1 } } } });
+  const mastery = { getUserMasteryProfile: async () => ({ skills: [{ skillId: skill.id, skillCode: skill.code, skillName: skill.name, practiceCount: 12, masteryScore: .4 }] }) };
+  const service = new ActivitiesService(db, mastery);
+  const result = await service.forUser(user.id);
+  assert.ok(result.sections.theory.some(a => a.href === `/theory?lesson=${lesson.id}`));
+  assert.equal(result.sections.vocabulary.length, 1);
+  assert.equal(result.sections.vocabulary[0].href, `/flashcards/${folder.id}`);
+  assert.equal(result.sections.listening[0].href, `/listening?session=${session.id}`);
+  assert.equal(result.sections.reading[0].href, `/reading?article=${article.id}`);
+  assert.equal(JSON.stringify(result).includes('Hidden words'), false);
+  assert.equal(JSON.stringify(result).includes('selected'), false);
+  const flashcards = new FlashcardService(db);
+  const rows = await flashcards.reviews(user.id, folder.id);
+  assert.equal(rows[0].memory.source.startsWith('hlr-'), true);
+  assert.ok(rows[0].memory.probability < .8);
+  await assert.rejects(flashcards.reviews(user.id, hidden.id));
+  const newcomer = await db.user.create({ data: { email: 'newcomer-activities@example.test', passwordHash: 'not-a-login' } });
+  const starterFolder = await db.flashcardFolder.create({ data: { name: 'Shared starter words', userId: user.id, private: false,
+    flashcards: { create: { word: 'office', meaning: 'văn phòng' } } } });
+  const startingService = new ActivitiesService(db, { getUserMasteryProfile: async () => ({ skills: [] }) });
+  const starting = await startingService.forUser(newcomer.id);
+  assert.equal(starting.learnerProfile.stage, 'unassessed');
+  for (const section of Object.values(starting.sections)) {
+    assert.ok(section.length > 0, 'Available resources must produce starting suggestions before module history');
+    assert.equal(section[0].evidence, 'starter');
+  }
+  assert.equal(starting.sections.vocabulary[0].href, `/flashcards/${starterFolder.id}`);
+  assert.equal(JSON.stringify(starting).includes('Hidden words'), false);
+  await db.listeningSource.update({ where: { id: source.id }, data: { published: false } });
+  assert.equal((await service.forUser(user.id)).sections.listening.length, 0);
+  console.log('PASS: integrated activities use real queries, typed memory estimates, private-folder/source filtering and safe response fields');
+}
+
+async function testReadingGeneration(db) {
+  const { ReadingAiService } = require('../dist/reading/reading-ai.service');
+  const { ReadingService } = require('../dist/reading/reading.service');
+  const { ReadingProcessor } = require('../dist/reading/reading.processor');
+  const user = await db.user.create({ data: { email: 'grounding@example.test', passwordHash: 'not-a-login' } });
+  const text = 'The training session will be held on Tuesday in the main meeting room. Employees should register with their supervisor before Friday. The session will cover customer service techniques and include practical examples for new employees. Participants will receive a workbook at the entrance.';
+  const draft = { questions: [{ type: 'MAIN', prompt: 'What is this notice about?', options: ['A training session', 'An office closure', 'A recruitment fair', 'A product recall'],
+    answer: 0, explanation: 'Thông báo về buổi đào tạo.', evidenceRequired: true, evidence: [{ text: 'The training session will be held on Tuesday in the main meeting room.' }],
+    learning: { level: 'UNDERSTAND', objective: 'Xác định chủ đề của thông báo.', sourceCardIds: ['source-1'] } }] };
+  const check = { questionIndex: 0, supportedAnswer: 0, singleAnswer: true, explanationSupported: true, evidenceSufficient: true, objectiveAligned: true };
+  let responses = [draft, { checks: [{ ...check, supportedAnswer: 1 }] }];
+  const ai = new ReadingAiService({ generateText: async () => JSON.stringify(responses.shift()) });
+  const service = new ReadingService(db, {}, ai);
+  const processor = new ReadingProcessor(db, service, ai);
+  const article = await db.readingArticle.create({ data: { key: 'grounding-test', ownerId: user.id, title: 'Training', originalText: text, status: 'CREATING', generationAttempts: 1 } });
+  const job = { data: { articleId: article.id, userId: user.id } };
+  await processor.process(job);
+  assert.equal((await db.readingArticle.findUnique({ where: { id: article.id } })).status, 'FAILED');
+  assert.equal(await db.readingVersion.count({ where: { articleId: article.id } }), 0);
+  assert.equal(await db.readingAiEvent.count({ where: { userId: user.id, status: 'FAILED' } }), 1);
+  responses = [draft, { checks: [check] }, { checks: [check] }];
+  await db.readingArticle.update({ where: { id: article.id }, data: { status: 'CREATING', generationAttempts: 2 } });
+  await processor.process(job);
+  const stored = await db.readingArticle.findUnique({ where: { id: article.id } });
+  assert.equal(stored.status, 'READY');
+  assert.equal(stored.originalText, text);
+  const version = await db.readingVersion.findUnique({ where: { id: stored.currentVersionId } });
+  assert.equal(version.reviewed, false);
+  assert.equal(version.questions[0].learning.level, 'UNDERSTAND');
+  const view = await service.view(user.id, article.id);
+  assert.equal(view.version.questions[0].learningLevel, 'UNDERSTAND');
+  assert.equal('answer' in view.version.questions[0], false);
+  assert.equal('learning' in view.version.questions[0], false);
+  assert.equal('evidence' in view.version.questions[0], false);
+  console.log('PASS: generation rejected before version write; approved blind/rationale checks stored atomically, legacy source retained, learning pointers hidden');
+}
+
+async function testPracticeSupport(db) {
+  const { PracticeSupportService } = require('../dist/das3h/practice-support.service');
+  const user = await db.user.create({ data: { email: 'support@example.test', passwordHash: 'not-a-login' } });
+  const skill = await db.skill.create({ data: { code: 'P5_PARTS_OF_SPEECH', name: 'Từ loại', part: 5, category: 'Grammar' } });
+  const question = await db.question.create({ data: {
+    part: 5, content: 'The team worked ___.', optionA: 'efficiently', optionB: 'efficient', optionC: 'efficiency', optionD: 'efficiencies',
+    correctAnswer: 'A', itemDifficulty: 0, explanation: '[admin-question] An adverb modifies worked.', skills: { create: { skillId: skill.id } },
+  } });
+  await db.theoryLesson.create({ data: { skillId: skill.id, part: 5, title: 'Từ loại trong câu', content: 'Fixture lesson' } });
+  const attemptId = randomUUID();
+  const das3h = new Das3hService(db);
+  const support = new PracticeSupportService(db);
+  await assert.rejects(support.getSupport(user.id, question.id, skill.id, attemptId));
+  const result = await das3h.checkAndRecordAnswer(user.id, question.id, 'B', skill.id, attemptId);
+  assert.equal(result.isCorrect, false);
+  const before = await db.studentSkillHistory.count({ where: { userId: user.id } });
+  const help = await support.getSupport(user.id, question.id, skill.id, attemptId);
+  assert.equal(help.steps.length, 3);
+  assert.ok(help.lesson);
+  assert.equal('correctAnswer' in help, false);
+  assert.deepEqual(await support.getSupport(user.id, question.id, skill.id, attemptId), help);
+  assert.deepEqual(await das3h.checkAndRecordAnswer(user.id, question.id, 'B', skill.id, attemptId), result);
+  assert.equal(await db.studentSkillHistory.count({ where: { userId: user.id } }), before);
+  await assert.rejects(support.getSupport(user.id + 1, question.id, skill.id, attemptId));
+  await assert.rejects(support.getSupport(user.id, question.id, skill.id + 1, attemptId));
+  const correctId = randomUUID();
+  await das3h.checkAndRecordAnswer(user.id, question.id, 'A', skill.id, correctId);
+  await assert.rejects(support.getSupport(user.id, question.id, skill.id, correctId));
+  await db.examAttempt.create({ data: { userId: user.id, examType: 'CUSTOM', questionIds: [question.id], deadlineAt: new Date(Date.now() + 60000) } });
+  await assert.rejects(support.getSupport(user.id, question.id, skill.id, attemptId), /Nộp bài thi/);
+  console.log('PASS: persisted wrong attempt -> progressive support -> relevant theory, retries read-only, ownership/skill/correct/exam boundaries');
 }
 
 async function testExamReliability(db, user, questions, exams) {

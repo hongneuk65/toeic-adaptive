@@ -15,7 +15,8 @@ import { MasteryQueueService } from '../queue/mastery-queue.service';
 import { Role } from '@prisma/client';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { AdaptiveAnswerDto, RecordMasteryDto } from './dto/adaptive-answer.dto';
+import { AdaptiveAnswerDto, PracticeSupportDto, RecordMasteryDto } from './dto/adaptive-answer.dto';
+import { PracticeSupportService } from './practice-support.service';
 import { getUserId } from '../common/user-id';
 
 @Controller('das3h')
@@ -26,10 +27,16 @@ export class Das3hController {
         private readonly das3hService: Das3hService,
         private readonly adaptiveScheduler: AdaptiveSchedulerService,
         private readonly masteryQueueService: MasteryQueueService,
+        private readonly practiceSupport: PracticeSupportService,
     ) { }
 
     @Get('status')
     getModelStatus() { return this.das3hService.getModelStatus(); }
+
+    @Post('practice-support')
+    getPracticeSupport(@Req() req: any, @Body() body: PracticeSupportDto) {
+        return this.practiceSupport.getSupport(getUserId(req), body.questionId, body.skillId, body.attemptId);
+    }
 
     /**
      * POST /das3h/predict

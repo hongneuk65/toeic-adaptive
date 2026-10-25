@@ -23,6 +23,26 @@ export interface UserMasteryProfile {
   skills: SkillMasteryItem[];
   partBreakdown: PartMasteryItem[];
   overallMastery: number;
+  learningPlan?: LearningPlan;
+}
+
+export interface LearningPlanItem {
+  skillId: number;
+  skillCode: string;
+  skillName: string;
+  part: number;
+  priority: 'diagnostic' | 'focus' | 'review' | 'maintain';
+  score: number;
+  reasons: string[];
+  reviewDueAt: string | null;
+  lesson: { id: number; title: string; part: number } | null;
+  foundations: { skillId: number; skillName: string; status: 'unassessed' | 'needs-practice' }[];
+}
+
+export interface LearningPlan {
+  version: 'learning-plan-v1';
+  generatedAt: string;
+  items: LearningPlanItem[];
 }
 
 export type AdaptiveQuestion = ExamQuestion;

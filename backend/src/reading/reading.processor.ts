@@ -57,7 +57,7 @@ export class ReadingProcessor extends WorkerHost {
         data: {
           status: 'FAILED',
           error:
-            'AI chưa tạo được câu hỏi có cấu trúc và bằng chứng hợp lệ, hoặc dịch vụ đang hết hạn mức/timeout. Hãy thử lại sau. Văn bản gốc vẫn được giữ nguyên.',
+            'AI chưa tạo được câu hỏi vượt qua kiểm tra cấu trúc, đáp án và bằng chứng, hoặc dịch vụ đang hết hạn mức/timeout. Hãy thử lại sau. Văn bản gốc vẫn được giữ nguyên.',
         },
       });
     }

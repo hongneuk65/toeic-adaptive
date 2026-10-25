@@ -19,6 +19,8 @@ export interface PersonalizedExplanationResult {
   generationStatus: 'generated' | 'stored_only'; contextWarnings: string[];
   explanation: string; sections: ExplanationSections;
   retrievedSources: Omit<TutorSource, 'content'>[];
+  nextPractice?: { skillId: number; skillName: string; part: number; excludeQuestionId: number };
+  recommendedLesson?: { id: number; title: string };
 }
 export interface ExplainRequest { userId: number; questionId: number; selectedAnswer: string; attemptId?: number; mode?: ExplanationMode; userNote?: string; signal?: AbortSignal; onChunk?: (chunk: string) => void; }
 
@@ -50,7 +52,7 @@ export class RagExplainerService {
     const context = await this.context.resolve(params.userId, params);
     const [evidence, sources] = await Promise.all([
       this.evidence.get(params.userId, context.skills),
-      this.knowledge.retrieve(`${context.content}\n${context.passage}`, context.skills.map(skill => skill.code), context.part),
+      this.knowledge.retrieve(`${context.content}\n${context.passage}`, context.skills.map(skill => skill.code), context.part, params.signal),
     ]);
     params.signal?.throwIfAborted();
     const policy = explanationPolicy(evidence, params.mode);
@@ -93,6 +95,8 @@ Chỉ trả JSON {"sections":{"misconceptionAnalysis":"...","correctAnswerExplan
     const explanation = Object.values(sections).map((value, index) => `### ${index + 1}. ${headings[index]}\n${value}`).join('\n\n');
     params.onChunk?.(explanation);
     const first = evidence[0];
+    const practiceSkill = context.skills.find(skill => evidence.find(item => item.id === skill.id)?.status !== 'sufficient') || context.skills[0];
+    const lessonSource = sources.find(source => source.lessonId);
     return { questionId: context.questionId, part: context.part, selectedAnswer: context.selectedAnswer, correctAnswer: context.correctAnswer, isCorrect,
       learnerMastery: first ? { skillCode: first.code, skillName: first.name, masteryScore: first.predictedSuccess, evidenceStatus: first.attempts ? 'practiced' : 'unassessed', levelDescription: policy.description } : null,
       learnerEvidence: evidence, evidencePolicyVersion: EVIDENCE_POLICY.version, presentation: policy, answerOrigin: context.answerOrigin,
@@ -100,6 +104,8 @@ Chỉ trả JSON {"sections":{"misconceptionAnalysis":"...","correctAnswerExplan
       knowledgeNotice: citations.length ? 'Nguồn được duyệt được liệt kê bên dưới; mức độ hỗ trợ từng nhận định vẫn cần được đánh giá.' : 'Chưa có tài liệu được duyệt được sử dụng để kiểm chứng thêm. Không coi phản hồi là lời giải đã được thẩm định.',
       generationStatus, contextWarnings: context.warnings, explanation, sections,
       retrievedSources: sources.filter(source => citations.includes(source.id)).map(({ content: _content, ...source }) => source),
+      nextPractice: practiceSkill ? { skillId: practiceSkill.id, skillName: practiceSkill.name, part: context.part, excludeQuestionId: context.questionId } : undefined,
+      recommendedLesson: lessonSource ? { id: lessonSource.lessonId!, title: lessonSource.title } : undefined,
     };
   }
 }

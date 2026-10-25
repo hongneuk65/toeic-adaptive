@@ -127,7 +127,7 @@ export const TheoryPage: React.FC = () => {
         <div className="w-full space-y-4">
             <PageHeader
                 eyebrow="Ôn tập theo từng Part TOEIC"
-                title="Lý thuyết & luyện tập"
+                title="Kiến thức & luyện tập"
                 description="Đọc bài học, làm mini-quiz và củng cố kỹ năng theo tiến độ cá nhân."
             />
             {error && <p role="alert" className="text-red-700">{error} <button onClick={() => { list.reload(); resource.reload(); }}>Thử lại</button></p>}
@@ -184,7 +184,7 @@ export const TheoryPage: React.FC = () => {
                         </div>
                     ) : currentLesson ? (
                         <>
-                            {/* Vùng bài đọc lý thuyết */}
+                            {/* Vùng bài đọc kiến thức */}
                             <div className="bg-white p-6 sm:p-8 rounded-sm border border-slate-200 shadow-sm space-y-4">
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded border border-blue-200 font-mono">
@@ -197,7 +197,7 @@ export const TheoryPage: React.FC = () => {
                                     {currentLesson.title}
                                 </h1>
 
-                                {/* Nội dung lý thuyết dùng font tiêu chuẩn, dễ đọc, khoảng cách dòng thoáng */}
+                                {/* Nội dung kiến thức dùng font tiêu chuẩn, dễ đọc, khoảng cách dòng thoáng */}
                                 <div className="font-body text-slate-800 text-base leading-relaxed whitespace-pre-line border-t border-slate-100 pt-4">
                                     {currentLesson.content}
                                 </div>

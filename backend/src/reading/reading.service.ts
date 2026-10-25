@@ -571,7 +571,9 @@ export class ReadingService {
           dto.questions,
           readingLimits().maxQuestions,
           { sourceCrawl },
-        );
+        ).map(({ learning: _learning, ...question }) => question);
+        // A manual revision may change the task/source. Do not carry AI-assigned
+        // objectives or source-card pointers into an edited version as if fresh.
       } catch (e) {
         throw new BadRequestException((e as Error).message);
       }

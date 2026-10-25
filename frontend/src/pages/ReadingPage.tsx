@@ -1,3 +1,6 @@
+import { ReadingModes } from '../components/reading/ReadingModes';
+import { notifyLearningProgress } from '../lib/learning-progress';
+import { ActivitySuggestions } from '../components/ActivitySuggestions';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, getErrorMessage } from "../lib/api";
@@ -20,6 +23,11 @@ const levels: Record<string, string> = {
   EASY: "Dễ",
   MEDIUM: "Vừa",
   HARD: "Khó",
+};
+const learningLevels = {
+  UNDERSTAND: "Hiểu nội dung",
+  REMEMBER: "Nhớ thông tin",
+  ANALYZE: "Phân tích",
 };
 const kinds: Record<string, string> = {
   EMAIL: "Email",
@@ -76,6 +84,7 @@ function ReadingWorkspace({
   const version = attempt.version;
   const question = version.questions[index];
   const submitted = !!attempt.submittedAt;
+  const learningLevel = question.learningLevel ?? (submitted ? question.learning?.level : undefined);
   useEffect(() => {
     started.current = performance.now();
     live.current = true;
@@ -270,9 +279,9 @@ function ReadingWorkspace({
           {version.topic} · {kinds[version.kind]} · {levels[version.difficulty]}{" "}
           (ước lượng) ·{" "}
           {version.origin === "AI"
-            ? "Bài AI cá nhân · chưa duyệt, chỉ luyện tập"
+            ? "Bài AI cá nhân · chưa duyệt chuyên môn, chỉ luyện tập"
             : version.origin === "AI_DRAFT"
-              ? "AI hỗ trợ · đã biên tập"
+              ? version.reviewed ? "AI hỗ trợ · đã biên tập" : "AI hỗ trợ · chưa duyệt chuyên môn, chỉ luyện tập"
               : version.origin === "CRAWL" ? "Đề TOEIC đã nhập · Giữ nguyên nội dung nguồn" : "Bài thư viện hệ thống"}
         </p>
       </div>
@@ -345,6 +354,13 @@ function ReadingWorkspace({
               <span className="text-xs text-ink-medium">{saving}</span>
             </div>
             <p className="text-base leading-relaxed">{question.prompt}</p>
+            {learningLevel && learningLevels[learningLevel] && (
+              <p className="text-xs text-ink-medium">
+                <span className="rounded-full border border-paper-kraft px-3 py-1">
+                  Mục tiêu luyện tập: {learningLevels[learningLevel]}
+                </span>
+              </p>
+            )}
             <fieldset className="space-y-2" disabled={submitted || busy}>
               <legend className="sr-only">Chọn đáp án</legend>
               {question.options.map((option, i) => (
@@ -482,6 +498,7 @@ function ReadingWorkspace({
                         `/reading/attempts/${attempt.id}/submit`,
                         { method: "POST", data: snapshot() },
                       );
+                      notifyLearningProgress();
                       setAttempt(next);
                       setAnswers(next.answers);
                       setSaving("Đã nộp và lưu kết quả");
@@ -648,6 +665,7 @@ function ReadingWorkspace({
           </details>
         </div>
       </div>
+      {submitted && <ActivitySuggestions section="reading" compact excludeHref={`/reading?article=${version.articleId}`} />}
     </div>
   );
 }
@@ -688,6 +706,10 @@ export function ReadingPage() {
   const [kind, setKind] = useState("");
   const [progress, setProgress] = useState("");
   const [source, setSource] = useState("");
+  const [addingText, setAddingText] = useState(false);
+  const personalTitle = useRef<HTMLInputElement>(null);
+  const personalTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (addingText) personalTitle.current?.focus(); }, [addingText]);
   const [text, setText] = useState("");
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
@@ -740,7 +762,10 @@ export function ReadingPage() {
             : !!studied(a.version?.id) &&
               !studied(a.version?.id)?.submittedAt)),
   );
-  if (params.get("practice") === "clauses") return <ReadingClausePractice onLibrary={() => setParams({})} />;
+  const showReadingLibrary = () => { const next = new URLSearchParams(params); next.delete("practice"); setAddingText(false); setParams(next); };
+  const showPersonalReading = () => { const next = new URLSearchParams(params); next.delete("practice"); setAddingText(true); setParams(next); };
+  const showSentencePractice = () => { const next = new URLSearchParams(params); next.set("practice", "clauses"); setAddingText(false); setParams(next); };
+  if (params.get("practice") === "clauses" && !articleId && !attemptId) return <ReadingClausePractice onLibrary={showReadingLibrary} modeNavigation={<ReadingModes mode="clauses" onReading={showReadingLibrary} onClauses={showSentencePractice} onPersonal={showPersonalReading} personalTrigger={personalTrigger} />} />;
   return (
     <div className={`page-stack prep-learning-page ${articleId || attemptId ? "prep-learning-study" : "prep-learning-library"}`}>
       {(error || catalog.error || content.error) && (
@@ -833,9 +858,63 @@ export function ReadingPage() {
           <PageHeader
             eyebrow="READING LIBRARY / ĐỌC & HIỂU"
             title="Luyện đọc"
-            actions={<button className="secondary-button" onClick={() => setParams({practice:"clauses"})}>Luyện tìm mệnh đề chính</button>}
             description="Chọn bài đọc, trả lời câu hỏi và đối chiếu bằng chứng để hiểu sâu hơn."
           />
+          <ReadingModes mode={addingText ? "personal" : "reading"} onReading={showReadingLibrary} onClauses={showSentencePractice} onPersonal={showPersonalReading} personalTrigger={personalTrigger} />
+          <section hidden={!addingText} id="personal-reading-form" aria-label="Văn bản Reading riêng" className="rounded-xl border border-paper-kraft bg-paper-white p-4 sm:p-5 space-y-3"><div className="flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Văn bản cá nhân của bạn</h2><button type="button" className="text-action min-h-11" onClick={() => { setAddingText(false); personalTrigger.current?.focus(); }}>Đóng</button></div>
+            <form
+              className="space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void act(async () => {
+                  const next = await api<{ id: number }>("/reading/personal", {
+                    method: "POST",
+                    data: { title, text },
+                  });
+                  setParams({ article: String(next.id) });
+                  catalog.reload();
+                });
+              }}
+            >
+              <p className="text-sm">
+                Dán văn bản tiếng Anh từ 40 từ, tối đa{" "}
+                {catalog.data?.limits.maxText || 10000} ký tự. AI tạo tối đa{" "}
+                {catalog.data?.limits.maxQuestions || 5} câu dựa trên bài, giữ nguyên
+                văn bản gốc và trích dẫn bằng chứng nguyên văn. AI kiểm tra lại
+                câu hỏi trước khi lưu; nội dung vẫn do AI tạo, chưa duyệt chuyên
+                môn và chỉ dùng luyện tập. Bài cá nhân riêng tư.
+              </p>
+              <input
+                ref={personalTitle}
+                aria-label="Tên bài Reading cá nhân"
+                maxLength={200}
+                className="form-input !border"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Tên bài (tuỳ chọn)"
+              />
+              <textarea
+                aria-label="Văn bản Reading cá nhân"
+                rows={8}
+                maxLength={catalog.data?.limits.maxText || 10000}
+                required
+                className="form-input !border"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
+              <button
+                disabled={busy || !text.trim()}
+                className="primary-button"
+              >
+                {busy ? "Đang lưu…" : "Tạo bài luyện riêng"}
+              </button>
+              <p className="text-xs text-ink-medium">
+                Không nhập thông tin cá nhân không cần thiết. Email/số điện
+                thoại được che trong ngữ cảnh AI. Bài thư viện vẫn học được khi
+                AI không hoạt động.
+              </p>
+            </form>
+          </section>
           <div className="prep-library-layout reading-library-layout grid items-start gap-6">
           <section aria-label="Thư viện bài đọc" className="min-w-0 space-y-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wider text-accent-navy">Thư viện Reading</p><h2 className="section-title mt-1">Bài luyện dành cho bạn</h2></div><span className="rounded-full bg-paper-cream px-3 py-1 text-sm text-ink-medium">{filtered.length} bài phù hợp</span></div><div className="prep-library-filters grid gap-3 sm:grid-cols-2 2xl:grid-cols-5">
             <select
@@ -950,59 +1029,7 @@ export function ReadingPage() {
             <div className="status-message space-y-3"><p>Chưa có bài phù hợp với bộ lọc này.</p><button className="secondary-button" onClick={() => { setTopic(""); setDifficulty(""); setKind(""); setProgress(""); setSource(""); }}>Xóa bộ lọc</button></div>
           )}
           </section>
-          <aside aria-label="Bài đọc cá nhân và lịch sử" className="prep-learning-sidebar min-w-0 space-y-4"><div><h2 className="font-semibold">Góc học của bạn</h2><p className="mt-1 text-sm text-ink-medium">Xem lại tiến độ hoặc luyện với văn bản riêng.</p></div><details className="section-disclosure">
-            <summary>Tạo bài từ văn bản của bạn</summary>
-            <form
-              className="space-y-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void act(async () => {
-                  const next = await api<{ id: number }>("/reading/personal", {
-                    method: "POST",
-                    data: { title, text },
-                  });
-                  setParams({ article: String(next.id) });
-                  catalog.reload();
-                });
-              }}
-            >
-              <p className="text-sm">
-                Dán văn bản tiếng Anh từ 40 từ, tối đa{" "}
-                {catalog.data?.limits.maxText || 10000} ký tự. AI tạo tối đa{" "}
-                {catalog.data?.limits.maxQuestions || 5} câu dựa trên bài, không
-                đổi văn bản gốc. Bài cá nhân riêng tư, chưa duyệt và chỉ dùng
-                luyện tập.
-              </p>
-              <input
-                aria-label="Tên bài Reading cá nhân"
-                maxLength={200}
-                className="form-input !border"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Tên bài (tuỳ chọn)"
-              />
-              <textarea
-                aria-label="Văn bản Reading cá nhân"
-                rows={8}
-                maxLength={catalog.data?.limits.maxText || 10000}
-                required
-                className="form-input !border"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-              />
-              <button
-                disabled={busy || !text.trim()}
-                className="primary-button"
-              >
-                {busy ? "Đang lưu…" : "Tạo bài luyện riêng"}
-              </button>
-              <p className="text-xs text-ink-medium">
-                Không nhập thông tin cá nhân không cần thiết. Email/số điện
-                thoại được che trong ngữ cảnh AI. Bài thư viện vẫn học được khi
-                AI không hoạt động.
-              </p>
-            </form>
-          </details>
+          <aside aria-label="Bài đọc cá nhân và lịch sử" className="prep-learning-sidebar min-w-0 space-y-4"><div><h2 className="font-semibold">Góc học của bạn</h2><p className="mt-1 text-sm text-ink-medium">Xem lại tiến độ hoặc luyện với văn bản riêng.</p></div>
           <details className="section-disclosure">
             <summary>Lịch sử lần đầu và làm lại</summary>
             <div className="space-y-2">
@@ -1021,6 +1048,7 @@ export function ReadingPage() {
               ))}
             </div>
           </details></aside></div>
+          <ActivitySuggestions section="reading" compact />
         </>
       )}
       {admin && <ReadingAdmin onChanged={catalog.reload} />}

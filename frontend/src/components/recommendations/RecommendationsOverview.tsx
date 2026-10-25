@@ -37,7 +37,7 @@ export const RecommendationsOverview: React.FC<Props> = ({
               onClick={() => navigate('/theory')}
               className="rounded border border-paper-kraft bg-paper-cream px-4 py-2 text-sm font-bold text-ink-dark transition hover:bg-paper-kraft-light/50"
             >
-              Lý thuyết
+              Kiến thức
             </button>
           </>
         }

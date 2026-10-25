@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useRef } from 'react';
+import React, { lazy, Suspense, useCallback, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiStream } from '../../lib/api';
 import { AiMarkdown } from './AiMarkdown';
@@ -6,6 +6,8 @@ import { readJsonSse } from '../../lib/sse';
 import { useDialogFocus } from '../../hooks/useDialogFocus';
 import { useAsyncResource } from '../../hooks/useAsyncResource';
 import type { PersonalizedExplanationResult } from '../../types/rag';
+
+const AdaptivePracticeModal = lazy(() => import('../AdaptivePracticeModal').then(module => ({ default: module.AdaptivePracticeModal })));
 
 interface RagExplanationModalProps {
   isOpen: boolean;
@@ -26,7 +28,9 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
 }) => {
   const navigate = useNavigate();
   const dialog = useRef<HTMLDivElement>(null);
-  useDialogFocus(dialog, isOpen, onClose);
+  const [practiceQuestionId, setPracticeQuestionId] = useState<number | null>(null);
+  const practiceOpen = isOpen && practiceQuestionId === questionId;
+  useDialogFocus(dialog, isOpen && !practiceOpen, onClose);
   const [preference, setPreference] = useState<{ questionId: number | null; mode: 'auto' | 'simpler' | 'example' | 'deeper' }>({ questionId: null, mode: 'auto' });
   const mode = preference.questionId === questionId ? preference.mode : 'auto';
   const requestKey = useMemo(() => ({ isOpen, questionId, selectedAnswer, attemptId, mode }), [isOpen, questionId, selectedAnswer, attemptId, mode]);
@@ -55,6 +59,19 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
   const partialText = progress?.key === requestKey ? progress.text : '';
 
   if (!isOpen || !questionId) return null;
+
+  if (practiceOpen && data?.nextPractice) {
+    const practice = data.nextPractice;
+    return <Suspense fallback={<div role="status" className="fixed inset-0 z-50 flex items-center justify-center bg-paper-cream">Đang mở bài luyện…</div>}>
+      <AdaptivePracticeModal
+        key={questionId}
+        skill={{ skillId: practice.skillId, skillName: practice.skillName, skillCode: data.learnerMastery?.skillCode ?? '', part: practice.part, masteryScore: data.learnerMastery?.masteryScore ?? 0, practiceCount: 0, lastPracticed: null }}
+        contextLabel="Luyện tiếp sau lời giải"
+        onClose={() => setPracticeQuestionId(null)}
+        onAnswerRecorded={() => {}}
+      />
+    </Suspense>;
+  }
 
   const displaySelected =
     !(data?.selectedAnswer ?? selectedAnswer) || (data?.selectedAnswer ?? selectedAnswer) === 'CHƯA_CHỌN'
@@ -190,6 +207,11 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
                   <div className="text-ink-dark leading-relaxed">
                     <AiMarkdown content={data.sections.recommendedAction} />
                   </div>
+                  {(data.nextPractice || data.recommendedLesson) && <div className="flex flex-wrap gap-2 pt-2">
+                    {data.nextPractice && <button type="button" onClick={() => setPracticeQuestionId(questionId)} className="rounded border border-slate-800 bg-slate-900 px-3 py-2 font-semibold text-white hover:bg-slate-800">Luyện cùng kỹ năng</button>}
+                    {data.recommendedLesson && <button type="button" onClick={() => { onClose(); navigate(`/theory?lesson=${data.recommendedLesson!.id}`); }} className="rounded border border-paper-kraft px-3 py-2 font-semibold text-ink-dark hover:bg-paper-cream">Ôn bài: {data.recommendedLesson.title}</button>}
+                  </div>}
+                  {data.nextPractice && <p className="pt-1 text-ink-light">Luyện từ ngân hàng câu hỏi theo kỹ năng {data.nextPractice.skillName}. Gửi đáp án sẽ ghi nhận một lượt luyện tập.</p>}
                 </div>
               </div>
 
@@ -213,7 +235,7 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
                           <button
                             onClick={() => {
                               onClose();
-                              navigate('/theory');
+                              navigate(`/theory?lesson=${s.lessonId}`);
                             }}
                             className="ml-1 text-slate-900 underline font-bold hover:text-accent-coral"
                           >

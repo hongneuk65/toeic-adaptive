@@ -2,6 +2,8 @@ import { Das3hService } from '../das3h/das3h.service';
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { groupLearningTopics } from './learning-topics';
+import { buildLearningPlan } from './recommendation-policy';
+import { importedQuestions } from '../common/imported-questions';
 
 @Injectable()
 export class MasteryService {
@@ -85,6 +87,18 @@ export class MasteryService {
         orderBy: { id: 'asc' },
       });
 
+      // Only offer practice actions backed by the same bank used by the scheduler.
+      // One distinct relation query avoids a count query for every skill.
+      const available = await this.prisma.questionSkill.findMany({
+        where: { question: importedQuestions },
+        select: { skillId: true },
+        distinct: ['skillId'],
+      });
+      const availableIds = new Set(available.map(item => item.skillId));
+      const learningPlan = buildLearningPlan(
+        skillsProfile.filter(skill => availableIds.has(skill.skillId)), lessons,
+      );
+
       return {
         userId,
         model: das3h.getModelStatus(),
@@ -92,6 +106,7 @@ export class MasteryService {
         partBreakdown,
         overallMastery,
         topicGroups: groupLearningTopics(skillsProfile, lessons),
+        learningPlan,
       };
     } catch (error: any) {
       // In chi tiết lỗi thật ra Terminal Backend

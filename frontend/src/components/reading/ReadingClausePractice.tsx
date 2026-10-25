@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { PageHeader } from '../ui/PageHeader';
 import { clauseExercises, clauseScore } from '../../lib/reading-clauses';
 
-export function ReadingClausePractice({ onLibrary }: { onLibrary(): void }) {
+export function ReadingClausePractice({ onLibrary, modeNavigation }: { onLibrary(): void; modeNavigation?: ReactNode }) {
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
@@ -17,6 +17,7 @@ export function ReadingClausePractice({ onLibrary }: { onLibrary(): void }) {
 
   return <div className="page-stack mx-auto w-full max-w-4xl">
     <PageHeader variant="compact" eyebrow="READING · CẤU TRÚC CÂU" title="Tìm mệnh đề chính" description="Tách phần phụ để nhận ra chủ ngữ và động từ chính trong câu nhiều mệnh đề." actions={<button className="secondary-button" onClick={onLibrary}>Thư viện bài đọc</button>} />
+    {modeNavigation}
     {finished ? <section className="space-y-6 rounded-2xl border border-paper-kraft bg-paper-white p-6 sm:p-8"><div><p className="text-xs font-semibold uppercase tracking-wider text-accent-navy">Đã hoàn thành</p><h2 ref={heading} tabIndex={-1} className="mt-3 text-2xl font-semibold text-ink-dark">Bạn xác định đúng {score} / {clauseExercises.length} câu</h2><p className="mt-3 text-sm leading-7 text-ink-medium">Tìm từ nối phụ thuộc trước, sau đó kiểm tra phần còn lại có chủ ngữ và cụm động từ hoàn chỉnh. Với mệnh đề quan hệ, thử lược phần bổ nghĩa rồi đọc lại câu.</p></div><div className="flex flex-wrap gap-3"><button className="primary-button" onClick={reset}>Luyện lại 12 câu</button><button className="secondary-button" onClick={onLibrary}>Áp dụng vào bài đọc</button></div></section> : <>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-paper-kraft pb-4"><p className="text-sm font-semibold text-ink-dark">Câu {index + 1} / {clauseExercises.length}</p><p role="status" className="text-sm text-ink-medium">Đúng {score} / {answers.length} câu đã kiểm tra</p></div>
       <section className="overflow-hidden rounded-2xl border border-paper-kraft bg-paper-white">

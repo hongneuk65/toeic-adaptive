@@ -6,6 +6,12 @@ export interface ReadingEvidence {
   text: string;
 }
 export interface ReadingQuestion {
+  learningLevel?: 'UNDERSTAND' | 'REMEMBER' | 'ANALYZE';
+  learning?: {
+    level: 'UNDERSTAND' | 'REMEMBER' | 'ANALYZE';
+    objective: string;
+    sourceCardIds: string[];
+  };
   type: string;
   prompt: string;
   options: string[];

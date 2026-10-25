@@ -1,5 +1,6 @@
 // Live DB acceptance in an isolated schema. No production learner answers are changed.
 require('reflect-metadata');
+require('../dist/config/environment');
 const assert = require('node:assert/strict');
 const { randomUUID } = require('node:crypto');
 const { writeFileSync, unlinkSync } = require('node:fs');
@@ -40,9 +41,7 @@ let db;
   await service.recordAndSync(user.id,question.id,true,skills.map(s=>s.id),'direct-event',{occurredAt:at.toISOString(),itemDifficulty:0});
   assert.equal(await db.trainedDas3hObservation.count(),1,'One response, not two micro-skill observations; replay is idempotent');
   assert.equal(await db.studentSkillHistory.count(),2,'Legacy micro-skills remain intact');
-  const state = await db.trainedDas3hState.findFirst();
-  assert.equal(state.modelVersion,model.version);
-  assert.ok(Math.abs(state.ability-.03*(1-initial))<1e-12);
+  assert.equal(await db.trainedDas3hState.count(),0,'Released d=0 does not add an unvalidated online learner intercept');
   assert.ok(await service.predictProbCorrect(user.id,question.id)>initial);
   const profile = await new MasteryService(db).getUserMasteryProfile(user.id);
   assert.equal(profile.model.mode,'trained-own-das3h');
@@ -56,7 +55,7 @@ let db;
   assert.equal((await service.getTrainedSkillScores(user.id,skills.map(s=>s.id))).size,0,'Changed content uses fallback');
   delete process.env.DAS3H_MODEL_PATH;
   assert.equal(service.getModelStatus().mode,'legacy-heuristic');
-  console.log('PASS: trained predictions, versioned ability, profile, response deduplication, outbox/replay, content guard and rollback');
+  console.log('PASS: trained d0 predictions, profile, response deduplication, outbox/replay, content guard and rollback');
 })().catch(e=>{console.error(e);process.exitCode=1}).finally(async()=>{
   if(db)await db.$disconnect();
   await admin.$executeRawUnsafe(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);

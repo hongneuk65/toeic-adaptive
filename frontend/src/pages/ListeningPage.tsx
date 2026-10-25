@@ -1,3 +1,5 @@
+import { notifyLearningProgress } from '../lib/learning-progress';
+import { ActivitySuggestions } from '../components/ActivitySuggestions';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, apiUpload, getErrorMessage } from '../lib/api';
@@ -24,7 +26,7 @@ function Exercise({ session, play, change, act, busy, heard }: { session: Listen
   if (!unit) return <p className="rounded border border-paper-kraft bg-paper-cream p-5 text-sm">Chưa có câu luyện trong đoạn này. Hệ thống sẽ cập nhật bài khi lời thoại sẵn sàng; bạn có thể nghe trong lúc chờ hoặc chọn đoạn khác.</p>;
   const submittedAnswer = session.mode === 'CLOZE' ? clozeAnswer(unit.tokens || [], blanks) : answer;
   const patch = async (data: object) => change(await api<ListeningSession>(`/listening/sessions/${session.id}`, { method: 'PATCH', data }));
-  const submit = async () => setFeedback(await api<ListeningFeedback>(`/listening/sessions/${session.id}/answers`, { method: 'POST', data: { unitId: unit.id, mode: session.mode, difficulty: session.difficulty, answer: submittedAnswer } }));
+  const submit = async () => { const result = await api<ListeningFeedback>(`/listening/sessions/${session.id}/answers`, { method: 'POST', data: { unitId: unit.id, mode: session.mode, difficulty: session.difficulty, answer: submittedAnswer } }); setFeedback(result); notifyLearningProgress(); };
   return <section className="prep-question-surface page-section space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h2 className="text-lg font-semibold">Đoạn {session.currentIndex + 1} / {session.totalUnits} <span className="ml-2 text-sm font-normal text-ink-light">{time(unit.start)}–{time(unit.end)}</span></h2>
@@ -61,7 +63,10 @@ function Exercise({ session, play, change, act, busy, heard }: { session: Listen
 
 export function ListeningPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [initialSessionId] = useState(() => Number(searchParams.get('session')) || null);
+  const sessionParam = searchParams.get('session');
+  const initialSessionId = sessionParam && /^[1-9]\d*$/.test(sessionParam) && Number.isSafeInteger(Number(sessionParam)) ? Number(sessionParam) : null;
+  const sourceParam = searchParams.get('source');
+  const requestedSource = sourceParam && /^[1-9]\d*$/.test(sourceParam) && Number.isSafeInteger(Number(sourceParam)) ? Number(sourceParam) : null;
   const restoreController = useRef<AbortController | null>(null);
   const { token } = useAuth(); let admin = false;
   try { admin = JSON.parse(atob(token!.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).role === 'ADMIN'; } catch { /* Server guards remain authoritative. */ }
@@ -71,6 +76,11 @@ export function ListeningPage() {
   const [catalogKind, setCatalogKind] = useState('');
   const catalog = useAsyncResource(useCallback((signal: AbortSignal) => api<ListeningCatalog>("/listening?page=" + catalogPage + "&pageSize=24&search=" + encodeURIComponent(catalogQuery) + (catalogKind ? "&kind=" + catalogKind : ""), { signal }), [catalogPage, catalogQuery, catalogKind]));
   const [selectedId, setSelectedId] = useState<number | null>(null); const [session, setSession] = useState<ListeningSession | null>(null);
+  const [addingVideo, setAddingVideo] = useState(false);
+  const [browsingLibrary, setBrowsingLibrary] = useState(false);
+  const videoInput = useRef<HTMLInputElement>(null);
+  const videoTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (addingVideo) videoInput.current?.focus(); }, [addingVideo]);
   const [url, setUrl] = useState(''); const [start, setStart] = useState(0); const [end, setEnd] = useState(180);
   const [actionBusy, setBusy] = useState(false); const [capturing, setCapturing] = useState(false); const busy = actionBusy || capturing; const [error, setError] = useState(''); const [notice, setNotice] = useState(''); const player = useRef<ListeningPlayerHandle>(null);
   const [restoring, setRestoring] = useState(!!initialSessionId);
@@ -88,6 +98,18 @@ export function ListeningPage() {
     }).catch(cause => { if (!controller.signal.aborted) setError(getErrorMessage(cause)); }).finally(() => { if (!controller.signal.aborted) setRestoring(false); });
     return () => controller.abort();
   }, [initialSessionId]);
+  useEffect(() => {
+    if (initialSessionId || !requestedSource || !catalog.data) return;
+    const controller = new AbortController();
+    const defaultEnd = catalog.data.settings.defaultSegmentSeconds || 180;
+    void api<SourceStatus>(`/listening/sources/${requestedSource}`, { signal: controller.signal }).then(() => {
+      if (controller.signal.aborted) return;
+      restoreController.current?.abort();
+      setRestoring(false); setSelectedId(requestedSource); setSession(null);
+      setStart(0); setEnd(defaultEnd); setNotice(''); setError(''); setAudioFile(null);
+    }).catch(cause => { if (!controller.signal.aborted) setError(getErrorMessage(cause)); });
+    return () => controller.abort();
+  }, [initialSessionId, requestedSource, catalog.data]);
   const status = useAsyncResource(useCallback((signal: AbortSignal) => selectedId ? api<SourceStatus>(`/listening/sources/${selectedId}${end > start ? `?start=${start}&end=${end}` : ''}`, { signal }) : Promise.resolve(null), [selectedId, start, end]));
   const source = session?.source || status.data?.source; const reloadStatus = status.reload;
   useEffect(() => { if (!['PENDING', 'PROCESSING'].includes(status.data?.transcript?.status || '')) return; const timer = window.setTimeout(reloadStatus, 2500); return () => clearTimeout(timer); }, [status.data, reloadStatus]);
@@ -100,8 +122,8 @@ export function ListeningPage() {
     return () => controller.abort();
   }, [session, status.data?.transcript?.id, status.data?.transcript?.status]);
   const act = async (action: () => Promise<void>) => { if (busyRef.current) return; busyRef.current = true; setBusy(true); setError(''); try { await action(); } catch (cause) { setError(getErrorMessage(cause)); } finally { busyRef.current = false; setBusy(false); } };
-  const select = (item: ListeningSource) => { setRestoring(false); restoreController.current?.abort(); setSearchParams({}, { replace: true }); setSelectedId(item.id); setSession(null); setStart(0); setEnd(catalog.data?.settings.defaultSegmentSeconds || 180); setNotice(''); setAudioFile(null); };
-  const resume = (id: number) => act(async () => { setRestoring(false); restoreController.current?.abort(); const next = await api<ListeningSession>(`/listening/sessions/${id}`); setSession(next); setSearchParams({ session: String(next.id) }, { replace: true }); setSelectedId(next.sourceId); setStart(next.start); setEnd(next.end); });
+  const select = (item: ListeningSource) => { setBrowsingLibrary(false); setAddingVideo(false); setRestoring(false); restoreController.current?.abort(); setSearchParams({}, { replace: true }); setSelectedId(item.id); setSession(null); setStart(0); setEnd(catalog.data?.settings.defaultSegmentSeconds || 180); setNotice(''); setAudioFile(null); };
+  const resume = (id: number) => act(async () => { setBrowsingLibrary(false); setRestoring(false); restoreController.current?.abort(); const next = await api<ListeningSession>(`/listening/sessions/${id}`); setSession(next); setSearchParams({ session: String(next.id) }, { replace: true }); setSelectedId(next.sourceId); setStart(next.start); setEnd(next.end); });
   const startPractice = (mode: ListeningSession['mode']) => act(async () => {
     if (!source) return;
     const to = Math.min(status.data?.mediaDuration || end, catalog.data?.settings.maxSegmentSeconds || 300);
@@ -114,10 +136,17 @@ export function ListeningPage() {
   });
   return <div className={`page-stack prep-learning-page ${source || restoring || selectedId ? "prep-learning-study" : "prep-learning-library"}`}>
     <PageHeader eyebrow={source || restoring || selectedId ? undefined : "LISTENING LIBRARY / NGHE & PHẢN XẠ"} variant={source || restoring || selectedId ? "compact" : "feature"} title={source ? "Luyện nghe theo từng câu" : "Luyện nghe"} description={source ? undefined : "Chọn bài nghe, luyện từng câu và tiếp tục từ đoạn bạn đã lưu."} />
+    <section aria-label="Chọn nguồn luyện nghe" className="grid gap-3 sm:grid-cols-2">
+      <button type="button" disabled={busy} aria-pressed={!addingVideo} onClick={() => { setAddingVideo(false); setBrowsingLibrary(true); }} className={`min-w-0 rounded-xl border p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-navy sm:p-5 ${!addingVideo ? 'border-accent-navy bg-paper-sky' : 'border-paper-kraft bg-paper-white hover:bg-paper-cream'}`}><span className="block text-lg font-semibold">Bài nghe có sẵn</span><span className="mt-2 block text-sm leading-6 text-ink-medium">Chọn từ thư viện và luyện nghe theo từng câu.</span></button>
+      <button ref={videoTrigger} type="button" disabled={busy} aria-expanded={addingVideo} aria-controls="listening-personal-video" onClick={() => setAddingVideo(true)} className={`min-w-0 rounded-xl border p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-navy sm:p-5 ${addingVideo ? 'border-accent-navy bg-paper-sky' : 'border-paper-kraft bg-paper-white hover:bg-paper-cream'}`}><span className="block text-lg font-semibold">Thêm video của bạn</span><span className="mt-2 block text-sm leading-6 text-ink-medium">Dán link YouTube để tạo bài nghe riêng.</span></button>
+    </section>
+    <section hidden={!addingVideo} id="listening-personal-video" aria-label="Video YouTube cá nhân" className="rounded-xl border border-paper-kraft bg-paper-white p-4 sm:p-5 space-y-3"><h2 className="text-lg font-semibold">Thêm video YouTube của bạn</h2><form onSubmit={event => { event.preventDefault(); void act(async () => { const created = await api<ListeningSource>('/listening/sources', { method: 'POST', data: { title: 'YouTube cá nhân', kind: 'YOUTUBE', url } }); select(created); setUrl(''); catalog.reload(); }); }} className="space-y-3"><label className="block text-sm font-semibold" htmlFor="personal-video-url">Link YouTube</label><input ref={videoInput} id="personal-video-url" aria-label="Link YouTube" type="url" required disabled={busy} value={url} onChange={event => setUrl(event.target.value)} placeholder="https://www.youtube.com/watch?v=..." className="form-input !border" /><p className="text-xs text-ink-medium">Video chỉ được lưu trong thư viện của bạn.</p><div className="flex flex-wrap gap-3"><button disabled={busy} className="primary-button">{busy ? 'Đang thêm video…' : 'Thêm video'}</button><button type="button" className="secondary-button" onClick={() => { setAddingVideo(false); videoTrigger.current?.focus(); }}>Đóng</button></div></form></section>
+    {browsingLibrary && session && <button type="button" className="secondary-button self-start" onClick={() => setBrowsingLibrary(false)}>Tiếp tục bài đang luyện</button>}
+
     {(error || catalog.error || status.error) && <p role="alert" className="prep-learning-error rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error || catalog.error || status.error} <button onClick={() => { catalog.reload(); status.reload(); }} className="underline">Tải lại</button></p>}
     {notice && <p role="status" className="text-sm text-ink-medium">{notice} {removedId && <button disabled={busy} className="ml-2 underline" onClick={() => void act(async () => { await api(`/listening/sources/${removedId}/restore`, { method: 'POST' }); setRemovedId(null); setNotice('Đã khôi phục bài nghe.'); catalog.reload(); })}>Hoàn tác xoá</button>}</p>}
     <div className="grid gap-5">
-      {(source || restoring || selectedId) && <div className="min-w-0 space-y-5">
+      {(source || restoring || selectedId) && <div hidden={browsingLibrary} className="min-w-0 space-y-5">
         {restoring || (selectedId && status.loading && !source) ? <p role="status" className="learning-surface">Đang mở bài nghe…</p> : source ? <>
           <div className={session ? "grid items-start gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,1fr)]" : "space-y-4"}>
           <section className="prep-listening-player min-w-0 space-y-4 bg-paper-white p-4 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="min-w-0 break-words text-xl font-semibold">{source.title}</h2>{source.ownerId !== null && <button disabled={busy} className="text-sm text-rose-700 underline" onClick={() => void act(async () => { await api(`/listening/sources/${source.id}`, { method: 'DELETE' }); restoreController.current?.abort(); setRemovedId(source.id); setSelectedId(null); setSession(null); setSearchParams({}, { replace: true }); setNotice('Đã xoá bài và các đoạn khỏi danh sách học.'); catalog.reload(); })}>Xoá bài</button>}</div><ListeningPlayer key={source.id} ref={player} source={source} onPlayed={() => { setHeardUnitId(session?.unit?.id || null); const position = player.current?.currentTime(); if (position !== null && position !== undefined) captureOnPlayed.current?.(position); }} />
@@ -136,14 +165,13 @@ export function ListeningPage() {
         </> : null}
       </div>}
       <aside className={source ? "grid items-start gap-6 border-t border-paper-kraft/60 pt-6" : "grid items-start gap-6"} aria-label="Thư viện và đoạn nghe đã lưu">
+        {session && <ActivitySuggestions section="listening" compact excludeHrefs={[`/listening?source=${session.sourceId}`, `/listening?session=${session.id}`]} />}
         <section className="min-w-0 space-y-5"><div className="section-heading"><div><p className="text-xs font-semibold uppercase tracking-wider text-accent-navy">Thư viện Listening</p><h2 className="section-title mt-1">{source ? "Khám phá bài nghe khác" : "Bài luyện dành cho bạn"}</h2></div><span className="rounded-full bg-paper-cream px-3 py-1 text-sm text-ink-medium">{catalog.data?.pagination?.total ?? catalog.data?.sources.length ?? 0} bài nghe</span></div><form className="flex flex-wrap gap-3" onSubmit={event => { event.preventDefault(); setCatalogPage(1); setCatalogQuery(catalogSearch.trim()); }}><input aria-label="Tìm bài nghe" type="search" value={catalogSearch} onChange={event => setCatalogSearch(event.target.value)} placeholder="Tìm theo tên bài nghe…" className="form-input !border min-w-0 flex-1" /><select aria-label="Loại nguồn bài nghe" className="form-input !border !w-auto" value={catalogKind} onChange={event => { setCatalogKind(event.target.value); setCatalogPage(1); }}><option value="">Mọi loại nguồn</option><option value="AUDIO">Audio</option><option value="YOUTUBE">YouTube</option><option value="VIDEO">Video</option></select><button className="secondary-button" type="submit">Tìm kiếm</button></form><div className="prep-library-catalog grid gap-5 sm:grid-cols-2">{catalog.loading && <p role="status" className="text-sm">Đang tải thư viện…</p>}{!catalog.loading && catalog.data?.sources.length === 0 && <p className="text-sm text-ink-medium">Không tìm thấy bài nghe phù hợp. Hãy đổi từ khóa hoặc chọn loại nguồn khác.</p>}{catalog.data?.sources.map(item => <button key={item.id} disabled={busy} onClick={() => select(item)} aria-pressed={selectedId === item.id} className={`prep-learning-card w-full text-left ${selectedId === item.id ? 'prep-learning-card-selected' : ''}`}><span className="block break-words text-lg font-semibold">{item.title}</span><span className="mt-2 block text-sm text-ink-medium">{item.kind === 'YOUTUBE' ? 'YouTube' : item.kind === 'AUDIO' ? 'Audio' : 'Video'} · {item.ownerId === null ? 'Thư viện' : 'Riêng tư'}</span><span className="mt-5 block border-t border-paper-kraft/60 pt-3 text-sm font-semibold text-accent-navy">{selectedId === item.id ? 'Đang mở bài nghe' : 'Mở bài luyện'}</span></button>)}</div>{catalog.data?.pagination && catalog.data.pagination.totalPages > 1 && <nav aria-label="Trang thư viện Listening" className="flex items-center justify-between gap-3"><button className="secondary-button" disabled={catalog.loading || catalogPage <= 1} onClick={() => setCatalogPage(page => page - 1)}>Trang trước</button><span className="text-sm text-ink-medium">Trang {catalog.data.pagination.page} / {catalog.data.pagination.totalPages}</span><button className="secondary-button" disabled={catalog.loading || catalogPage >= catalog.data.pagination.totalPages} onClick={() => setCatalogPage(page => page + 1)}>Trang tiếp</button></nav>}</section>
-        <div className="prep-learning-sidebar space-y-4"><div><h2 className="font-semibold">Góc học của bạn</h2><p className="mt-1 text-sm text-ink-medium">Tiếp tục tiến độ và quản lý nguồn nghe riêng.</p></div><details open={!source} className="section-disclosure"><summary>Tiếp tục đoạn đã lưu</summary><div className="space-y-2">{!catalog.loading && catalog.data?.sessions.length === 0 && <p className="text-sm text-ink-medium">Chưa có đoạn đã lưu. Chọn bài nghe và chuẩn bị một đoạn luyện.</p>}{catalog.data?.sessions.map(item => <button key={item.id} disabled={busy} onClick={() => void resume(item.id)} className="block w-full border-b border-paper-kraft py-2 text-left text-sm"><span className="block">{item.source.title}{item.favorite ? ' · Yêu thích' : ''}</span><span className="text-xs text-ink-light">{time(item.start)}–{time(item.end)} · vị trí {item.currentIndex + 1}</span></button>)}</div></details><details className="section-disclosure"><summary>Thêm video YouTube của bạn</summary>        <form onSubmit={event => { event.preventDefault(); void act(async () => { const created = await api<ListeningSource>('/listening/sources', { method: 'POST', data: { title: 'YouTube cá nhân', kind: 'YOUTUBE', url } }); select(created); setUrl(''); catalog.reload(); }); }} className="space-y-3">
-          <input aria-label="Link YouTube" type="url" required value={url} onChange={event => setUrl(event.target.value)} placeholder="https://www.youtube.com/watch?v=..." className="form-input !border" /><p className="text-xs text-ink-light">Video chỉ được lưu trong thư viện của bạn.</p><button disabled={busy} className="secondary-button w-full">Thêm video</button>
-        </form>
-</details>
+        <div className="prep-learning-sidebar space-y-4"><div><h2 className="font-semibold">Góc học của bạn</h2><p className="mt-1 text-sm text-ink-medium">Tiếp tục tiến độ và quản lý nguồn nghe riêng.</p></div><details open={!source} className="section-disclosure"><summary>Tiếp tục đoạn đã lưu</summary><div className="space-y-2">{!catalog.loading && catalog.data?.sessions.length === 0 && <p className="text-sm text-ink-medium">Chưa có đoạn đã lưu. Chọn bài nghe và chuẩn bị một đoạn luyện.</p>}{catalog.data?.sessions.map(item => <button key={item.id} disabled={busy} onClick={() => void resume(item.id)} className="block w-full border-b border-paper-kraft py-2 text-left text-sm"><span className="block">{item.source.title}{item.favorite ? ' · Yêu thích' : ''}</span><span className="text-xs text-ink-light">{time(item.start)}–{time(item.end)} · vị trí {item.currentIndex + 1}</span></button>)}</div></details>
 </div>
       </aside>
     </div>
+    {!source && !restoring && !selectedId && <ActivitySuggestions section="listening" compact />}
     {admin && <ListeningAdmin onChanged={catalog.reload} />}
   </div>;
 }

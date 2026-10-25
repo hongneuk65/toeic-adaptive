@@ -9,7 +9,7 @@ export const ActionPlanSteps: React.FC = () => {
     <div className="w-full space-y-4">
       <PageHeader
         title="Lộ trình cải thiện 3 bước"
-        description="Ôn lý thuyết, củng cố từ vựng và kiểm tra lại tiến bộ."
+        description="Ôn kiến thức, củng cố từ vựng và kiểm tra lại tiến bộ."
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -17,7 +17,7 @@ export const ActionPlanSteps: React.FC = () => {
         <div className="relative flex flex-col justify-between rounded-lg border border-paper-kraft/70 bg-paper-cream p-5 shadow-paper-subtle">
           <div>
             <span className="font-mono text-xs font-bold text-accent-coral uppercase block">BƯỚC 01</span>
-            <h3 className="font-display text-xl font-bold text-ink-dark mt-1">Ôn lý thuyết phần yếu</h3>
+            <h3 className="font-display text-xl font-bold text-ink-dark mt-1">Ôn kiến thức phần yếu</h3>
             <p className="font-body text-xs text-ink-medium mt-2">
               Dành 15–20 phút ôn quy tắc và chiến lược của Part thấp điểm nhất.
             </p>
@@ -26,7 +26,7 @@ export const ActionPlanSteps: React.FC = () => {
             onClick={() => navigate('/theory')}
             className="mt-5 w-full rounded border border-paper-kraft bg-paper-white py-2 text-xs font-bold text-ink-dark transition hover:bg-paper-kraft-light/50"
           >
-            Mở lý thuyết
+            Mở kiến thức
           </button>
         </div>
 

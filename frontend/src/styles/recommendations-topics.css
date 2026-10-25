@@ -15,6 +15,12 @@
 .topic-card h3 { font-size:23px; line-height:1.25; font-weight:650; letter-spacing:-.035em; }
 .topic-description { font-size:13px; line-height:1.7; color:var(--topic-muted); margin:12px 0 18px; }
 .topic-evidence { display:block; color:var(--topic-muted); font-size:11px; line-height:1.6; }
+.learning-plan-reasons { list-style:disc; padding-left:18px; margin:16px 0; font-size:13px; line-height:1.7; overflow-wrap:anywhere; }
+.learning-plan-reasons li+li { margin-top:6px; }
+.learning-plan-foundations { margin-top:14px; font-size:12px; line-height:1.7; }
+.learning-plan-foundations .topic-text-link { text-align:left; text-decoration:underline; }
+.learning-plan-foundations>span { display:block; }
+.learning-plan-card button:disabled { opacity:.55; cursor:not-allowed; }
 .topic-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:auto; padding-top:22px; }
 .topic-actions .primary-button,.topic-actions .secondary-button { font-size:12px; min-height:44px; padding:10px 16px; border-radius:999px; }
 .topic-card-featured .primary-button { background:#fff; color:#233876; border-color:#fff; }

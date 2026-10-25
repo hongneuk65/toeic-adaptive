@@ -1,3 +1,6 @@
+import { ActivitySuggestions } from '../components/ActivitySuggestions';
+import { notifyLearningProgress } from '../lib/learning-progress';
+import { VocabularyMemory, type VocabularyMemoryEstimate } from '../components/VocabularyMemory';
 import '../styles/prep-knowledge.css';
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -27,7 +30,7 @@ interface FolderDetail {
   isOwner: boolean;
 }
 
-interface CardReview { cardId: number; known: boolean; reviewCount: number; dueAt?: string; intervalDays?: number; schedulingSource?: string }
+interface CardReview { cardId: number; known: boolean; reviewCount: number; dueAt?: string; intervalDays?: number; schedulingSource?: string; memory?: VocabularyMemoryEstimate }
 
 export const FlashcardStudyPage: React.FC = () => {
   const { topic: folderId } = useParams<{ topic: string }>();
@@ -43,7 +46,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
       api<Flashcard[]>(`/flashcards/folders/${folderId}/cards`, { signal }),
       api<CardReview[]>(`/flashcards/folders/${folderId}/reviews`, { signal }),
     ]);
-    return { folder, cards, reviews };
+    return { folder, cards, reviews, estimatedAt: Date.now() };
   }, [folderId]);
   const { data, loading, error, reload: loadData } = useAsyncResource(load);
   const folder = data?.folder;
@@ -123,6 +126,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
     setActionError('');
     try {
       const result = await api<CardReview>(`/flashcards/cards/${id}/review`, { method: 'PATCH', data: { known: payload.known, ...payload.attempt } });
+      notifyLearningProgress();
       pendingReviews.current.delete(id);
       setRetryingId(null);
       if (sessionActive) { setSessionReviewed(ids => [...ids, id]); setFocusIndex(0); setFlippedIds({}); }
@@ -368,6 +372,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
             const card = filtered[focusIndex] || filtered[0];
             return (
               <>
+                <VocabularyMemory memory={data?.reviews.find(review => review.cardId === card.id)?.memory} estimatedAt={data?.estimatedAt ?? dueTime} currentTime={dueTime} />
                 <FlashcardRecall key={card.id} card={card} pending={reviewingId !== null} onReview={reviewCard} />
 
                 <div className="flex justify-between items-center gap-2 max-w-3xl mx-auto text-sm">
@@ -394,6 +399,8 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
           })()}
         </div>
       )}
+
+      {!loading && data && <ActivitySuggestions section="vocabulary" compact excludeHref={`/flashcards/${folderId}`} />}
 
       {/* 3. Modal thêm từ */}
       {isModalOpen && folder?.isOwner && (

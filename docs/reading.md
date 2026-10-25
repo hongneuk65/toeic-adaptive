@@ -2,6 +2,10 @@
 
 Reading có dữ liệu và kết quả riêng, không cập nhật DAS3H hoặc sửa trọng số. Listening giữ module/API hiện có.
 
+Đầu trang tách **Đọc hiểu** và **Tìm mệnh đề chính** thành hai lựa chọn ngang hàng, nói rõ mục tiêu luyện. Cả màn thư viện và màn tìm mệnh đề chính đều có lối chuyển; đường dẫn `?practice=clauses` được giữ. **Tạo bài từ văn bản của bạn** là thao tác riêng dễ thấy, mở form phía trên; chuyển lựa chọn không tự gọi AI. Nội dung văn bản đang nhập được giữ khi đóng/mở form.
+
+Luồng tạo bài từ văn bản đã bổ sung mục tiêu học, thẻ nguồn và kiểm tra AI ba lượt. Xem [phạm vi, giới hạn và kiểm chứng](reading-source-generation.md).
+
 ## Cài đặt
 
 Dùng Node 24, PostgreSQL và Redis theo cấu hình đang có. Từ thư mục backend:

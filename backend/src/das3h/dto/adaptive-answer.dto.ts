@@ -19,6 +19,19 @@ export class AdaptiveAnswerDto {
   skillId?: number;
 }
 
+export class PracticeSupportDto {
+  @IsUUID()
+  attemptId: string;
+
+  @IsInt()
+  @Min(1)
+  questionId: number;
+
+  @IsInt()
+  @Min(1)
+  skillId: number;
+}
+
 // Administrative diagnostic endpoints only; learners submit actual answers.
 export class RecordMasteryDto {
   @IsInt()

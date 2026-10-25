@@ -1,3 +1,4 @@
+import { ActivitySuggestions } from '../components/ActivitySuggestions';
 import { StudyIcon } from '../components/StudyIcon';
 import '../styles/prep-knowledge.css';
 import React, { useState, useCallback, useMemo, useRef } from 'react';
@@ -112,6 +113,7 @@ export const FlashcardFoldersPage: React.FC = () => {
         description="Chọn một thư mục chuyên đề để bắt đầu lật thẻ và luyện nghe phát âm."
         actions={<button onClick={() => { setActionError(''); setIsModalOpen(true); }} className="primary-button">Tạo thư mục</button>}
       />
+      <ActivitySuggestions section="vocabulary" />
       <div className="vocabulary-library-toolbar"><div className="vocabulary-scope" aria-label="Lọc thư mục">{[['ALL','Tất cả'],['OWN','Sổ của tôi'],['LIBRARY','Thư viện chủ đề']].map(([value,label]) => <button key={value} aria-pressed={scope===value} onClick={()=>setScope(value)}>{label}</button>)}</div><label className="min-w-0 w-full sm:w-80"><span className="sr-only">Tìm thư mục từ vựng</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Tìm theo tên, mô tả hoặc mã…" className="w-full rounded-lg border border-paper-kraft bg-paper-white px-3 py-2.5 text-sm" /></label><p role="status" className="text-sm text-ink-medium">{filteredFolders.length} thư mục</p></div>
 
       {/* 2. DANH SÁCH CÁC THƯ MỤC DẠNG HỒ SƠ GIẤY */}

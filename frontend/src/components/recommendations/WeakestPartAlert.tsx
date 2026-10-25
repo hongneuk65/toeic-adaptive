@@ -30,7 +30,7 @@ export const WeakestPartAlert: React.FC<Props> = ({ weakestPart, onPracticePart 
             </span>
           </div>
           <p className="mt-1 text-sm text-ink-medium">
-            {meta?.advice || 'Hệ thống nhận thấy bạn hay mất điểm ở phần này. Hãy ưu tiên ôn lý thuyết và làm bài thích ứng ngay.'}
+            {meta?.advice || 'Hệ thống nhận thấy bạn hay mất điểm ở phần này. Hãy ưu tiên ôn kiến thức và làm bài thích ứng ngay.'}
           </p>
         </div>
 
@@ -39,7 +39,7 @@ export const WeakestPartAlert: React.FC<Props> = ({ weakestPart, onPracticePart 
             onClick={() => navigate('/theory')}
             className="rounded bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow transition hover:bg-slate-800"
           >
-            Ôn lý thuyết
+            Ôn kiến thức
           </button>
           <button
             onClick={() => onPracticePart(weakestPart.part)}

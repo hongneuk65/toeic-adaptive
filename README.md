@@ -2,6 +2,12 @@
 
 Ứng dụng luyện TOEIC: thi thử, lý thuyết, flashcard, theo dõi kỹ năng DAS3H và gia sư AI/RAG.
 
+Trang **Gợi ý học tiếp** có kế hoạch luyện theo kỹ năng, mốc ôn và gợi ý kiến thức nền. Xem [thiết kế và kiểm tra kế hoạch học](docs/adaptive-learning-plan.md).
+
+Khi trả lời sai trong luyện thích ứng, có thể mở [hướng dẫn củng cố từng bước](docs/adaptive-practice-support.md), ôn lý thuyết và luyện thêm cùng kỹ năng.
+
+Đối chứng nghiên cứu pyBKT và pyKT DKT được tách tại [KT benchmark](experiments/kt-benchmark/README.md), dùng cohort và split học viên tương ứng với DAS3H; không tự thay model đang phục vụ.
+
 Listening theo từng đoạn audio/video/YouTube tại `/listening`; xem [hướng dẫn Listening](docs/listening.md). Chạy `npm run seed:listening --prefix backend` để có audio demo ổn định. Kết quả Listening lưu riêng, không cập nhật DAS3H.
 
 ## Cấu trúc
@@ -60,5 +66,9 @@ Bản web [TOEIC Compass](https://toeic-compass.up.railway.app) tự động ph�
 
 
 ## Reading
+
+Gợi ý hiện có trong từng thư viện lý thuyết, từ vựng, nghe và đọc; chế độ ôn từ vựng hiển thị đường cong ghi nhớ. Xem [cách phối hợp lịch ôn với DAS3H và kế hoạch nghiên cứu](docs/integrated-learning.md).
+
+Các phần thích ứng trên nhánh nghiên cứu: [kế hoạch chọn kỹ năng](docs/adaptive-learning-plan.md), [hỗ trợ sau lỗi sai](docs/adaptive-practice-support.md), [đối chứng KT](experiments/kt-benchmark/README.md), [sinh câu hỏi từ nguồn](docs/reading-source-generation.md) và [thực nghiệm lập kế hoạch theo hướng ExRec](experiments/exrec-sandbox/README.md).
 
 Module Reading có thư viện 25 bài mẫu, bài cá nhân AI, lịch sử theo phiên bản và từ vựng riêng. Sau migration, chạy `npm run seed:reading --prefix backend`. Xem [cấu hình, kiểm thử và hướng dẫn demo Reading](docs/reading.md).

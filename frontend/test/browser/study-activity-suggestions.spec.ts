@@ -1,0 +1,39 @@
+import { test, expect, type Page } from '@playwright/test';
+async function fixture(page: Page, failed = false) {
+ let completed = false; let events = 0;
+ await page.addInitScript(() => {localStorage.setItem('accessToken','fixture'); (window as unknown as {progressEvents:number}).progressEvents=0; window.addEventListener('learning-progress-updated',()=>{(window as unknown as {progressEvents:number}).progressEvents++;});});
+ const question = {id:1,part:5,content:'Choose the correct word.',optionA:'Works',optionB:'Work',optionC:'Working',optionD:'Worked'};
+ const source={id:9,title:'Office listening',kind:'AUDIO',url:'/fixture.mp3',videoId:null,ownerId:null,published:true};
+ const settings={defaultSegmentSeconds:180,maxSegmentSeconds:300,maxRecordingSeconds:60};
+ const version={id:1,articleId:1,title:'Office reading',text:'The office opens at nine.',kind:'NOTICE',difficulty:'EASY',origin:'CURATED',reviewed:true,questions:[{type:'DETAIL',prompt:'When does the office open?',options:['At nine','At ten'],evidenceRequired:false,...(completed?{answer:0,explanation:'The notice says nine.',evidence:[]}: {})}]};
+ await page.route('**/api/**', async route=>{
+  const url=new URL(route.request().url());const path=url.pathname.replace(/^\/api/,'');const json=(body:unknown,status=200)=>route.fulfill({status,json:body});
+  if(path==='/auth/me')return json({id:1,email:'fixture@example.invalid',role:'USER'});
+  if(path==='/auth/google/config')return json({enabled:false});
+  if(path==='/mastery/activities'){events++;const item=(href:string,title:string)=>({id:href,title,href,reason:'Củng cố kiến thức cần luyện',priority:'focus',evidence:'das3h'});return json({generatedAt:'2026-10-24T00:00:00Z',sections:{theory:[item('/theory?lesson=1','Current lesson'),item('/theory?lesson=2','Next lesson')],vocabulary:[item('/flashcards/1','Current folder'),item('/flashcards/2',completed?'Updated vocabulary':'Next vocabulary')],reading:[item('/reading?article=1','Current article'),item('/reading?article=2','Next reading')],listening:[item('/listening?session=7','Current session'),item('/listening?source=9','Current source'),item('/listening?source=10',completed?'Updated listening':'Next listening')]}});}
+  if(path==='/theory/catalog')return json([]);
+  if(path==='/theory/1')return json({id:1,title:'Grammar lesson',content:'Read the grammar explanation.',part:5,skill:{code:'GRAMMAR',name:'Grammar'}});
+  if(path==='/theory/1/quiz')return json([question]);
+  if(path==='/theory/1/quiz/submit'){if(failed)return json({message:'Try again'},503);completed=true;return json({totalQuestions:1,correctCount:1,scorePercentage:100,details:[{questionId:1,selectedAnswer:'A',correctAnswer:'A',isCorrect:true}]});}
+  if(path==='/flashcards/folders/1')return json({id:1,name:'Office vocabulary',isOwner:false});
+  if(path==='/flashcards/folders/1/cards')return json([{id:1,word:'office',meaning:'văn phòng'}]);
+  if(path==='/flashcards/folders/1/reviews')return json([]);
+  if(path==='/flashcards/cards/1/review'){if(failed)return json({message:'Try again'},503);completed=true;return json({cardId:1,known:true,reviewCount:1});}
+  if(path==='/reading')return json({articles:[],attempts:[],limits:{}});
+  if(path==='/reading/attempts/1/submit'){completed=true;return json({id:1,currentIndex:0,answers:{0:{selected:0,evidence:[]}},submittedAt:'2026-10-24T00:00:00Z',elapsedSeconds:0,correct:1,total:1,version:{...version,questions:[{...version.questions[0],answer:0,evidence:[],explanation:'The notice says nine.'}]}});}
+  if(path==='/reading/attempts/1')return json({id:1,currentIndex:0,answers:{},submittedAt:null,elapsedSeconds:0,version});
+  if(path==='/listening')return json({sources:[source],sessions:[],settings,asrAvailable:false});
+  if(path==='/listening/sources/9')return json({source,transcript:null});
+  if(path==='/listening/sessions/7')return json({id:7,sourceId:9,source,start:0,end:180,currentIndex:0,totalUnits:1,unit:{id:1,start:0,end:10,wordCount:3},mode:'DICTATION',difficulty:'EASY',settings});
+  if(path==='/listening/sessions/7/answers'){completed=true;return json({score:1,expected:'Office opens nine',blankAnswers:[],words:[],note:'Saved'});}
+  if(path==='/reading/attempts/1'&&route.request().method()==='PATCH')return json({});
+  return json({},200);
+ });
+ return {reads:()=>events};
+}
+test('theory reader recommends another lesson after content',async({page},info)=>{await fixture(page);await page.goto('/theory?lesson=1');await expect(page.getByText('Read the grammar explanation.')).toBeVisible();await expect(page.getByRole('link',{name:'Next lesson',exact:true})).toBeVisible();await expect(page.getByRole('link',{name:'Current lesson',exact:true})).toHaveCount(0);await page.screenshot({path:info.outputPath('theory-reader-suggestions.png'),fullPage:true});});
+test('quiz suggestions appear only after successful result',async({page})=>{await fixture(page);await page.goto('/theory/1/quiz');await expect(page.getByRole('radio')).toHaveCount(4);await expect(page.getByRole('heading',{name:'Gợi ý học cho bạn'})).toHaveCount(0);await page.getByRole('radio').first().check();await page.getByRole('button',{name:'Nộp bài quiz',exact:true}).click();await expect(page.getByRole('link',{name:'Next lesson',exact:true})).toBeVisible();await expect.poll(()=>page.evaluate(()=>(window as unknown as {progressEvents:number}).progressEvents)).toBe(1);});
+test('failed quiz does not announce progress or recommend results',async({page})=>{await fixture(page,true);await page.goto('/theory/1/quiz');await page.getByRole('radio').first().check();await page.getByRole('button',{name:'Nộp bài quiz',exact:true}).click();await expect(page.getByRole('alert')).toBeVisible();expect(await page.evaluate(()=>(window as unknown as {progressEvents:number}).progressEvents)).toBe(0);await expect(page.getByRole('heading',{name:'Gợi ý học cho bạn'})).toHaveCount(0);});
+test('flashcard study refreshes suggestions after saved recall',async({page},info)=>{await fixture(page);await page.goto('/flashcards/1');await expect(page.getByRole('link',{name:'Next vocabulary',exact:true})).toBeVisible();await expect(page.getByRole('link',{name:'Current folder',exact:true})).toHaveCount(0);await page.getByRole('textbox',{name:'Câu trả lời của bạn',exact:true}).fill('office');await page.getByRole('button',{name:'Kiểm tra đáp án',exact:true}).click();await page.getByRole('button',{name:'Lưu lượt ôn',exact:true}).click();await expect(page.getByRole('link',{name:'Updated vocabulary',exact:true})).toBeVisible();await page.screenshot({path:info.outputPath('study-suggestions.png'),fullPage:true});});
+test('reading keeps unanswered workspace clear then recommends after submit',async({page})=>{await fixture(page);await page.goto('/reading?attempt=1');await expect(page.getByRole('heading',{name:'Gợi ý học cho bạn'})).toHaveCount(0);await page.getByRole('radio').first().check();await page.getByRole('button',{name:/Nộp bài \(/}).click();await expect(page.getByRole('link',{name:'Next reading',exact:true})).toBeVisible();await expect(page.getByRole('link',{name:'Current article',exact:true})).toHaveCount(0);});
+test('listening suggestions stay below practice and refresh after answer',async({page})=>{const control=await fixture(page);await page.goto('/listening?session=7');await expect(page.getByRole('link',{name:'Next listening',exact:true})).toBeVisible();await expect(page.getByRole('link',{name:'Current source',exact:true})).toHaveCount(0);await expect(page.getByRole('link',{name:'Current session',exact:true})).toHaveCount(0);const initial=control.reads();await page.getByRole('textbox',{name:'Câu trả lời Listening'}).fill('Office opens nine');await page.getByRole('button',{name:'Kiểm tra câu trả lời',exact:true}).click();await expect(page.getByRole('link',{name:'Updated listening',exact:true})).toBeVisible();expect(control.reads()).toBeGreaterThan(initial);});

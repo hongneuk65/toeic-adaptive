@@ -5,12 +5,18 @@ import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MasteryService } from './mastery.service';
 import { getUserId } from '../common/user-id';
+import { ActivitiesService } from './activities.service';
 
 @Controller('mastery')
 @Roles(Role.USER)
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class MasteryController {
-  constructor(private readonly masteryService: MasteryService) {}
+  constructor(private readonly masteryService: MasteryService, private readonly activities: ActivitiesService) {}
+
+  @Get('activities')
+  async getActivities(@Req() req: any) {
+    return this.activities.forUser(getUserId(req));
+  }
 
   @Get('me')
   async getMyMastery(@Req() req: any) {

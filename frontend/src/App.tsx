@@ -31,7 +31,7 @@ const AdminPage = lazy(() => import('./pages/admin/AdminPage').then(module => ({
 
 const navigation = [
   { title: 'Luyện tập', items: [{ label: 'Reading', path: '/reading' }, { label: 'Listening', path: '/listening' }] },
-  { title: 'Ôn tập', items: [{ label: 'Lý thuyết', path: '/theory' }, { label: 'Từ vựng', path: '/flashcards' }, { label: 'Lịch sử làm bài', path: '/history' }] },
+  { title: 'Ôn tập', items: [{ label: 'Kiến thức', path: '/theory' }, { label: 'Từ vựng', path: '/flashcards' }, { label: 'Lịch sử làm bài', path: '/history' }] },
 ];
 const directLinks = [{ label: 'Trang chủ', path: '/dashboard' }, { label: 'Gợi ý học', path: '/recommendations' }, { label: 'Thi thử', path: '/exam' }];
 

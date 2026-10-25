@@ -1,0 +1,8 @@
+# Install in the benchmark runtime, alongside the existing scientific Python stack.
+pyBKT==1.4.3
+pykt-toolkit==0.0.38
+numpy==1.26.4
+scipy==1.14.1
+scikit-learn==1.5.2
+pandas==2.2.3
+pytz==2024.2

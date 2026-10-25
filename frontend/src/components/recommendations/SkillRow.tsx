@@ -19,7 +19,7 @@ export const SkillRow: React.FC<Props> = ({ skill, onStartPractice }) => {
         <p className="mt-1 text-sm text-ink-medium">{practiced ? `${skill.practiceCount} lượt trả lời` : 'Chưa luyện'}</p>
       </div>
       <div className="skill-row-actions">
-        <button onClick={() => navigate('/theory')} className="min-h-11 px-1 text-sm text-ink-medium underline underline-offset-4 hover:text-ink-dark">Lý thuyết</button>
+        <button onClick={() => navigate('/theory')} className="min-h-11 px-1 text-sm text-ink-medium underline underline-offset-4 hover:text-ink-dark">Kiến thức</button>
         <button onClick={() => onStartPractice(skill)} className="secondary-button">Luyện tập</button>
       </div>
     </div>

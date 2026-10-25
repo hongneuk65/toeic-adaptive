@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RagChatService } from './rag-chat.service';
 import { RagExplainerService } from './rag-explainer.service';
 import { RagLlmService } from './rag-llm.service';
-import { RagRetrieverService } from './rag-retriever.service';
+import { RagRetrieverService, RetrievedChunk } from './rag-retriever.service';
 import { RagController } from './rag.controller';
 import { RagService } from './rag.service';
 import { TutorContextService } from './tutor-context.service';
@@ -31,7 +31,7 @@ describe('RAG preparation and streaming', () => {
       create: jest.fn<(params: any) => Promise<any>>(),
     },
   };
-  const retriever = { retrieveContext: jest.fn<() => Promise<[]>>() };
+  const retriever = { retrieveContext: jest.fn<() => Promise<RetrievedChunk[]>>() };
   const llm = { streamText: jest.fn<(options: any) => AsyncGenerator<string>>() };
   let explainer: RagExplainerService;
   let chat: RagChatService;
@@ -46,7 +46,7 @@ describe('RAG preparation and streaming', () => {
     db.das3hWeights.findMany.mockResolvedValue([]);
     db.aiChatMessage.findMany.mockResolvedValue([{ role: 'user', content: 'old message' }]);
     db.aiChatMessage.create.mockImplementation(async ({ data }) => ({ id: 3, createdAt: new Date(), ...data }));
-    retriever.retrieveContext.mockResolvedValue([]);
+    retriever.retrieveContext.mockResolvedValue([{ id: 1, title: 'Reviewed grammar', category: 'Grammar', part: 5, content: 'Reviewed rule', relevanceScore: 1, sourceType: 'chunk', citationId: 'K1@v1', sourceUri: 'https://example.org/rule', version: 'v1' }]);
     llm.streamText.mockImplementation(async function* () { yield* text; });
     const args = [db as unknown as PrismaService, retriever as unknown as RagRetrieverService, llm as unknown as RagLlmService] as const;
     const evidence = { get: async () => {
@@ -135,6 +135,14 @@ describe('RAG preparation and streaming', () => {
     expect((await iterator.next()).value).toBe('partial');
     await expect(iterator.next()).rejects.toThrow('disconnected');
     expect(db.aiChatMessage.create.mock.calls.map(([arg]) => arg.data.role)).toEqual(['user']);
+  });
+
+  it('abstains without paid generation when no approved source matches', async () => {
+    retriever.retrieveContext.mockResolvedValue([]);
+    const iterator = chat.streamUserMessage({ userId: 2, message: 'unrelated' });
+    expect((await iterator.next()).value).toContain('Chưa có tài liệu');
+    await iterator.next();
+    expect(llm.streamText).not.toHaveBeenCalled();
   });
 
   it('forwards cancellation and does not hide it behind fallback text', async () => {

@@ -72,7 +72,7 @@ describe('Admin management protections', () => {
     currentQuestion();
     await service.updateQuestion(1, { passage: 'Revised', audioUrl: '/new.mp3' });
     const data = prisma.question.update.mock.calls[0][0].data;
-    expect(data.stimulus).toEqual({ groupId: 'g1', questionPosition: 1, documents: [] });
+    expect(data.stimulus).toEqual({ groupId: 'g1', questionPosition: 1, documents: [], _trainedItemInvalidated: true });
   });
   it('rejects D as a Part 2 answer and missing D on other Parts', async () => {
     currentQuestion();

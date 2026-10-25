@@ -62,6 +62,7 @@ export class RagService {
   }
 
   searchKnowledge(query: string, part?: number): Promise<RetrievedChunk[]> {
-    return this.retriever.retrieveContext({ query, part, topK: 5 });
+    // GET search is a browse endpoint; it must not bypass POST AI budgets.
+    return this.retriever.retrieveContext({ query, part, topK: 5, semantic: false });
   }
 }
