@@ -1,39 +1,47 @@
 import { BadRequestException } from '@nestjs/common';
 
-interface TimedQuestion { id: number; part: number; audioUrl?: string | null; stimulus?: unknown }
+interface TimedQuestion { id: number; part: number; audioUrl?: string | null; content?: string; stimulus?: unknown }
 export interface ListeningPlan {
   targetSeconds: number; audioSeconds: number; restSeconds: number;
+  pacingVersion: 'part-response-v1';
   groups: { firstQuestionId: number; audioSeconds: number; restSeconds: number; questionCount: number }[];
 }
 
-export function buildListeningPlan(examType: string, questions: readonly TimedQuestion[]): ListeningPlan | undefined {
-  const listening = questions.filter(q => q.part <= 4);
+// ETS sample: P1/2 5s; P3/4 normally 8s after each narrated question.
+// Longer sample pauses require reviewed per-question timing, not a guess
+// from the presence of a graphic. Conversation-only clips use grouped windows;
+// they cannot reproduce a complete narrated 45-minute ETS track.
+// https://www.fr.ets.org/content/dam/ets-org/fr/pdfs/toeic/sample-test-listening-reading.pdf
+function responseSeconds(q: TimedQuestion): number {
+  if (q.part <= 2) return 5;
+  const stimulus = q.stimulus as Record<string, unknown> | null;
+  return stimulus?.audioQuestionResponseSeconds === 12 ? 12 : 8;
+}
+
+export function buildListeningPlan(_examType: string, questions: readonly TimedQuestion[]): ListeningPlan | undefined {
+  const listening = questions.filter(q => q.part >= 1 && q.part <= 4);
   if (!listening.length) return undefined;
-  const groups: { firstQuestionId: number; audioMs: number; questionCount: number; key: string }[] = [];
+  const groups: { firstQuestionId: number; audioMs: number; responseMs: number; tailMs: number; questionCount: number; key: string }[] = [];
   for (const q of listening) {
-    const data = q.stimulus;
+    const data = q.stimulus as Record<string, unknown> | null;
     const duration = data && typeof data === 'object' && 'audioDurationSeconds' in data ? data.audioDurationSeconds : undefined;
     // Legacy attempts without measured media retain the UI's basic rest, never a guessed 45-minute claim.
-    if (typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0) return undefined;
+    if (!q.audioUrl || typeof duration !== 'number' || !Number.isFinite(duration) || duration <= 0) return undefined;
+    const audioMs = Math.round(duration * 1000);
+    const tail = data?.audioTrailingSilenceSeconds;
+    const tailMs = typeof tail === 'number' && Number.isFinite(tail) && tail >= 0 && tail < duration ? Math.floor(tail * 1000) : 0;
     const previous = groups.at(-1);
-    const key = `${q.part}:${q.audioUrl}`;
-    if ((q.part === 3 || q.part === 4) && previous?.key === key) previous.questionCount++;
-    else groups.push({ firstQuestionId: q.id, audioMs: Math.round(duration * 1000), questionCount: 1, key });
+    const groupId = typeof data?.groupId === 'string' ? data.groupId : '';
+    const key = `${q.part}:${groupId}:${q.audioUrl}`;
+    if ((q.part === 3 || q.part === 4) && previous?.key === key) {
+      if (previous.audioMs !== audioMs || previous.tailMs !== tailMs) throw new BadRequestException('Metadata audio trong nhóm câu hỏi không đồng nhất.');
+      previous.questionCount++;
+      previous.responseMs += responseSeconds(q) * 1000;
+    } else groups.push({ firstQuestionId: q.id, audioMs, responseMs: responseSeconds(q) * 1000, tailMs, questionCount: 1, key });
   }
-  const audioMs = groups.reduce((sum, group) => sum + group.audioMs, 0);
-  const proportionalMs = Math.round(2700000 * listening.length / 100);
-  const targetMs = examType === 'FULL' ? 2700000 : examType === 'CUSTOM' ? Math.max(proportionalMs, audioMs + 5000 * listening.length) : proportionalMs;
-  const restMs = targetMs - audioMs;
-  if (restMs < 0) throw new BadRequestException('Tổng audio vượt thời lượng phần nghe. Vui lòng tạo đề khác.');
-  // Allocate integer milliseconds by cumulative question weight; rounding never changes the total budget.
-  let processed = 0, allocated = 0;
-  const scheduled = groups.map(group => {
-    processed += group.questionCount;
-    const cumulative = Math.round(restMs * processed / listening.length);
-    const gap = cumulative - allocated;
-    allocated = cumulative;
-    return { firstQuestionId: group.firstQuestionId, audioSeconds: group.audioMs / 1000,
-      restSeconds: gap / 1000, questionCount: group.questionCount };
-  });
-  return { targetSeconds: targetMs / 1000, audioSeconds: audioMs / 1000, restSeconds: restMs / 1000, groups: scheduled };
+  const scheduled = groups.map(group => ({ firstQuestionId: group.firstQuestionId, audioSeconds: group.audioMs / 1000,
+    restSeconds: Math.max(0, group.responseMs - group.tailMs) / 1000, questionCount: group.questionCount }));
+  const audioSeconds = scheduled.reduce((sum, g) => sum + Math.round(g.audioSeconds * 1000), 0) / 1000;
+  const restSeconds = scheduled.reduce((sum, g) => sum + Math.round(g.restSeconds * 1000), 0) / 1000;
+  return { pacingVersion: 'part-response-v1', targetSeconds: Math.round((audioSeconds + restSeconds) * 1000) / 1000, audioSeconds, restSeconds, groups: scheduled };
 }

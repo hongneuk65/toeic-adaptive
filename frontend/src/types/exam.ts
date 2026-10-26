@@ -39,6 +39,7 @@ export interface ExamSession {
   totalQuestions: number;
   questions: ExamQuestion[];
   listeningPlan?: {
+    pacingVersion?: 'part-response-v1';
     targetSeconds: number;
     audioSeconds: number;
     restSeconds: number;

@@ -19,4 +19,9 @@ test('backend pacing including zero or fractional rests is preserved; legacy get
   assert.equal(listeningRestSeconds(undefined, 3), 15);
   assert.equal(listeningRestSeconds(undefined, 1), 5);
   assert.equal(listeningRestSeconds(NaN, 3), 15);
+  assert.equal(listeningRestSeconds(undefined, 3, 3), 24);
+  assert.equal(listeningRestSeconds(undefined, 3, 4), 24);
+  assert.equal(listeningRestSeconds(undefined, 1, 2), 5);
+  assert.equal(listeningRestSeconds(22.875, 3, 3), 22.875);
+  assert.equal(listeningRestSeconds(0, 3, 4), 0);
 });
