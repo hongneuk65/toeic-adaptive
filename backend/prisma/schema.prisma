@@ -28,6 +28,8 @@ model User {
   updatedAt    DateTime @updatedAt
 
   ability Float @default(0.0)
+  learningPreferences Json?
+  placementAttempts PlacementAttempt[]
   trainedDas3hStates TrainedDas3hState[]
   trainedDas3hObservations TrainedDas3hObservation[]
 
@@ -45,6 +47,25 @@ model User {
   readingReports ReadingReport[]
   readingAiEvents ReadingAiEvent[]
   flashcardReviews FlashcardReview[]
+}
+
+model PlacementAttempt {
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status String @default("ACTIVE")
+  revision Int @default(0)
+  seed String
+  policyVersion String
+  goal String
+  targetScore Int?
+  issued Json
+  responses Json
+  result Json?
+  startedAt DateTime @default(now())
+  deadlineAt DateTime
+  completedAt DateTime?
+  @@index([userId, startedAt])
 }
 
 model Skill {

@@ -1,4 +1,5 @@
 import { HistoryModule } from './history/history.module';
+import { PlacementModule } from './placement/placement.module';
 import { VocabularyModule } from './vocabulary/vocabulary.module';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
@@ -25,6 +26,7 @@ import { ReadingModule } from './reading/reading.module';
     FlashcardModule,
     TheoryModule,
     ExamModule,
+    PlacementModule,
     MasteryModule,
     Das3hModule,
     RagModule,

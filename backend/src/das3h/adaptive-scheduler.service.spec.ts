@@ -6,6 +6,7 @@ import { Das3hService } from './das3h.service';
 
 describe('adaptive selection', () => {
   const db = {
+    user: { findUnique: jest.fn<any>() },
     studentSkillHistory: { findMany: jest.fn<any>() },
     question: { findMany: jest.fn<any>() },
   };
@@ -15,6 +16,7 @@ describe('adaptive selection', () => {
     jest.resetAllMocks();
     jest.spyOn(Math, 'random').mockReturnValue(.5);
     db.studentSkillHistory.findMany.mockResolvedValue([]);
+    db.user.findUnique.mockResolvedValue(null);
   });
   afterEach(() => jest.restoreAllMocks());
 
@@ -55,5 +57,11 @@ describe('adaptive selection', () => {
   it('rejects invalid skill identifiers without reading the bank', async () => {
     await expect(service.getNextAdaptiveQuestion(7, -1)).rejects.toBeInstanceOf(BadRequestException);
     expect(db.question.findMany).not.toHaveBeenCalled();
+  });
+  it.each([['FOUNDATION',.85,1],['CHALLENGE',.65,2]])('uses %s only to control practice challenge, not to assign proficiency',async(goal,target,id)=>{
+    db.user.findUnique.mockResolvedValue({learningPreferences:{goal,targetScore:800}});
+    db.question.findMany.mockResolvedValueOnce([{id:1,itemDifficulty:0},{id:2,itemDifficulty:1}]).mockResolvedValueOnce([{id:1,itemDifficulty:0},{id:2,itemDifficulty:1}]);
+    predictor.evaluateCandidatesForSkill.mockResolvedValue([{questionId:1,predictedProbability:.85},{questionId:2,predictedProbability:.65}]);
+    const result=await service.getNextAdaptiveQuestion(7,3);expect(result.targetProb).toBe(target);expect(result.selectedQuestion.id).toBe(id);
   });
 });

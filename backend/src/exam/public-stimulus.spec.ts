@@ -25,4 +25,8 @@ describe('Exam stimulus public contract', () => {
     expect(json).not.toContain('spoken answer');
     expect(json).toContain('/image.png');
   });
+  it('keeps graphic table labels while hiding the conversation transcript',()=>{
+    const json=JSON.stringify(publicStimulus({documents:[{blocks:[{type:'paragraph',children:[{type:'text',text:'SECRET CONVERSATION'}]},{type:'table',children:[{type:'row',children:[{type:'cell',children:[{type:'text',text:'Room 301',correctAnswer:'B'}]}]}]}]}]},true));
+    expect(json).not.toContain('SECRET CONVERSATION');expect(json).not.toContain('correctAnswer');expect(json).toContain('Room 301');
+  });
 });
