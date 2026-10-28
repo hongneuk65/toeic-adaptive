@@ -24,6 +24,13 @@ test('custom parts combine planned listening time with only selected Reading bud
   assert.equal(remainingSeconds({...exam,selectedParts:[7],questions:[{part:7}],listeningPlan:null},start),2700);
 });
 
+test('measured listening plus a separate Reading budget replaces nominal duration', () => {
+  const exam = {examType:'FULL',startedAt,listeningPlan:{targetSeconds:91.044}};
+  assert.equal(remainingSeconds(exam,start),4592);
+  assert.equal(remainingSeconds({...exam,examType:'MINI'},start),2342);
+  assert.equal(remainingSeconds({...exam,deadlineAt:new Date(start+60000).toISOString()},start),60);
+});
+
 for (const [examType, seconds] of [['FULL', 7200], ['MINI', 3600], ['PART_5', 1200]]) {
   test(`${examType} uses server start time across reloads and clamps expiration`, () => {
     const exam = { examType, startedAt };

@@ -6,8 +6,8 @@ import { Das3hService } from './das3h.service';
 
 @Injectable()
 export class AdaptiveSchedulerService {
-  // Vùng mục tiêu thử thách tối ưu ZPD: 70% - 80% (tâm là 0.75)
-  private readonly TARGET_PROB = 0.75;
+  // Product heuristics for preferred challenge; not validated optimal ZPD bounds.
+  private readonly TARGETS:Record<string,number> = {FOUNDATION:.85,BALANCED:.75,CHALLENGE:.65};
   private readonly CANDIDATE_LIMIT = 50;
   private readonly EPSILON = 0.15; // 15% xác suất exploration cho câu hỏi mới/chưa hiệu chuẩn
 
@@ -23,6 +23,9 @@ export class AdaptiveSchedulerService {
     if (!Number.isSafeInteger(skillId) || skillId <= 0) {
       throw new BadRequestException('Kỹ năng không hợp lệ.');
     }
+    const user=await this.prisma.user.findUnique({where:{id:userId},select:{learningPreferences:true}});
+    const preference=user?.learningPreferences as {goal?:string}|null;
+    const targetProb=this.TARGETS[preference?.goal??'BALANCED']??.75;
     // 1. Lấy danh sách câu hỏi đã làm gần đây (tránh lặp lại liên tục)
     const recentHistories = await this.prisma.studentSkillHistory.findMany({
       // A question may cover several skills: rotating skill must not repeat it.
@@ -81,8 +84,8 @@ export class AdaptiveSchedulerService {
     const sources = new Map(evaluatedResults.map(r => [r.questionId, r]));
 
     const evaluated = pool.map((q) => {
-      const prob = probMap.get(q.id) ?? this.TARGET_PROB;
-      const distance = Math.abs(prob - this.TARGET_PROB);
+      const prob = probMap.get(q.id) ?? targetProb;
+      const distance = Math.abs(prob - targetProb);
       const { itemDifficulty: _itemDifficulty, ...sanitizedQuestion } = q;
       return {
         question: sanitizedQuestion,
@@ -105,7 +108,7 @@ export class AdaptiveSchedulerService {
     return {
       selectedQuestion: selected.question,
       predictedProb: selected.predictedProbability,
-      targetProb: this.TARGET_PROB,
+      targetProb,
       evaluatedCandidatesCount: pool.length,
       isExploration,
       predictionSource: selected.predictionSource,

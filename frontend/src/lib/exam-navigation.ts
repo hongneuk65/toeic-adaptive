@@ -8,7 +8,7 @@ export function buildExamGroups(questions: readonly ExamQuestion[]): ExamGroup[]
   let previousIdentity: string | undefined;
   questions.forEach((question, index) => {
     const shared = question.part === 3 || question.part === 4
-      ? question.audioUrl || question.stimulus?.groupId
+      ? question.audioUrl ? `${question.audioUrl}:${question.stimulus?.groupId ?? ''}` : question.stimulus?.groupId
       : question.part === 6 || question.part === 7
         ? question.stimulus?.groupId || question.passage
         : undefined;

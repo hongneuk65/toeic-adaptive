@@ -17,6 +17,7 @@ const FlashcardStudyPage = lazy(() => import('./pages/FlashcardStudyPage').then(
 const TheoryReadingPage = lazy(() => import('./pages/TheoryReadingPage').then(module => ({ default: module.TheoryReadingPage })));
 const TheoryQuizPage = lazy(() => import('./pages/TheoryQuizPage').then(module => ({ default: module.TheoryQuizPage })));
 const ExamListPage = lazy(() => import('./pages/ExamListPage').then(module => ({ default: module.ExamListPage })));
+const PlacementPage = lazy(() => import('./pages/PlacementPage').then(module => ({ default: module.PlacementPage })));
 const ExamRoomPage = lazy(() => import('./pages/ExamRoomPage').then(module => ({ default: module.ExamRoomPage })));
 const ExamReviewPage = lazy(() => import('./pages/ExamReviewPage').then(module => ({ default: module.ExamReviewPage })));
 import { AiTutorFloatingButton } from './components/rag/AiTutorFloatingButton';
@@ -109,6 +110,7 @@ const LearningPages = memo(function LearningPages() {
           <Route path="/theory" element={<TheoryReadingPage />} />
           <Route path="/theory/:lessonId/quiz" element={<TheoryQuizPage />} />
           <Route path="/exam" element={<ExamListPage />} />
+          <Route path="/placement" element={<PlacementPage />} />
           <Route path="/exam/:attemptId" element={<ExamRoomPage />} />
           <Route path="/exam/:attemptId/review" element={<ExamReviewPage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -125,6 +127,7 @@ const AppLayout: React.FC = () => {
   // Ẩn nút AI Tutor khi đang trong phòng thi tính giờ trực tiếp
   const isExamRoom = /^\/exam\/\d+$/.test(location.pathname) && !location.pathname.includes('/review');
   const isExamWorkspace = isExamRoom || /^\/exam\/\d+\/review\/?$/.test(location.pathname);
+  const isPlacement = location.pathname === '/placement' || location.pathname === '/placement/';
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -139,9 +142,9 @@ const AppLayout: React.FC = () => {
       <main ref={mainRef} id="learning-main" tabIndex={-1} className="app-content">
         <RouteErrorBoundary key={location.pathname}><Suspense fallback={<p role="status" className="p-6">Đang mở trang học…</p>}><LearningPages /></Suspense></RouteErrorBoundary>
       </main></div>
-      {!isExamRoom && <SelectionVocabulary key={location.pathname} source={location.pathname} />}
+      {!isExamRoom && !isPlacement && <SelectionVocabulary key={location.pathname} source={location.pathname} />}
 
-      {!isExamRoom && !location.pathname.endsWith('/review') && !location.pathname.startsWith('/reading') && (
+      {!isExamRoom && !isPlacement && !location.pathname.endsWith('/review') && !location.pathname.startsWith('/reading') && (
         <>
           <AiTutorFloatingButton
             isOpen={tutorOpen}

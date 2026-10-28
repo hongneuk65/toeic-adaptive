@@ -6,7 +6,8 @@ export function remainingSeconds(exam: ExamSession, now = Date.now()) {
   const customParts = exam.selectedParts ?? [...new Set((exam.questions ?? []).map(question => question.part))];
   const readingMinutes = customParts.reduce((sum, part) => sum + ([0,0,0,0,0,20,10,45][part] || 0), 0);
   const listeningSeconds = exam.listeningPlan?.targetSeconds ?? Math.round((exam.questions ?? []).filter(question => question.part <= 4).length * 27);
-  const duration = exam.examType === 'CUSTOM' ? listeningSeconds + readingMinutes * 60 : DURATION_MINUTES[exam.examType] * 60;
+  const duration = exam.examType === 'CUSTOM' ? listeningSeconds + readingMinutes * 60
+    : exam.listeningPlan && (exam.examType === 'FULL' || exam.examType === 'MINI') ? listeningSeconds + (exam.examType === 'FULL' ? 75 * 60 : 37.5 * 60) : DURATION_MINUTES[exam.examType] * 60;
   const deadline = exam.deadlineAt ? Date.parse(exam.deadlineAt) : Date.parse(exam.startedAt) + duration * 1000;
   return Math.max(0, Math.ceil((deadline - now) / 1000));
 }

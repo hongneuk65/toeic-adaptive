@@ -194,7 +194,8 @@ export class ExamService {
   private deadline(type: string, parts: number[], questions: readonly {id:number;part:number;audioUrl?:string|null;stimulus?:unknown}[], start: Date) {
     const plan = buildListeningPlan(type, questions);
     const minutes = ({ FULL: 120, MINI: 60, PART_5: 20 } as Record<string, number>)[type];
-    const seconds = type === 'CUSTOM' ? (plan?.targetSeconds ?? questions.filter(q => q.part <= 4).length * 27) + parts.reduce((sum, part) => sum + ([0,0,0,0,0,20,10,45][part] || 0) * 60, 0) : minutes * 60;
+    const seconds = type === 'CUSTOM' ? (plan?.targetSeconds ?? questions.filter(q => q.part <= 4).length * 27) + parts.reduce((sum, part) => sum + ([0,0,0,0,0,20,10,45][part] || 0) * 60, 0)
+      : plan && (type === 'FULL' || type === 'MINI') ? plan.targetSeconds + (type === 'FULL' ? 75 * 60 : 37.5 * 60) : minutes * 60;
     return new Date(start.getTime() + seconds * 1000);
   }
 

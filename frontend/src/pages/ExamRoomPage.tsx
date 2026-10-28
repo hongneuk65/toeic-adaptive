@@ -27,6 +27,7 @@ export const ExamRoomPage = () => {
 };
 
 function formatTime(seconds: number) {
+  seconds = Math.max(0, Math.ceil(seconds));
   const hours = Math.floor(seconds / 3600);
   return `${hours ? `${String(hours).padStart(2, '0')}:` : ''}${String(Math.floor(seconds % 3600 / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
@@ -260,7 +261,7 @@ export function ExamRoom({ exam }: { exam: ExamSession }) {
       <section className="exam-column exam-material-column" aria-label="Tư liệu bài thi" ref={materialRef} tabIndex={0}>
         <div className="exam-column-heading"><h2>{listening ? 'Listening' : 'Reading'}</h2><span>Câu {groupLabel}</span></div>
         <div className="exam-material-body">
-          {listening ? <><div className="exam-audio-panel"><span className="exam-section-kicker">Bài nghe · Part {currentQ.part}</span>{currentQ.audioUrl ? <ExamListeningAudio key={`${attemptId}:${activeGroup.key}`} attemptId={attemptId} groupKey={activeGroup.key} src={currentQ.audioUrl} restSeconds={listeningRestSeconds(exam.listeningPlan?.groups.find(group => group.firstQuestionId === currentQ.id)?.restSeconds, activeGroup.indices.length)} onComplete={completeListening} disabled={timeLeft <= 0 || submitting} /> : <p role="alert">Bài nghe chưa có audio. Vui lòng báo lỗi nguồn đề thi.</p>}</div>{listeningGraphic ? <ExamStimulus question={currentQ} blankNumbers={{}} /> : currentQ.imageUrl && <img className="exam-source-image" src={currentQ.imageUrl} alt={`Hình ảnh câu ${groupLabel}`} />}{currentQ.part === 2 && <div className="exam-material-note"><span>QUESTION–RESPONSE</span><h3>Nghe và chọn đáp án.</h3><p>Câu hỏi và ba phương án được đọc trong bài nghe.</p></div>}</> : <ExamStimulus question={currentQ} blankNumbers={blankNumbers} />}
+          {listening ? <><div className="exam-audio-panel"><span className="exam-section-kicker">Bài nghe · Part {currentQ.part}</span>{currentQ.audioUrl ? <ExamListeningAudio key={`${attemptId}:${activeGroup.key}`} attemptId={attemptId} groupKey={activeGroup.key} src={currentQ.audioUrl} restSeconds={listeningRestSeconds(exam.listeningPlan?.groups.find(group => group.firstQuestionId === currentQ.id)?.restSeconds, activeGroup.indices.length, currentQ.part)} onComplete={completeListening} disabled={timeLeft <= 0 || submitting} /> : <p role="alert">Bài nghe chưa có audio. Vui lòng báo lỗi nguồn đề thi.</p>}</div>{listeningGraphic ? <ExamStimulus question={currentQ} blankNumbers={{}} /> : currentQ.imageUrl && <img className="exam-source-image" src={currentQ.imageUrl} alt={`Hình ảnh câu ${groupLabel}`} />}{currentQ.part === 2 && <div className="exam-material-note"><span>QUESTION–RESPONSE</span><h3>Nghe và chọn đáp án.</h3><p>Câu hỏi và ba phương án được đọc trong bài nghe.</p></div>}</> : <ExamStimulus question={currentQ} blankNumbers={blankNumbers} />}
         </div>
       </section>
       <section className="exam-column exam-questions-column" aria-label="Câu hỏi và đáp án" ref={questionsRef} tabIndex={0}>
