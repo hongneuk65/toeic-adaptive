@@ -2,6 +2,8 @@
 
 Đối chứng mở rộng AFM, PFA, log-count/recency ablations và binary skill Elo: xem [thiết kế, nguồn nghiên cứu và cách chạy](../../docs/learner-model-comparison.md). Các biến thể được ghi rõ khác biệt với paper; runner dùng cùng cohort/split và kiểm chứng lại DAS3H trước khi so sánh. Không tự kích hoạt model trên website.
 
+Đối chứng augmentation dựa trên mã tác giả DCL4KT: [adapter, kiểm toán và protocol nhiều seed](../contrastive-kt/README.md). Mới xác minh smoke/profile, chưa có kết quả đầy đủ để đưa vào leaderboard.
+
 Thực nghiệm riêng trên nhánh `codex/adaptive-recommendation`. Không ghi database, không thay trọng số hay cấu hình model đang phục vụ. Dùng mã nguồn thật của **pyBKT 1.4.3** và lớp **DKT của pyKT 0.0.38**; không gọi một implementation tự viết là thư viện gốc.
 
 ## Dữ liệu và đánh giá
