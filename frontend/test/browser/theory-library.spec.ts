@@ -51,3 +51,20 @@ test('deep link opens reader and returns to filtered library with quiz route int
   await page.getByRole('button', { name: 'Làm quiz củng cố →' }).click();
   await expect(page).toHaveURL(/\/theory\/1\/quiz$/);
 });
+
+
+test('rapid topic and Part changes preserve the latest URL filters', async ({ page }) => {
+  await page.goto('/theory?topic=listening');
+  await expect(page.getByRole('button', { name: /Câu hỏi Where/ })).toBeVisible();
+  // Dispatch both interactions in one task, before the router's transition renders.
+  await page.getByRole('button', { name: 'Tất cả chủ đề', exact: true }).evaluate(button => {
+    (button as HTMLButtonElement).click();
+    const select = document.querySelector<HTMLSelectElement>('.theory-filters select')!;
+    select.value = '6';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await expect(page).toHaveURL(/\/theory\?part=6$/);
+  await expect(page.getByLabel('Phần thi liên quan')).toHaveValue('6');
+  await expect(page.locator('.theory-lesson')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /Bài ngữ pháp 15/ })).toBeVisible();
+});
