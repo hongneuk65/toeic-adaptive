@@ -34,3 +34,5 @@ ednet_santa_mapping_clean/
 /experiments/kt-benchmark/results/
 /experiments/exrec-sandbox/results/
 /.report-qa/
+/backend/public/
+/backend/demo-assets.manifest.json
