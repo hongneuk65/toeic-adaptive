@@ -42,12 +42,14 @@ export function TheoryReadingPage() {
   const currentPage = Math.min(page, pages);
   const visible = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   function changeFilter(key: string, value: string) {
-    const next = new URLSearchParams(params);
+    // BrowserRouter writes the URL before its deferred render commits. Read the
+    // latest URL so rapid filter changes do not restore an earlier selection.
+    const next = new URLSearchParams(window.location.search);
     if (value) next.set(key, value); else next.delete(key);
     next.delete('lesson'); setParams(next); setPage(1);
   }
   function openLesson(id: number) {
-    const next = new URLSearchParams(params); next.set('lesson', String(id)); setParams(next);
+    const next = new URLSearchParams(window.location.search); next.set('lesson', String(id)); setParams(next);
   }
   const selectedSummary = lessons.find(item => item.id === lessonId);
   return <div className="page-stack theory-library">

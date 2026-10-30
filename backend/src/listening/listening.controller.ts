@@ -5,7 +5,8 @@ import { Role } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
+import { objectMediaStorage } from './object-media-storage';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { PrismaService } from '../prisma/prisma.service';
@@ -69,7 +70,10 @@ export class ListeningAdminController {
     else if (data.subarray(4, 8).toString() === 'ftyp') extension = 'mp4';
     else if (data.subarray(0, 4).toString('hex') === '1a45dfa3') extension = 'webm';
     if (!extension) throw new BadRequestException('Chỉ hỗ trợ WAV, MP3, MP4 hoặc WebM hợp lệ.');
-    const name = `${randomUUID()}.${extension}`; await mkdir(mediaDirectory(), { recursive: true }); await writeFile(resolve(mediaDirectory(), name), data);
+    const name = `${randomUUID()}.${extension}`;
+    const storage = objectMediaStorage();
+    if (storage) await storage.put(name, data);
+    else { await mkdir(mediaDirectory(), { recursive: true }); await writeFile(resolve(mediaDirectory(), name), data); }
     return { url: `/api/listening/media/${name}`, kind: ['wav', 'mp3'].includes(extension) ? 'AUDIO' : 'VIDEO' };
   }
 }
@@ -77,9 +81,11 @@ export class ListeningAdminController {
 // Uploaded admin media are public resources; private recordings never reach this endpoint.
 @Controller('listening/media')
 export class ListeningMediaController {
-  @Get(':name') media(@Param('name') name: string, @Res() response: Response) {
+  @Get(':name') media(@Param('name') name: string, @Res() response: Response, @Req() request?: Request) {
     if (!/^[a-f0-9-]{36}\.(wav|mp3|mp4|webm)$/.test(name)) throw new BadRequestException('Tên tài nguyên không hợp lệ.');
     response.setHeader('X-Content-Type-Options', 'nosniff');
+    const storage = objectMediaStorage();
+    if (storage) return storage.serve(name, response, request?.headers.range);
     return response.sendFile(name, { root: mediaDirectory(), dotfiles: 'deny' });
   }
 }

@@ -1,3 +1,4 @@
+import { learningActionLabel, useLearningStatus } from '../components/onboarding/useLearningStatus';
 import { useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -13,6 +14,7 @@ import { DuckMascot } from '../components/mascot/DuckMascot';
 import { HomeAtmosphere } from '../components/home/HomeAtmosphere';
 import '../prep-home.css';
 export const DashboardPage = () => {
+  const { status: learningStatus, error: learningStatusError, refresh: refreshLearningStatus } = useLearningStatus();
   const homeRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const root = homeRef.current;
@@ -64,11 +66,12 @@ export const DashboardPage = () => {
         <svg className="home-distant-planet" viewBox="0 0 160 160" fill="none"><circle cx="80" cy="80" r="55" fill="#5B639D" /><path d="M35 49c24 18 54 22 89 19M27 75c33 20 68 24 106 17M42 111c23 8 45 10 70 6" stroke="#A4B5DF" strokeWidth="10" opacity=".4" /><path d="M105 32c19 39 6 76-34 101a55 55 0 0 0 34-101Z" fill="#111E46" opacity=".45" /></svg>
       </div>
       <div className="prep-home-hero-content"><p className="home-cosmic-eyebrow"><span aria-hidden="true" />TOEIC ADAPTIVE · KHÁM PHÁ TRI THỨC</p><h1 id="prep-home-title">Học TOEIC<br />theo cách<br /><span>của bạn.</span></h1>
-        <div className="home-discover-dock"><div className="home-astronaut-holder"><DuckMascot astronaut label="Chú vịt phi hành gia bám vào nút khám phá" /></div><a href="#programs" className="prep-home-hero-cta">Khám phá ngay</a></div>
+        <div className="home-discover-dock"><div className="home-astronaut-holder"><DuckMascot astronaut label="Chú vịt phi hành gia bám vào nút khám phá" /></div><Link to="/recommendations" className="prep-home-hero-cta">{learningActionLabel(learningStatus)}</Link></div>
       </div>
-      <a className="home-scroll-cue" href="#learning-progress">Tiếp nối hành trình <span aria-hidden="true">↓</span></a>
+      <a className="home-scroll-cue" href="#learning-progress">{learningStatus?.hasLearningActivity ? 'Tiếp nối hành trình' : 'Khám phá nội dung học'} <span aria-hidden="true">↓</span></a>
     </section>
-    <HomeProgress refreshing={resource.loading} loading={resource.loading && !resource.data} error={Boolean(resource.error || resource.data?.partial)} onRetry={resource.reload} resumes={resumes} nextSkill={nextSkill ? `${nextSkill.skillName} (Part ${nextSkill.part})` : undefined} stats={[...(reading ? [{ label: 'Bài Reading đã nộp', value: completed.length }] : []), ...(listening ? [{ label: 'Phiên Listening đã lưu', value: listening.sessions.length }] : []), ...(mastery ? [{ label: 'Kỹ năng đã luyện', value: practiced.length }] : [])]} />
+    {learningStatusError && <div role="status" className="onboarding-status">Chưa tải được trạng thái học của bạn. Bạn vẫn có thể chọn bài học.<button onClick={refreshLearningStatus}>Thử lại</button></div>}
+    <HomeProgress hasLearningActivity={learningStatus?.hasLearningActivity} refreshing={resource.loading} loading={resource.loading && !resource.data} error={Boolean(resource.error || resource.data?.partial)} onRetry={resource.reload} resumes={resumes} nextSkill={nextSkill ? `${nextSkill.skillName} (Part ${nextSkill.part})` : undefined} stats={[...(reading ? [{ label: 'Bài Reading đã nộp', value: completed.length }] : []), ...(listening ? [{ label: 'Phiên Listening đã lưu', value: listening.sessions.length }] : []), ...(mastery ? [{ label: 'Kỹ năng đã luyện', value: practiced.length }] : [])]} />
     <HomePrograms />
     <HomeTechnology />
     <HomeJourney />
