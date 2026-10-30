@@ -11,7 +11,7 @@ interface PageHeaderProps {
 export function PageHeader({ eyebrow, title, description, actions, variant = 'feature' }: PageHeaderProps) {
   return (
     <header className={`page-header page-header-${variant}`}>
-      <div className="min-w-0">
+      <div className="page-header-copy min-w-0">
         {eyebrow && (
           <p className="page-header-eyebrow mb-2 text-xs font-semibold text-ink-medium">
             {eyebrow}

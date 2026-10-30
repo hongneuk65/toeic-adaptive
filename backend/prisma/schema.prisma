@@ -28,6 +28,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   ability Float @default(0.0)
+  onboardingChoice String?
   learningPreferences Json?
   placementAttempts PlacementAttempt[]
   trainedDas3hStates TrainedDas3hState[]

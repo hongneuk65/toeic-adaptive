@@ -1,0 +1,20 @@
+.onboarding-dialog { width:min(720px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); padding:0; border:1px solid #dbe4ef; border-radius:24px; color:#172b4d; background:#fff; box-shadow:0 24px 80px #0c204338; overflow:auto; }
+.onboarding-dialog::backdrop { background:rgb(11 26 48 / 62%); backdrop-filter:blur(5px); }
+.onboarding-content { padding:32px; }
+.onboarding-eyebrow { font-size:10px; font-weight:700; letter-spacing:.12em; color:#426b9a; margin-bottom:12px; }
+.onboarding-content h2 { font-size:28px; line-height:1.25; font-weight:700; letter-spacing:-.035em; margin:0 0 14px; }
+.onboarding-content>p:not(.onboarding-eyebrow) { line-height:1.75; font-size:14px; color:#52647d; }
+.onboarding-options { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:24px 0 20px; }
+.onboarding-options section { display:flex; flex-direction:column; align-items:flex-start; border:1px solid #dce5ef; border-radius:16px; padding:22px; background:#f8fafc; }
+.onboarding-options section:first-child { border-color:#b6cbe6; background:#f0f6ff; }
+.onboarding-option-number { color:#58799f; font-size:12px; font-weight:700; margin-bottom:16px; }
+.onboarding-options h3 { font-size:17px; font-weight:700; margin:0 0 10px; }
+.onboarding-options p { font-size:13px; color:#52647d; line-height:1.75; margin:0 0 22px; flex:1; }
+.onboarding-options button { width:100%; min-height:44px; white-space:normal; }
+.onboarding-note { margin-top:8px; }
+.onboarding-dismiss { margin-top:12px; font-size:13px; min-height:44px; text-decoration:underline; text-underline-offset:4px; color:#52647d; }
+.onboarding-error { color:#a52c3c!important; }
+.onboarding-status { border:1px solid #dbe4ef; background:#f8fafc; color:#52647d; padding:12px 18px; border-radius:14px; margin:20px auto; max-width:1120px; font-size:13px; }
+.onboarding-status button { text-decoration:underline; margin-left:8px; min-height:36px; }
+.onboarding-dialog button:focus-visible { outline:3px solid #5794e0; outline-offset:4px; }
+@media(max-width:600px) { .onboarding-content { padding:24px 20px; } .onboarding-content h2 { font-size:24px; } .onboarding-options { grid-template-columns:1fr; gap:12px; margin:20px 0 14px; } .onboarding-options section { padding:18px; } .onboarding-option-number { margin-bottom:8px; } .onboarding-options p { margin-bottom:14px; } }

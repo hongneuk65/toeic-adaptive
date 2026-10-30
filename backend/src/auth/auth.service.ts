@@ -12,6 +12,27 @@ export class AuthService {
         private jwtService: JwtService,
     ) { }
 
+    async learningStatus(userId: number) {
+        const user = await this.prisma.user.findUniqueOrThrow({
+            where: { id: userId },
+            select: { role: true, onboardingChoice: true, _count: { select: {
+                examAttempts: true, placementAttempts: true, studentSkillHistories: true,
+                readingAttempts: true, listeningSessions: true, flashcardReviews: true,
+            } } },
+        });
+        const hasLearningActivity = Object.values(user._count).some(count => count > 0);
+        return {
+            hasLearningActivity,
+            onboardingChoice: user.onboardingChoice as 'ASSESSMENT' | 'SELF_STUDY' | null,
+            onboardingRequired: user.role === 'USER' && !user.onboardingChoice && !hasLearningActivity,
+        };
+    }
+
+    async chooseOnboarding(userId: number, choice: 'ASSESSMENT' | 'SELF_STUDY') {
+        await this.prisma.user.update({ where: { id: userId }, data: { onboardingChoice: choice } });
+        return this.learningStatus(userId);
+    }
+
     async register(dto: RegisterDto) {
         const existing = await this.prisma.user.findUnique({
             where: { email: dto.email },

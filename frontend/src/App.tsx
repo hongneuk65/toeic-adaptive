@@ -26,6 +26,9 @@ const ListeningPage = lazy(() => import('./pages/ListeningPage').then(module => 
 const ReadingPage = lazy(() => import('./pages/ReadingPage').then(module => ({ default: module.ReadingPage })));
 import { useInteractiveMotion } from './components/ui/useInteractiveMotion';
 import { PublicRoute } from './auth/PublicRoute';
+import { LearningStatusProvider } from './components/onboarding/LearningStatusProvider';
+import { OnboardingPrompt } from './components/onboarding/OnboardingPrompt';
+import { learningActionLabel, useLearningStatus } from './components/onboarding/useLearningStatus';
 import { SelectionVocabulary } from './components/vocabulary/SelectionVocabulary';
 
 const AdminPage = lazy(() => import('./pages/admin/AdminPage').then(module => ({ default: module.AdminPage })));
@@ -83,6 +86,7 @@ function LearningNavigation() {
 
 const AppNavbar = ({ focusMode }: { focusMode: boolean }) => {
   const { logout } = useAuth();
+  const { status } = useLearningStatus();
   return <header className="app-header">
     <a href="#learning-main" className="skip-link">Đến nội dung học</a>
     <div className="app-header-inner">
@@ -91,7 +95,7 @@ const AppNavbar = ({ focusMode }: { focusMode: boolean }) => {
         {!focusMode && <LearningNavigation />}
       </div>
       <div className="app-header-actions">
-        {!focusMode && <Link to="/recommendations" className="app-start-action">Học tiếp</Link>}
+        {!focusMode && <Link to="/recommendations" className="app-start-action">{learningActionLabel(status)}</Link>}
         <button onClick={logout} className="app-account-action">Đăng xuất</button>
       </div>
     </div>
@@ -138,6 +142,7 @@ const AppLayout: React.FC = () => {
   return (
     <div data-section={location.pathname.split('/')[1]} className={`min-h-screen flex flex-col w-full ${location.pathname === '/dashboard' ? 'home-layout' : ''} ${isExamWorkspace ? 'exam-room-layout' : location.pathname !== '/dashboard' ? 'study-layout' : ''}`}>
       <AppNavbar focusMode={isExamRoom} />
+      <OnboardingPrompt />
       <div className="learning-shell">
       <main ref={mainRef} id="learning-main" tabIndex={-1} className="app-content">
         <RouteErrorBoundary key={location.pathname}><Suspense fallback={<p role="status" className="p-6">Đang mở trang học…</p>}><LearningPages /></Suspense></RouteErrorBoundary>
@@ -160,6 +165,11 @@ const AppLayout: React.FC = () => {
   );
 };
 
+function AuthenticatedLearningLayout() {
+  const { user } = useAuth();
+  return <LearningStatusProvider key={user?.id}><AppLayout /></LearningStatusProvider>;
+}
+
 export default function App() {
   useInteractiveMotion();
   return (
@@ -172,7 +182,7 @@ export default function App() {
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route path="/admin/*" element={<RouteErrorBoundary><Suspense fallback={<div className="p-8" role="status">Đang mở trang quản trị…</div>}><AdminPage /></Suspense></RouteErrorBoundary>} />
-            <Route path="/*" element={<AppLayout />} />
+            <Route path="/*" element={<AuthenticatedLearningLayout />} />
           </Route>
         </Routes>
       </BrowserRouter>
