@@ -32,3 +32,5 @@ Set `EXAM_MEDIA_DIR=storage/exam`, `VOCABULARY_DICTIONARY_PATH=storage/dictionar
 Free services sleep while idle and need time to wake. PostgreSQL is durable; the free queue is ephemeral. Keep the existing PostgreSQL mastery outbox enabled. Persist uploads in object storage; immutable assets are restored at build time. Monitor free quotas; this setup never upgrades plans automatically.
 
 Verify readiness, registration/login, placement, recommendations, dictionary lookup, and audio returning `206 Partial Content`. The new database does not contain previous user accounts or learning histories.
+
+Migration connections: set DATABASE_URL_UNPOOLED (or DIRECT_DATABASE_URL) when available. Boot uses it only for migrations. For Neon pooled hostnames, boot can derive the matching direct hostname by removing the documented -pooler suffix; TLS and credentials are preserved. The running application and library import retain DATABASE_URL. This avoids session advisory locks being retained by transaction pooling.
