@@ -214,3 +214,18 @@ html:has(.prep-home)::-webkit-scrollbar { display: none; }
   .prep-home-progress-content aside { padding: 24px 0 0; }
   .prep-home-programs { padding-top: 0; }
 }
+/* Signed-in home: keep the study controls within reach instead of a full-screen introduction. */
+.prep-home .prep-home-hero{min-height:370px;padding:138px 32px 38px;text-align:left;place-items:stretch}
+.prep-home .prep-home-hero-content{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:40px;max-width:1120px;width:100%;margin:auto}
+.prep-home .home-cosmic-eyebrow{grid-column:1;justify-content:flex-start;letter-spacing:.08em;margin-bottom:12px}
+.prep-home .prep-home-hero h1{grid-column:1;font-size:36px;line-height:1.2}
+.prep-home .home-discover-dock{grid-column:2;grid-row:1/span 2;margin-top:0;align-self:center}
+.prep-home .prep-home-hero-cta{min-height:46px;min-width:180px;padding:12px 22px;font-size:14px}
+.prep-home .home-astronaut-holder{width:72px;left:auto;right:12px;bottom:22px;transform:none}
+.prep-home .home-scroll-cue{display:none}
+.prep-home .home-motion-toggle{right:16px;bottom:10px;min-height:34px;padding:6px 12px;font-size:11px}
+.prep-home .prep-home-progress{padding-top:32px}
+.prep-home .prep-home-progress .prep-home-heading{margin-bottom:20px}
+.prep-home .prep-home-progress .prep-home-heading h2{font-size:28px}
+.prep-home .prep-home-progress .prep-home-heading p{font-size:14px;margin-top:8px}
+@media(max-width:640px){.prep-home .prep-home-hero{min-height:350px;padding:126px 20px 28px}.prep-home .prep-home-hero-content{grid-template-columns:1fr;gap:0}.prep-home .home-cosmic-eyebrow{font-size:9px;margin-bottom:10px}.prep-home .prep-home-hero h1{font-size:29px;line-height:1.2}.prep-home .home-discover-dock{grid-column:1;grid-row:auto;justify-self:start;margin-top:18px}.prep-home .home-astronaut-holder{display:none}.prep-home .prep-home-progress{padding-top:24px}.prep-home .prep-home-progress .prep-home-heading h2{font-size:25px}}

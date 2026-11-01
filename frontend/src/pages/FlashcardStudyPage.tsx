@@ -1,3 +1,4 @@
+import { Pagination } from '../components/ui/Pagination';
 import { ActivitySuggestions } from '../components/ActivitySuggestions';
 import { notifyLearningProgress } from '../lib/learning-progress';
 import { VocabularyMemory, type VocabularyMemoryEstimate } from '../components/VocabularyMemory';
@@ -77,7 +78,10 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
   // Chế độ xem: 'grid' hoặc 'focus'
   const [viewMode, setViewMode] = useState<'grid' | 'focus'>('focus');
   const [focusIndex, setFocusIndex] = useState(0);
-  const [visibleCards, setVisibleCards] = useState(24);
+  const [gridPage, setGridPage] = useState(1);
+  const gridPages = Math.max(1, Math.ceil(filtered.length / 12));
+  const currentGridPage = Math.min(gridPage, gridPages);
+  const visibleGridCards = filtered.slice((currentGridPage - 1) * 12, currentGridPage * 12);
 
   // Modal thêm từ
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -263,13 +267,13 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
       </div>
       <div className="grid grid-cols-1 gap-3 border-b border-paper-kraft pb-4 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div role="group" aria-label="Chế độ ôn từ vựng" className="prep-knowledge-tabs flex w-fit rounded-lg bg-paper-cream p-1"><button aria-pressed={viewMode === 'focus'} disabled={navigationLocked} onClick={() => handleSwitchViewMode('focus')} className={`min-h-11 rounded-lg px-3 text-sm font-semibold ${viewMode === 'focus' ? 'bg-paper-white text-ink-dark shadow-sm' : 'text-ink-medium'}`}>Ôn tập trung</button><button aria-pressed={viewMode === 'grid'} disabled={navigationLocked} onClick={() => handleSwitchViewMode('grid')} className={`min-h-11 rounded-lg px-3 text-sm font-semibold ${viewMode === 'grid' ? 'bg-paper-white text-ink-dark shadow-sm' : 'text-ink-medium'}`}>Tất cả thẻ</button></div>
-        <div className="flex w-full items-center gap-3 sm:col-span-2 sm:row-start-2"><input type="search" disabled={navigationLocked} value={search} onChange={event => { setSearch(event.target.value); setFocusIndex(0); setVisibleCards(24); setFlippedIds({}); }} aria-label="Tìm từ vựng" placeholder="Tìm từ hoặc nghĩa…" className="min-w-0 flex-1 rounded-lg border border-paper-kraft bg-paper-white px-3 py-2.5 text-sm" /><span className="shrink-0 text-xs text-ink-medium">{filtered.length} từ</span></div>
+        <div className="flex w-full items-center gap-3 sm:col-span-2 sm:row-start-2"><input type="search" disabled={navigationLocked} value={search} onChange={event => { setSearch(event.target.value); setFocusIndex(0); setGridPage(1); setFlippedIds({}); }} aria-label="Tìm từ vựng" placeholder="Tìm từ hoặc nghĩa…" className="min-w-0 flex-1 rounded-lg border border-paper-kraft bg-paper-white px-3 py-2.5 text-sm" /><span className="shrink-0 text-xs text-ink-medium">{filtered.length} từ</span></div>
         {folder?.isOwner && <button onClick={() => setIsModalOpen(true)} className="secondary-button justify-self-start sm:col-start-2 sm:row-start-1 sm:justify-self-end">Thêm từ</button>}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-sm text-ink-medium">Lọc thẻ <select disabled={navigationLocked} aria-label="Lọc trạng thái ghi nhớ" value={reviewFilter} onChange={event => { setReviewFilter(event.target.value as 'all' | 'needed' | 'known' | 'due'); setFocusIndex(0); setFlippedIds({}); setSessionActive(false); }} className="min-h-11 rounded-lg border border-paper-kraft bg-paper-white px-3 ml-2"><option value="due">Đến hạn ôn</option><option value="needed">Cần ôn</option><option value="known">Đã nhớ</option><option value="all">Tất cả</option></select></label>
-        <button className="secondary-button" disabled={navigationLocked || (!sessionActive && filtered.length === 0)} onClick={() => { setSessionReviewed([]); setSessionActive(value => !value); setFocusIndex(0); setFlippedIds({}); }}>{sessionActive ? 'Kết thúc buổi ôn' : 'Bắt đầu buổi ôn'}</button>
+        <label className="text-sm text-ink-medium">Lọc thẻ <select disabled={navigationLocked} aria-label="Lọc trạng thái ghi nhớ" value={reviewFilter} onChange={event => { setReviewFilter(event.target.value as 'all' | 'needed' | 'known' | 'due'); setGridPage(1); setFocusIndex(0); setFlippedIds({}); setSessionActive(false); }} className="min-h-11 rounded-lg border border-paper-kraft bg-paper-white px-3 ml-2"><option value="due">Đến hạn ôn</option><option value="needed">Cần ôn</option><option value="known">Đã nhớ</option><option value="all">Tất cả</option></select></label>
+        <button className="secondary-button" disabled={navigationLocked || (!sessionActive && filtered.length === 0)} onClick={() => { setSessionReviewed([]); setSessionActive(value => !value); setGridPage(1); setFocusIndex(0); setFlippedIds({}); }}>{sessionActive ? 'Kết thúc buổi ôn' : 'Bắt đầu buổi ôn'}</button>
         {sessionActive && <p role="status" className="text-sm text-ink-medium">Đã ôn {sessionReviewed.length} thẻ · còn {filtered.length} thẻ. Mỗi thẻ chỉ xuất hiện một lần trong buổi.</p>}
       </div>
 
@@ -281,7 +285,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
       ) : error && !data ? null : filtered.length === 0 ? (
         <div className="w-full rounded-xl bg-paper-white px-5 py-10 text-center space-y-3">
           <p className="text-base font-medium text-ink-medium">{sessionActive ? 'Bạn đã hoàn thành các thẻ trong buổi ôn này.' : search ? 'Không có từ khớp với tìm kiếm.' : reviewFilter === 'due' ? 'Chưa có thẻ đến hạn. Chọn Tất cả để học thêm.' : reviewFilter === 'needed' ? 'Không còn thẻ cần ôn. Chọn Tất cả để xem thư mục.' : reviewFilter === 'known' ? 'Chưa có thẻ được đánh dấu đã nhớ.' : 'Thư mục này chưa có từ vựng nào.'}</p>
-          {search && <button className="secondary-button" onClick={() => { setSearch(''); setFocusIndex(0); }}>Xóa tìm kiếm</button>}
+          {search && <button className="secondary-button" onClick={() => { setSearch(''); setGridPage(1); setFocusIndex(0); }}>Xóa tìm kiếm</button>}
           {folder?.isOwner && !search && !sessionActive && data?.cards.length === 0 && (
             <button
               onClick={() => setIsModalOpen(true)}
@@ -294,7 +298,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
       ) : viewMode === 'grid' ? (
         /* Lưới ô thẻ */
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filtered.slice(0, visibleCards).map((card, idx) => {
+          {visibleGridCards.map((card, idx) => {
             const isFlipped = !!flippedIds[card.id];
             return (
               <div
@@ -308,7 +312,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
                   <div inert={isFlipped} aria-hidden={isFlipped} className="flip-card-front bg-paper-white border border-paper-kraft p-5 flex flex-col justify-between">
                     <div className="flex justify-between items-center">
                       <span className="font-mono text-[10px] text-ink-light uppercase ml-auto">
-                        #{String(idx + 1).padStart(2, '0')}
+                        #{String((currentGridPage - 1) * 12 + idx + 1).padStart(2, '0')}
                       </span>
                     </div>
 
@@ -363,7 +367,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
               </div>
             );
           })}
-          {filtered.length > visibleCards && <div className="col-span-full flex flex-wrap items-center justify-center gap-3 py-4"><span className="text-sm text-ink-medium">Đang hiện {visibleCards} / {filtered.length} từ</span><button className="secondary-button" onClick={() => setVisibleCards(count => count + 24)}>Xem thêm 24 từ</button></div>}
+          <fieldset disabled={navigationLocked} className="col-span-full min-w-0"><Pagination page={currentGridPage} totalPages={gridPages} onPageChange={setGridPage} label="Trang thẻ từ vựng" /></fieldset>
         </div>
       ) : (
         /* Chế độ Focus */

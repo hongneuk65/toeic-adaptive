@@ -6,6 +6,7 @@ import { AiMarkdown } from '../components/rag/AiMarkdown';
 import { api } from '../lib/api';
 import { useAsyncResource } from '../hooks/useAsyncResource';
 import { PageHeader } from '../components/ui/PageHeader';
+import { Pagination } from '../components/ui/Pagination';
 
 type Topic = { id: string; title: string; description: string };
 interface LessonSummary {
@@ -27,17 +28,19 @@ export function TheoryReadingPage() {
   const lessonId = Number(params.get('lesson')) || 0;
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [topicsExpanded, setTopicsExpanded] = useState(false);
+  const browseBy = params.get('view') === 'part' ? 'part' : 'topic';
   const loadCatalog = useCallback((signal: AbortSignal) => api<LessonSummary[]>('/theory/catalog', { signal }), []);
   const catalog = useAsyncResource(loadCatalog);
   const loadDetail = useCallback((signal: AbortSignal) => lessonId ? api<LessonDetail>(`/theory/${lessonId}`, { signal }) : Promise.resolve(null), [lessonId]);
   const detail = useAsyncResource(loadDetail);
   const lessons = catalog.data ?? [];
-  const topics = [...new Map(lessons.map(lesson => [lesson.topic.id, lesson.topic])).values()];
+  const topics = [...new Map(lessons.map(lesson => [lesson.topic.id, lesson.topic])).values()].sort((a, b) => a.title.localeCompare(b.title, 'vi'));
+  const topicOrder = new Map(topics.map((item, index) => [item.id, index]));
   const topic = topics.find(item => item.id === topicId);
   const filtered = lessons.filter(lesson => (!topicId || lesson.topic.id === topicId)
     && (!part || lesson.part === part)
-    && (!search.trim() || normalize(`${lesson.title} ${lesson.skill.name} ${lesson.topic.title}`).includes(normalize(search.trim()))));
+    && (!search.trim() || normalize(`${lesson.title} ${lesson.skill.name} ${lesson.topic.title}`).includes(normalize(search.trim()))))
+    .sort((a, b) => browseBy === 'part' ? a.part - b.part || a.id - b.id : (topicOrder.get(a.topic.id) ?? 0) - (topicOrder.get(b.topic.id) ?? 0) || a.part - b.part || a.id - b.id);
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, pages);
   const visible = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -53,10 +56,10 @@ export function TheoryReadingPage() {
   }
   const selectedSummary = lessons.find(item => item.id === lessonId);
   return <div className="page-stack theory-library">
-    <PageHeader eyebrow="HIỂU KIẾN THỨC · LUYỆN ĐÚNG TRỌNG TÂM" title="Kiến thức TOEIC" description="Tìm bài theo chủ đề kiến thức, rồi lọc Part khi cần. Đọc từng bài và kiểm tra lại bằng quiz." />
-    {!lessonId && <ActivitySuggestions section="theory" />}
+    <PageHeader variant="compact" title="Kiến thức TOEIC" description="Tìm bài theo chủ đề hoặc Part, rồi luyện quiz để củng cố." />
+    {!lessonId && <ActivitySuggestions section="theory" compact />}
     {lessonId ? <section className="theory-reader" aria-label="Nội dung bài học">
-      <button className="theory-back" onClick={() => changeFilter('lesson', '')}>← Thư viện bài học</button>
+      <button className="theory-back secondary-button" onClick={() => changeFilter('lesson', '')}>← Thư viện bài học</button>
       {detail.loading ? <p role="status" className="theory-state">Đang tải bài học…</p> : detail.error ? <div role="alert" className="theory-state">{detail.error} <button onClick={detail.reload}>Thử lại</button></div> : detail.data ? <article>
         <div className="theory-reader-meta"><span>Part {detail.data.part}</span>{selectedSummary && <span>{selectedSummary.topic.title}</span>}</div>
         <h2>{detail.data.title}</h2>
@@ -65,19 +68,23 @@ export function TheoryReadingPage() {
       </article> : <p className="theory-state">Không tìm thấy bài học.</p>}
     </section> : <>
       {catalog.loading ? <p role="status" className="theory-state">Đang tải thư viện bài học…</p> : catalog.error ? <div role="alert" className="theory-state">{catalog.error} <button onClick={catalog.reload}>Thử lại</button></div> : <>
-        <section className="theory-topics" aria-labelledby="theory-topics-title">
-          <div className="theory-section-heading"><div><h2 id="theory-topics-title">Bạn muốn củng cố điều gì?</h2><p>Các bài liên quan được gom thành chủ đề, không chia thành từng tag nhỏ.</p></div><button className="theory-all" aria-pressed={!topicId} onClick={() => changeFilter('topic', '')}>Tất cả chủ đề</button></div>
-          <div className="theory-topic-grid">{(topicsExpanded ? topics : topics.filter((item, index) => index < 6 || item.id === topicId)).map(item => <button key={item.id} className="theory-topic" aria-pressed={topicId === item.id} onClick={() => changeFilter('topic', topicId === item.id ? '' : item.id)}>
-            <span className="theory-topic-count">{lessons.filter(lesson => lesson.topic.id === item.id).length} bài học</span><strong>{item.title}</strong><span>{item.description}</span>
-          </button>)}</div>
-          {topics.length > 6 && <button className="theory-all mt-4" aria-expanded={topicsExpanded} onClick={() => setTopicsExpanded(value => !value)}>{topicsExpanded ? 'Thu gọn chủ đề' : `Xem tất cả ${topics.length} chủ đề`}</button>}
-        </section>
         <section className="theory-catalog" aria-labelledby="theory-catalog-title">
-          <div className="theory-section-heading"><div><h2 id="theory-catalog-title">{topic?.title || 'Tất cả bài học'}</h2><p>{filtered.length} bài học{part ? ` · Part ${part}` : ' · Toàn bộ Part'}</p></div></div>
-          <div className="theory-filters"><label className="theory-search"><span>Tìm bài học</span><input type="search" value={search} placeholder="Ví dụ: câu hỏi, động từ, email…" onChange={event => { setSearch(event.target.value); setPage(1); }} /></label><label><span>Phần thi liên quan</span><select value={part} onChange={event => changeFilter('part', event.target.value === '0' ? '' : event.target.value)}><option value={0}>Tất cả Part</option>{[1, 2, 3, 4, 5, 6, 7].map(value => <option key={value} value={value}>Part {value}</option>)}</select></label></div>
-          {!filtered.length ? <div className="theory-state"><h3>Chưa có bài phù hợp</h3><p>Thử từ khóa khác hoặc bỏ bộ lọc để xem thêm bài học.</p><button onClick={() => { setSearch(''); setParams({}); setPage(1); }}>Bỏ bộ lọc</button></div> : <>
+          <div className="theory-section-heading">
+            <div><h2 id="theory-catalog-title">Thư viện kiến thức</h2><p>Tìm nhanh bài phù hợp, mỗi trang tối đa {PAGE_SIZE} bài.</p></div>
+            <div className="theory-browse-switch" role="group" aria-label="Cách sắp xếp bài học">
+              <button aria-pressed={browseBy === 'topic'} onClick={() => changeFilter('view', '')}>Theo chủ đề</button>
+              <button aria-pressed={browseBy === 'part'} onClick={() => changeFilter('view', 'part')}>Theo Part</button>
+            </div>
+          </div>
+          <div className={`theory-filters theory-filters-${browseBy}`}>
+            <label className="theory-search"><span>Tìm bài học</span><input type="search" value={search} placeholder="Từ khóa, tên bài hoặc kỹ năng…" onChange={event => { setSearch(event.target.value); setPage(1); }} /></label>
+            <label className="theory-topic-filter"><span>Chủ đề kiến thức</span><select value={topicId} onChange={event => changeFilter('topic', event.target.value)}><option value="">Tất cả chủ đề</option>{topics.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
+            <label className="theory-part-filter"><span>Phần thi liên quan</span><select value={part} onChange={event => changeFilter('part', event.target.value === '0' ? '' : event.target.value)}><option value={0}>Tất cả Part</option>{[1, 2, 3, 4, 5, 6, 7].map(value => <option key={value} value={value}>Part {value}</option>)}</select></label>
+          </div>
+          <div className="theory-results-heading"><p role="status">{filtered.length} bài học{topic ? ` · ${topic.title}` : ''}{part ? ` · Part ${part}` : ''}</p>{(topicId || part || search) && <button className="study-action-button" onClick={() => { setSearch(''); const next = new URLSearchParams(window.location.search); next.delete('topic'); next.delete('part'); next.delete('lesson'); setParams(next); setPage(1); }}>Bỏ bộ lọc</button>}</div>
+          {!filtered.length ? <div className="theory-state"><h3>Chưa có bài phù hợp</h3><p>Thử từ khóa khác hoặc dùng nút Bỏ bộ lọc ở trên.</p></div> : <>
             <div className="theory-lessons">{visible.map(lesson => <button className="theory-lesson" key={lesson.id} onClick={() => openLesson(lesson.id)}><span className="theory-part">P{lesson.part}</span><span className="theory-lesson-copy"><strong>{lesson.title}</strong><span>{lesson.topic.title}</span></span><span className="theory-open">Đọc bài <span aria-hidden="true">↗</span></span></button>)}</div>
-            {pages > 1 && <nav className="theory-pagination" aria-label="Trang bài học"><button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>← Trước</button><span aria-live="polite">Trang {currentPage} / {pages}</span><button disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)}>Sau →</button></nav>}
+            <Pagination page={currentPage} totalPages={pages} onPageChange={setPage} label="Trang bài học" />
           </>}
         </section>
       </>}

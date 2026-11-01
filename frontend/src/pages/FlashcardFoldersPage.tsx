@@ -1,3 +1,4 @@
+import { Pagination } from '../components/ui/Pagination';
 import { ActivitySuggestions } from '../components/ActivitySuggestions';
 import { StudyIcon } from '../components/StudyIcon';
 import '../styles/prep-knowledge.css';
@@ -25,6 +26,7 @@ export const FlashcardFoldersPage: React.FC = () => {
   const load = useCallback((signal: AbortSignal) => api<FolderItem[]>('/flashcards/folders', { signal }), []);
   const { data: folders = [], loading, error, reload: loadFolders } = useAsyncResource(load);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [scope, setScope] = useState('ALL');
   const [actionError, setActionError] = useState('');
   const [notice, setNotice] = useState('');
@@ -60,7 +62,7 @@ export const FlashcardFoldersPage: React.FC = () => {
       setNewFolderDesc('');
       setIsModalOpen(false);
       setScope('OWN');
-      setSearch('');
+      setSearch(''); setPage(1);
       setNotice('Đã tạo thư mục. Mở thư mục để thêm từ vựng.');
       loadFolders();
     } catch (err) {
@@ -100,6 +102,9 @@ export const FlashcardFoldersPage: React.FC = () => {
     return folders.filter(folder => (scope === 'ALL' || (scope === 'OWN' ? folder.isOwner : !folder.isOwner)) && (!query || `${folder.name} ${folder.description || ''} ${folder.code}`.toLowerCase().includes(query)));
   }, [folders, search, scope]);
 
+  const pages = Math.max(1, Math.ceil(filteredFolders.length / 8));
+  const currentPage = Math.min(page, pages);
+  const visibleFolders = filteredFolders.slice((currentPage - 1) * 8, currentPage * 8);
   return (
     <div className="page-stack prep-knowledge-page prep-folder-page">
       {notice && <p role="status" className="status-message">{notice}</p>}
@@ -113,8 +118,8 @@ export const FlashcardFoldersPage: React.FC = () => {
         description="Chọn một thư mục chuyên đề để bắt đầu lật thẻ và luyện nghe phát âm."
         actions={<button onClick={() => { setActionError(''); setIsModalOpen(true); }} className="primary-button">Tạo thư mục</button>}
       />
-      <ActivitySuggestions section="vocabulary" />
-      <div className="vocabulary-library-toolbar"><div className="vocabulary-scope" aria-label="Lọc thư mục">{[['ALL','Tất cả'],['OWN','Sổ của tôi'],['LIBRARY','Thư viện chủ đề']].map(([value,label]) => <button key={value} aria-pressed={scope===value} onClick={()=>setScope(value)}>{label}</button>)}</div><label className="min-w-0 w-full sm:w-80"><span className="sr-only">Tìm thư mục từ vựng</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Tìm theo tên, mô tả hoặc mã…" className="w-full rounded-lg border border-paper-kraft bg-paper-white px-3 py-2.5 text-sm" /></label><p role="status" className="text-sm text-ink-medium">{filteredFolders.length} thư mục</p></div>
+      <ActivitySuggestions section="vocabulary" compact />
+      <div className="vocabulary-library-toolbar"><div className="vocabulary-scope" aria-label="Lọc thư mục">{[['ALL','Tất cả'],['OWN','Sổ của tôi'],['LIBRARY','Thư viện chủ đề']].map(([value,label]) => <button key={value} aria-pressed={scope===value} onClick={()=>{ setScope(value); setPage(1); }}>{label}</button>)}</div><label className="min-w-0 w-full sm:w-80"><span className="sr-only">Tìm thư mục từ vựng</span><input type="search" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} placeholder="Tìm theo tên, mô tả hoặc mã…" className="w-full rounded-lg border border-paper-kraft bg-paper-white px-3 py-2.5 text-sm" /></label><p role="status" className="text-sm text-ink-medium">{filteredFolders.length} thư mục</p></div>
 
       {/* 2. DANH SÁCH CÁC THƯ MỤC DẠNG HỒ SƠ GIẤY */}
       {loading && folders.length === 0 ? (
@@ -128,12 +133,14 @@ export const FlashcardFoldersPage: React.FC = () => {
         </div>
       ) : (
         <ul className="prep-folder-catalog">
-          {filteredFolders.map(folder => <li key={folder.id} className="prep-folder-tile" data-owned={folder.isOwner || undefined}><span className="vocabulary-folder-icon"><StudyIcon name={folder.isOwner ? 'cards' : 'book'} /></span>
+          {visibleFolders.map(folder => <li key={folder.id} className="prep-folder-tile" data-owned={folder.isOwner || undefined}><span className="vocabulary-folder-icon"><StudyIcon name={folder.isOwner ? 'cards' : 'book'} /></span>
             <div className="min-w-0 vocabulary-folder-content"><p className="prep-folder-eyebrow">{folder.count} từ vựng</p><h2 className="text-lg font-semibold"><Link className="folder-open-link text-left break-words" to={`/flashcards/${folder.id}`}>{folder.name}</Link></h2>{folder.description && <p className="mt-1 text-sm leading-6 text-ink-medium break-words">{folder.description}</p>}<p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-medium"><span>{folder.isOwner ? 'Của bạn' : `Người tạo: ${folder.authorName}`}</span><span>Mã: {folder.code}</span></p></div>
-            <div className="flex items-center gap-3"><span className="primary-button" aria-hidden="true">Mở thư mục →</span>{folder.isOwner && <button onClick={event => handleDeleteFolder(folder.id, folder.name, event)} className="folder-delete-button min-h-11 px-3 text-sm text-rose-800 hover:underline" aria-label={`Xóa thư mục ${folder.name}`}>Xóa</button>}</div>
+            <div className="flex items-center gap-3"><span className="primary-button" aria-hidden="true">Mở thư mục →</span>{folder.isOwner && <button onClick={event => handleDeleteFolder(folder.id, folder.name, event)} className="folder-delete-button min-h-11 px-3 text-sm text-rose-800 study-action-button" aria-label={`Xóa thư mục ${folder.name}`}>Xóa</button>}</div>
           </li>)}
         </ul>
       )}
+
+      <Pagination page={currentPage} totalPages={pages} onPageChange={setPage} label="Trang thư mục từ vựng" />
 
       {/* 3. MODAL TẠO THƯ MỤC MỚI */}
       {isModalOpen && (

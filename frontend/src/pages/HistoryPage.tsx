@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
+import { Pagination } from '../components/ui/Pagination';
 import { PageHeader } from '../components/ui/PageHeader';
 import { StudyIcon } from '../components/StudyIcon';
 import { useAsyncResource } from '../hooks/useAsyncResource';
@@ -26,7 +27,7 @@ export function HistoryPage() {
     const date = new Date(item.startedAt);
     return <article key={item.id} className="history-card"><div className="history-date" aria-hidden="true"><strong>{date.getDate().toString().padStart(2, '0')}</strong><span>THÁNG {date.getMonth() + 1}</span></div><div className="history-card-content"><div className="history-card-meta"><span className={`history-badge ${item.submittedAt ? 'done' : ''}`}><span />{item.submittedAt ? 'Đã nộp bài' : 'Đang làm'}</span><span>#{item.id}</span></div><h3>{item.title}</h3><p><time dateTime={item.startedAt}>{date.toLocaleString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</time>{item.questionCount ? ` · ${item.questionCount} câu hỏi` : ''}</p></div><div className="history-card-action"><div className="history-result"><span>{item.submittedAt ? 'Kết quả' : 'Bài chưa nộp'}</span><strong>{item.result || 'Tiếp tục luyện'}</strong></div><Link aria-label={`${item.submittedAt ? 'Xem chữa bài' : 'Tiếp tục'}: ${item.title}, bài ${item.id}`} className={item.submittedAt ? 'secondary-button' : 'primary-button'} to={item.href}>{item.submittedAt ? 'Chữa bài' : 'Làm tiếp'}<span aria-hidden="true">↗</span></Link></div></article>;
    })}</div>}
-   {data.total > data.pageSize && <nav className="history-pagination" aria-label="Trang lịch sử"><button className="secondary-button" disabled={page === 1} onClick={() => setPage(value => value - 1)}>← Trước</button><span>Trang {page} / {Math.max(1, Math.ceil(data.total / data.pageSize))}</span><button className="secondary-button" disabled={page * data.pageSize >= data.total} onClick={() => setPage(value => value + 1)}>Sau →</button></nav>}
+   <Pagination page={page} totalPages={Math.ceil(data.total / Math.max(1, data.pageSize))} onPageChange={setPage} label="Trang lịch sử" />
    </>}
   </section></div>
  </div>;

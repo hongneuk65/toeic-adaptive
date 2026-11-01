@@ -34,10 +34,8 @@ for (const [route, section] of [['/theory','theory'],['/flashcards','vocabulary'
  test('module recommendations '+section, async ({page}) => {
   await fixture(page); await page.goto(route);
   await expect(page.getByRole('heading',{name:'Gợi ý học cho bạn',exact:true})).toBeVisible();
-  const compact = section === 'reading' || section === 'listening';
-  if (compact) await expect(page.getByText('Củng cố nền tảng',{exact:true})).toHaveCount(0);
-  else await expect(page.getByText('Củng cố nền tảng',{exact:true})).toBeVisible();
-  await expect(page.getByRole('link',{name:new RegExp('^'+section+' suggestion ')})).toHaveCount(compact ? 2 : 3);
+  await expect(page.getByText('Củng cố nền tảng',{exact:true})).toHaveCount(0);
+  await expect(page.getByRole('link',{name:new RegExp('^'+section+' suggestion ')})).toHaveCount(2);
   await expect(page.getByRole('link',{name:section+' suggestion 0',exact:true})).toBeVisible();
   await expect(page.getByRole('link',{name:section+' suggestion 3',exact:true})).toHaveCount(0);
   await expect(page.getByRole('link',{name:section+' suggestion 0',exact:true})).toHaveAttribute('href', /\//);
@@ -47,8 +45,8 @@ for (const [route, section] of [['/theory','theory'],['/flashcards','vocabulary'
 test('unassessed profile offers a real starting lesson without a weakness claim', async ({page}, testInfo) => {
  await fixture(page,'starter'); await page.goto('/theory');
  const suggestions = page.getByRole('region',{name:'Gợi ý học cho bạn',exact:true});
- await expect(suggestions.getByText('Đang tìm điểm bắt đầu',{exact:true})).toBeVisible();
- await expect(suggestions.getByText('Bắt đầu / Khám phá',{exact:true})).toHaveCount(3);
+ await expect(suggestions.getByText('Đang tìm điểm bắt đầu',{exact:true})).toHaveCount(0);
+ await expect(suggestions.getByText('Bắt đầu / Khám phá',{exact:true})).toHaveCount(2);
  await expect(suggestions).not.toContainText('Củng cố phần cần luyện');
  await expect(suggestions.getByRole('link',{name:'theory suggestion 0',exact:true})).toHaveAttribute('href','/theory?lesson=1');
  await page.screenshot({path:testInfo.outputPath('module-starting-suggestions.png'),fullPage:true});
@@ -58,13 +56,13 @@ test('unassessed profile offers a real starting lesson without a weakness claim'
 
 for (const event of ['focus','learning-progress-updated']) test('suggestions refresh after '+event, async ({page}) => {
  const control = await fixture(page,'starter'); await page.goto('/flashcards');
- await expect(page.getByText('Đang tìm điểm bắt đầu',{exact:true})).toBeVisible();
+ await expect(page.getByText('Bắt đầu / Khám phá',{exact:true})).toHaveCount(2);
  control.progress(); await page.evaluate(name => window.dispatchEvent(new Event(name)),event);
- await expect(page.getByText('Củng cố nền tảng',{exact:true})).toBeVisible();
+ await expect(page.getByText('Củng cố',{exact:true})).toHaveCount(2);
  await expect(page.getByText('Đang tìm điểm bắt đầu',{exact:true})).toHaveCount(0);
 });
-test('hub offers every module', async ({page}, testInfo) => { await fixture(page); await page.goto('/recommendations'); for(const key of ['theory','vocabulary','reading','listening']) await expect(page.getByRole('link',{name:key+' suggestion 0',exact:true})).toBeVisible(); await page.screenshot({path:testInfo.outputPath('integrated-hub.png'),fullPage:true}); });
-test('suggestion failure remains nonblocking and retries', async ({page}) => { const control = await fixture(page,'error'); await page.goto('/theory'); await expect(page.getByRole('heading',{name:'Tất cả bài học',exact:true})).toBeVisible(); await expect(page.getByRole('button',{name:'Thử lại gợi ý'})).toBeVisible(); control.recover(); await page.getByRole('button',{name:'Thử lại gợi ý'}).click(); await expect(page.getByRole('link',{name:'theory suggestion 0',exact:true})).toBeVisible(); });
+test('hub keeps one set of priorities without repeating module suggestions', async ({page}, testInfo) => { await fixture(page); const activityRequests:string[]=[]; page.on('request',r=>{if(new URL(r.url()).pathname==='/api/mastery/activities')activityRequests.push(r.url());}); await page.goto('/recommendations'); await expect(page.getByRole('heading',{name:'Ưu tiên cho buổi học này',exact:true})).toBeVisible(); await expect(page.getByRole('heading',{name:'Học tiếp trong từng phần',exact:true})).toHaveCount(0); await expect(page.getByRole('heading',{name:'Bạn đang ở đâu?',exact:true})).toBeVisible(); expect(activityRequests).toEqual([]); await page.screenshot({path:testInfo.outputPath('integrated-hub.png'),fullPage:true}); });
+test('suggestion failure remains nonblocking and retries', async ({page}) => { const control = await fixture(page,'error'); await page.goto('/theory'); await expect(page.getByRole('heading',{name:'Thư viện kiến thức',exact:true})).toBeVisible(); await expect(page.getByRole('button',{name:'Thử lại gợi ý'})).toBeVisible(); control.recover(); await page.getByRole('button',{name:'Thử lại gợi ý'}).click(); await expect(page.getByRole('link',{name:'theory suggestion 0',exact:true})).toBeVisible(); });
 test('empty recommendations explain next step', async ({page}) => { await fixture(page,'empty'); await page.goto('/flashcards'); await expect(page.getByText('Chưa có bài phù hợp để gợi ý. Hãy chọn bài trong thư viện để bắt đầu.')).toBeVisible(); });
 test('same route listening suggestion opens source without session creation', async ({page}) => { await fixture(page); const writes: string[]=[]; page.on('request',r=>{if(r.method()==='POST')writes.push(r.url());}); await page.goto('/listening'); await page.getByRole('link',{name:'listening suggestion 0',exact:true}).click(); await expect(page.getByRole('heading',{name:'Office listening',exact:true})).toBeVisible(); await expect(page.getByRole('link',{name:'listening suggestion 0',exact:true})).toHaveCount(0); expect(writes).toEqual([]); });
 test('session takes precedence and unsafe source is ignored', async ({page}) => { await fixture(page); await page.goto('/listening?source=9&session=7'); await expect(page.getByRole('heading',{name:'Office listening',exact:true})).toBeVisible(); await expect(page.getByRole('link',{name:'listening suggestion 0',exact:true})).toHaveCount(0); await page.goto('/listening?source=-9'); await expect(page.getByRole('link',{name:'listening suggestion 0',exact:true})).toBeVisible(); });

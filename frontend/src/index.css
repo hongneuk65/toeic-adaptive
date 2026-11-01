@@ -5,7 +5,7 @@
 @layer components {
   .secondary-button { @apply inline-flex min-h-11 items-center justify-center rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-50; background: #DFF1FF; color: #1657AE; }
   .secondary-button:hover { background: #cce9ff; }
-  .text-action { @apply font-semibold text-accent-navy underline underline-offset-4; }
+  .text-action { @apply inline-flex min-h-10 items-center justify-center rounded-lg border border-paper-kraft bg-paper-white px-3 py-2 text-sm font-semibold text-accent-navy; text-decoration:none; }
   .section-title { @apply text-lg font-semibold text-ink-dark; }
   .learning-surface { @apply rounded-2xl border border-paper-kraft/70 bg-paper-white p-5 shadow-paper-subtle sm:p-6; }
   .status-message { @apply rounded-xl border border-paper-kraft/70 bg-paper-white p-3 text-sm text-ink-dark; }

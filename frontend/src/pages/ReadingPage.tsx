@@ -1,3 +1,4 @@
+import { Pagination } from '../components/ui/Pagination';
 import { ReadingModes } from '../components/reading/ReadingModes';
 import { notifyLearningProgress } from '../lib/learning-progress';
 import { ActivitySuggestions } from '../components/ActivitySuggestions';
@@ -243,7 +244,7 @@ function ReadingWorkspace({
     <div className="page-stack prep-study-workspace">
       <div className="prep-study-toolbar flex flex-wrap items-center justify-between gap-3">
         <button
-          className="underline text-sm"
+          className="study-action-button text-sm"
           onClick={() =>
             void act(async () => {
               if (!submitted) await save();
@@ -339,7 +340,7 @@ function ReadingWorkspace({
           >
             {highlighted}
           </div>
-          <button className="mt-4 text-xs underline" onClick={choose}>
+          <button className="mt-4 text-xs study-action-button" onClick={choose}>
             Dùng phần văn bản đang bôi chọn
           </button>
           </ReadingSourceDocument>
@@ -406,14 +407,14 @@ function ReadingWorkspace({
                 <div className="flex gap-4">
                   <button
                     disabled={!selection || !answers[index] || busy}
-                    className="underline disabled:opacity-40"
+                    className="study-action-button disabled:opacity-40"
                     onClick={attach}
                   >
                     Dùng đoạn đang chọn
                   </button>
                   {!!answers[index]?.evidence.length && (
                     <button
-                      className="underline"
+                      className="study-action-button"
                       onClick={() =>
                         setAnswers({
                           ...answers,
@@ -477,7 +478,7 @@ function ReadingWorkspace({
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <button
                   disabled={busy}
-                  className="text-sm underline"
+                  className="text-sm study-action-button"
                   onClick={() =>
                     void act(async () => {
                       await save();
@@ -523,14 +524,14 @@ function ReadingWorkspace({
                   <div className="flex flex-wrap gap-4">
                     <button
                       disabled={busy}
-                      className="underline"
+                      className="study-action-button"
                       onClick={() => void ask("WORD")}
                     >
                       Giải nghĩa theo ngữ cảnh
                     </button>
                     <button
                       disabled={busy}
-                      className="underline"
+                      className="study-action-button"
                       onClick={() => void ask("STRUCTURE")}
                     >
                       Giải thích cấu trúc
@@ -577,7 +578,7 @@ function ReadingWorkspace({
                   >
                     Lưu từ / cụm từ
                   </button>
-                  <Link to="/flashcards" className="ml-3 underline">
+                  <Link to="/flashcards" className="ml-3 study-action-button">
                     Mở sổ từ vựng
                   </Link>
                   <p className="text-xs text-ink-medium">
@@ -614,7 +615,7 @@ function ReadingWorkspace({
               <div className="flex flex-wrap gap-4">
                 <button
                   disabled={busy}
-                  className="underline"
+                  className="study-action-button"
                   onClick={() => void ask(submitted ? "ANSWER" : "HINT")}
                 >
                   {submitted
@@ -623,7 +624,7 @@ function ReadingWorkspace({
                 </button>
                 <button
                   disabled={busy || !selection}
-                  className="underline disabled:opacity-40"
+                  className="study-action-button disabled:opacity-40"
                   onClick={() => void ask("EVIDENCE")}
                 >
                   Nhận xét đoạn bằng chứng
@@ -701,6 +702,8 @@ export function ReadingPage() {
   } catch {
     /* API guards enforce role. */
   }
+  const [libraryPage, setLibraryPage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
   const [topic, setTopic] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [kind, setKind] = useState("");
@@ -762,10 +765,17 @@ export function ReadingPage() {
             : !!studied(a.version?.id) &&
               !studied(a.version?.id)?.submittedAt)),
   );
+  const libraryPages = Math.max(1, Math.ceil(filtered.length / 8));
+  const currentLibraryPage = Math.min(libraryPage, libraryPages);
+  const visibleArticles = filtered.slice((currentLibraryPage - 1) * 8, currentLibraryPage * 8);
+  const history = catalog.data?.attempts ?? [];
+  const historyPages = Math.max(1, Math.ceil(history.length / 8));
+  const currentHistoryPage = Math.min(historyPage, historyPages);
+  const visibleHistory = history.slice((currentHistoryPage - 1) * 8, currentHistoryPage * 8);
   const showReadingLibrary = () => { const next = new URLSearchParams(params); next.delete("practice"); setAddingText(false); setParams(next); };
   const showPersonalReading = () => { const next = new URLSearchParams(params); next.delete("practice"); setAddingText(true); setParams(next); };
   const showSentencePractice = () => { const next = new URLSearchParams(params); next.set("practice", "clauses"); setAddingText(false); setParams(next); };
-  if (params.get("practice") === "clauses" && !articleId && !attemptId) return <ReadingClausePractice onLibrary={showReadingLibrary} modeNavigation={<ReadingModes mode="clauses" onReading={showReadingLibrary} onClauses={showSentencePractice} onPersonal={showPersonalReading} personalTrigger={personalTrigger} />} />;
+  if (params.get("practice") === "clauses" && !articleId && !attemptId) return <ReadingClausePractice onLibrary={showReadingLibrary} modeNavigation={<><ActivitySuggestions section="reading" compact /><ReadingModes mode="clauses" onReading={showReadingLibrary} onClauses={showSentencePractice} onPersonal={showPersonalReading} personalTrigger={personalTrigger} /></>} />;
   return (
     <div className={`page-stack prep-learning-page ${articleId || attemptId ? "prep-learning-study" : "prep-learning-library"}`}>
       {(error || catalog.error || content.error) && (
@@ -775,7 +785,7 @@ export function ReadingPage() {
         >
           {error || catalog.error || content.error}{" "}
           <button
-            className="underline"
+            className="study-action-button"
             onClick={() => {
               catalog.reload();
               content.reload();
@@ -800,7 +810,7 @@ export function ReadingPage() {
         />
       ) : article ? (
         <section className="page-section space-y-4">
-          <button className="text-sm underline" onClick={() => setParams({})}>
+          <button className="text-sm study-action-button" onClick={() => setParams({})}>
             Thư viện Reading
           </button>
           <h1 className="text-2xl font-semibold">
@@ -860,6 +870,7 @@ export function ReadingPage() {
             title="Luyện đọc"
             description="Chọn bài đọc, trả lời câu hỏi và đối chiếu bằng chứng để hiểu sâu hơn."
           />
+          <ActivitySuggestions section="reading" compact />
           <ReadingModes mode={addingText ? "personal" : "reading"} onReading={showReadingLibrary} onClauses={showSentencePractice} onPersonal={showPersonalReading} personalTrigger={personalTrigger} />
           <section hidden={!addingText} id="personal-reading-form" aria-label="Văn bản Reading riêng" className="rounded-xl border border-paper-kraft bg-paper-white p-4 sm:p-5 space-y-3"><div className="flex items-center justify-between gap-3"><h2 className="text-lg font-semibold">Văn bản cá nhân của bạn</h2><button type="button" className="text-action min-h-11" onClick={() => { setAddingText(false); personalTrigger.current?.focus(); }}>Đóng</button></div>
             <form
@@ -921,7 +932,7 @@ export function ReadingPage() {
               aria-label="Lọc chủ đề Reading"
               className="form-input !border"
               value={topic}
-              onChange={(e) => setTopic(e.target.value)}
+              onChange={(e) => { setTopic(e.target.value); setLibraryPage(1); }}
             >
               <option value="">Mọi chủ đề</option>
               {[
@@ -938,7 +949,7 @@ export function ReadingPage() {
               aria-label="Lọc độ khó Reading"
               className="form-input !border"
               value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value)}
+              onChange={(e) => { setDifficulty(e.target.value); setLibraryPage(1); }}
             >
               <option value="">Mọi mức độ</option>
               {Object.entries(levels).map(([v, label]) => (
@@ -951,7 +962,7 @@ export function ReadingPage() {
               aria-label="Lọc loại Reading"
               className="form-input !border"
               value={kind}
-              onChange={(e) => setKind(e.target.value)}
+              onChange={(e) => { setKind(e.target.value); setLibraryPage(1); }}
             >
               <option value="">Mọi loại văn bản</option>
               {Object.entries(kinds).map(([v, label]) => (
@@ -964,7 +975,7 @@ export function ReadingPage() {
               aria-label="Lọc tiến độ Reading"
               className="form-input !border"
               value={progress}
-              onChange={(e) => setProgress(e.target.value)}
+              onChange={(e) => { setProgress(e.target.value); setLibraryPage(1); }}
             >
               <option value="">Mọi trạng thái</option>
               <option value="NEW">Chưa học</option>
@@ -975,7 +986,7 @@ export function ReadingPage() {
               aria-label="Lọc nguồn Reading"
               className="form-input !border"
               value={source}
-              onChange={(e) => setSource(e.target.value)}
+              onChange={(e) => { setSource(e.target.value); setLibraryPage(1); }}
             >
               <option value="">Mọi nguồn</option>
               <option value="SYSTEM">Thư viện</option>
@@ -984,7 +995,7 @@ export function ReadingPage() {
           </div>
           {catalog.loading && <p role="status">Đang tải thư viện…</p>}
           <div className="prep-library-catalog grid gap-5 md:grid-cols-2">
-            {filtered.map((a) => {
+            {visibleArticles.map((a) => {
               const last = studied(a.version?.id);
               return (
                 <button
@@ -1025,18 +1036,19 @@ export function ReadingPage() {
               );
             })}
           </div>
+          <Pagination page={currentLibraryPage} totalPages={libraryPages} onPageChange={setLibraryPage} label="Trang thư viện Reading" />
           {!catalog.loading && !filtered.length && (
-            <div className="status-message space-y-3"><p>Chưa có bài phù hợp với bộ lọc này.</p><button className="secondary-button" onClick={() => { setTopic(""); setDifficulty(""); setKind(""); setProgress(""); setSource(""); }}>Xóa bộ lọc</button></div>
+            <div className="status-message space-y-3"><p>Chưa có bài phù hợp với bộ lọc này.</p><button className="secondary-button" onClick={() => { setTopic(""); setDifficulty(""); setKind(""); setProgress(""); setSource(""); setLibraryPage(1); }}>Xóa bộ lọc</button></div>
           )}
           </section>
           <aside aria-label="Bài đọc cá nhân và lịch sử" className="prep-learning-sidebar min-w-0 space-y-4"><div><h2 className="font-semibold">Góc học của bạn</h2><p className="mt-1 text-sm text-ink-medium">Xem lại tiến độ hoặc luyện với văn bản riêng.</p></div>
           <details className="section-disclosure">
             <summary>Lịch sử lần đầu và làm lại</summary>
             <div className="space-y-2">
-              {catalog.data?.attempts.map((a) => (
+              {visibleHistory.map((a) => (
                 <button
                   key={a.id}
-                  className="block text-left text-sm underline"
+                  className="block text-left text-sm study-action-button"
                   onClick={() => setParams({ attempt: String(a.id) })}
                 >
                   Phiên bản #{a.versionId} · Lần {a.tryNumber}{" "}
@@ -1047,8 +1059,8 @@ export function ReadingPage() {
                 </button>
               ))}
             </div>
+          <Pagination page={currentHistoryPage} totalPages={historyPages} onPageChange={setHistoryPage} label="Trang lịch sử Reading" />
           </details></aside></div>
-          <ActivitySuggestions section="reading" compact />
         </>
       )}
       {admin && <ReadingAdmin onChanged={catalog.reload} />}

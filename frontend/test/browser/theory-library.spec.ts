@@ -23,14 +23,14 @@ Danh từ có thể đứng sau mạo từ.` } });
 
 test('browse topic, Part, accent-insensitive search and pagination', async ({ page }) => {
   await page.goto('/theory');
-  await expect(page.getByRole('heading', { name: 'Bạn muốn củng cố điều gì?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Thư viện kiến thức' })).toBeVisible();
   await expect(page.locator('.theory-lesson')).toHaveCount(12);
-  await page.getByRole('button', { name: 'Sau →', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Trang bài học' }).getByRole('button', { name: 'Trang 2', exact: true }).click();
   await expect(page.locator('.theory-lesson')).toHaveCount(4);
-  await page.getByRole('button', { name: /1 bài học Hỏi đáp/ }).click();
+  await page.getByLabel('Chủ đề kiến thức').selectOption('listening');
   await expect(page.locator('.theory-lesson')).toHaveCount(1);
   await expect(page.getByRole('button', { name: /Câu hỏi Where/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Tất cả chủ đề' }).click();
+  await page.getByLabel('Chủ đề kiến thức').selectOption('');
   await page.getByLabel('Phần thi liên quan').selectOption('6');
   await expect(page.locator('.theory-lesson')).toHaveCount(1);
   await page.getByLabel('Tìm bài học').fill('khong co ket qua');
@@ -57,9 +57,10 @@ test('rapid topic and Part changes preserve the latest URL filters', async ({ pa
   await page.goto('/theory?topic=listening');
   await expect(page.getByRole('button', { name: /Câu hỏi Where/ })).toBeVisible();
   // Dispatch both interactions in one task, before the router's transition renders.
-  await page.getByRole('button', { name: 'Tất cả chủ đề', exact: true }).evaluate(button => {
-    (button as HTMLButtonElement).click();
-    const select = document.querySelector<HTMLSelectElement>('.theory-filters select')!;
+  await page.getByLabel('Chủ đề kiến thức').evaluate(topicSelect => {
+    (topicSelect as HTMLSelectElement).value = '';
+    topicSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    const select = document.querySelector<HTMLSelectElement>('.theory-part-filter select')!;
     select.value = '6';
     select.dispatchEvent(new Event('change', { bubbles: true }));
   });
@@ -67,4 +68,24 @@ test('rapid topic and Part changes preserve the latest URL filters', async ({ pa
   await expect(page.getByLabel('Phần thi liên quan')).toHaveValue('6');
   await expect(page.locator('.theory-lesson')).toHaveCount(1);
   await expect(page.getByRole('button', { name: /Bài ngữ pháp 15/ })).toBeVisible();
+});
+
+
+test('switches between topic and Part browsing while retaining active filters', async ({ page }) => {
+  await page.goto('/theory?topic=grammar&part=5');
+  await expect(page.getByRole('button', { name: 'Theo chủ đề', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Theo Part', exact: true }).click();
+  await expect(page).toHaveURL(/topic=grammar&part=5&view=part$/);
+  await expect(page.getByRole('button', { name: 'Theo Part', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByLabel('Chủ đề kiến thức')).toHaveValue('grammar');
+  await expect(page.getByLabel('Phần thi liên quan')).toHaveValue('5');
+  await expect(page.locator('.theory-lesson')).toHaveCount(12);
+  await page.getByRole('navigation', { name: 'Trang bài học' }).getByRole('button', { name: 'Trang 2', exact: true }).click();
+  await expect(page.locator('.theory-lesson')).toHaveCount(2);
+  await page.getByLabel('Phần thi liên quan').selectOption('6');
+  await expect(page.locator('.theory-lesson')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /Bài ngữ pháp 15/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Theo chủ đề', exact: true }).click();
+  await expect(page).toHaveURL(/topic=grammar&part=6$/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
