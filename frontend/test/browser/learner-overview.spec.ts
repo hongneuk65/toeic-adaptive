@@ -33,6 +33,8 @@ test('partial overview averages only practiced valid skill estimates and shows c
   const overview = page.getByRole('region', { name: 'Bạn đang ở đâu?' });
   const part5 = overview.getByRole('article', { name: 'Part 5', exact: true });
   await expect(part5.locator('meter')).toHaveAttribute('value', '0.4');
+  await expect(part5.locator('.learner-bar-value')).toHaveAttribute('width', '40');
+  await expect(overview.getByRole('article', { name: 'Part 1', exact: true }).locator('.learner-bar-missing')).toHaveCount(1);
   await expect(part5).toContainText('2/3 kỹ năng đã luyện · một phần');
   await expect(overview.getByRole('article', { name: 'Part 1', exact: true }).locator('meter')).toHaveCount(0);
   await expect(overview.locator('.learner-overview-stats')).toContainText('3 / 4');

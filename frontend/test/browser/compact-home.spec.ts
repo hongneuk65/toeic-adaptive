@@ -13,6 +13,9 @@ test('signed-in home keeps its introduction compact and progress close', async (
   });
   await page.goto('/dashboard');
   await expect(page.locator('.prep-home-hero-cta')).toHaveText('Bắt đầu học');
+  await expect(page.locator('.home-study-group')).toHaveCount(2);
+  await expect(page.locator('.home-study-group').first().getByRole('link')).toHaveCount(3);
+  await expect(page.locator('.home-study-group').last().getByRole('link')).toHaveCount(2);
   await expect(page.locator('.home-studio-panel')).toHaveAttribute('aria-busy','false');
   const hero=await page.locator('.prep-home-hero').boundingBox();
   if(testInfo.project.name === 'mobile') expect((await page.locator('.home-studio-welcome').boundingBox())!.height).toBeLessThan(250);

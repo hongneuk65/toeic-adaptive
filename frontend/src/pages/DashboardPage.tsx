@@ -53,6 +53,7 @@ export const DashboardPage = () => {
         <div className="home-studio-welcome">
           <p className="home-studio-eyebrow">KHÔNG GIAN HỌC CỦA BẠN</p>
           <h1 id="prep-home-title">Học TOEIC,<br /><span>theo nhịp của bạn.</span></h1>
+
           <div className="home-discover-dock"><Link to={curriculum?.enrollment ? '/curriculum' : '/recommendations'} className="prep-home-hero-cta">{learningActionLabel(learningStatus)}</Link></div>
           {learningStatusError && <p role="status" className="home-studio-status">Chưa tải được trạng thái học. <button onClick={refreshLearningStatus}>Thử lại</button></p>}
         </div>

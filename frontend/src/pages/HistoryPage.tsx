@@ -17,7 +17,7 @@ export function HistoryPage() {
  const resource = useAsyncResource(useCallback((signal: AbortSignal) => api<History>(`/history?type=${type}&status=${status}&page=${page}`, { signal }), [type, status, page]));
  const { data, loading, error } = resource;
  return <div className="history-page page-stack">
-  <PageHeader variant="compact" eyebrow="KIỂM TRA & NHÌN LẠI" title="Lịch sử làm bài" description="Các bài bạn đã làm đều ở đây. Tiếp tục bài còn dở hoặc xem lại lời giải để hiểu sâu hơn." actions={<Link to="/exam" className="primary-button">Làm bài mới <span aria-hidden="true">＋</span></Link>} />
+  <PageHeader variant="compact" eyebrow="KIỂM TRA & NHÌN LẠI" title="Lịch sử làm bài" actions={<Link to="/exam" className="primary-button">Làm bài mới <span aria-hidden="true">＋</span></Link>} />
   <div className="history-workspace"><section className="history-main" aria-label="Lịch sử làm bài">
    <div className="history-type-tabs" aria-label="Loại bài">{[['EXAM', 'Thi thử TOEIC', 'exam'], ['READING', 'Reading', 'book']].map(([value, label, icon]) => <button key={value} aria-pressed={type === value} onClick={() => { setType(value); setPage(1); }}><StudyIcon name={icon} />{label}</button>)}</div>
    <div className="history-toolbar"><div className="history-status-tabs" aria-label="Lọc theo trạng thái">{statuses.map(([value, label]) => <button key={value} aria-pressed={status === value} onClick={() => { setStatus(value); setPage(1); }}>{value !== 'ALL' && <span className={`history-filter-dot ${value === 'COMPLETED' ? 'done' : ''}`} />}{label}</button>)}</div><span className="history-sort">Mới nhất trước</span></div>

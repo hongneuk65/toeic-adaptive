@@ -84,7 +84,7 @@ export function TheoryReadingPage() {
             <label className="theory-part-filter"><span>Phần thi liên quan</span><select value={part} onChange={event => changeFilter('part', event.target.value === '0' ? '' : event.target.value)}><option value={0}>Tất cả Part</option>{[1, 2, 3, 4, 5, 6, 7].map(value => <option key={value} value={value}>Part {value}</option>)}</select></label>
           </div>
           <div className="theory-results-heading"><p role="status">{filtered.length} bài học{topic ? ` · ${topic.title}` : ''}{part ? ` · Part ${part}` : ''}</p>{(topicId || part || search) && <button className="study-action-button" onClick={() => { setSearch(''); const next = new URLSearchParams(window.location.search); next.delete('topic'); next.delete('part'); next.delete('lesson'); setParams(next); setPage(1); }}>Bỏ bộ lọc</button>}</div>
-          {!filtered.length ? <div className="theory-state"><h3>Chưa có bài phù hợp</h3><p>Thử từ khóa khác hoặc dùng nút Bỏ bộ lọc ở trên.</p></div> : <>
+          {!filtered.length ? <div className="theory-state"><h3>Chưa có bài phù hợp</h3><p>Thử từ khóa khác hoặc bỏ bộ lọc.</p></div> : <>
             <div className="theory-lessons">{visible.map(lesson => <button className="theory-lesson" key={lesson.id} onClick={() => openLesson(lesson.id)}><span className="theory-part">P{lesson.part}</span><span className="theory-lesson-copy"><strong>{lesson.title}</strong><span>{lesson.topic.title}</span></span><span className="theory-open">Đọc bài </span></button>)}</div>
             <Pagination page={currentPage} totalPages={pages} onPageChange={setPage} label="Trang bài học" />
           </>}

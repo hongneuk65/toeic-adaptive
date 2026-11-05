@@ -296,7 +296,7 @@ function ReadingWorkspace({
   }, [version.text, evidence]);
   if (recovery) return <section className="learning-surface space-y-4" aria-labelledby="reading-recovery-title">
     <h1 id="reading-recovery-title" className="text-xl font-semibold">Có bản nháp chưa lưu trong tab này</h1>
-    <p className="text-sm text-ink-medium">Bản nháp khác với tiến độ trên tài khoản. Chọn bản muốn tiếp tục; hệ thống chưa ghi đè dữ liệu trên tài khoản.</p>
+    <p className="text-sm text-ink-medium">Có hai bản tiến độ khác nhau. Chọn bản muốn tiếp tục.</p>
     <div className="flex flex-wrap gap-3">
       <button className="primary-button" onClick={() => {
         currentDraft.current = recovery; setAnswers(recovery.answers); setIndex(recovery.currentIndex); setRecovery(null); setNotice("Đã khôi phục bản nháp. Tiến độ sẽ được lưu lại vào tài khoản.");

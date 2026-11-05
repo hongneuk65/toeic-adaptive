@@ -10,7 +10,7 @@ test('theme toggles day/night, survives navigation and reload',async({page},info
  expect(await page.locator('.ambient-background-photo').evaluate(e=>getComputedStyle(e).backgroundImage)).toContain('garden-study-night.webp');
  const panel=await page.locator('.home-studio-panel').evaluate(e=>({bg:getComputedStyle(e).backgroundColor,fg:getComputedStyle(e).color}));expect(panel.bg).not.toBe('rgb(255, 254, 250)');
  const card=await page.locator('.home-studio-path>a').first().evaluate(e=>getComputedStyle(e).backgroundColor);expect(card).not.toBe('rgb(255, 254, 250)');expect(card).not.toBe('rgb(255, 255, 255)');
- await expect(page.locator('.home-studio-path>a').first()).toHaveCSS('background-color','rgba(37, 43, 43, 0.96)');
+ await expect(page.locator('.home-studio-path>a').first()).toHaveCSS('background-color','rgba(27, 43, 58, 0.88)');
  await page.screenshot({path:info.outputPath('dark-home.png'),fullPage:false});
  await page.goto('/reading');await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
  await expect(page.getByRole('heading',{name:'Luyện đọc',exact:true})).toBeVisible();
@@ -27,7 +27,7 @@ test('system dark preference works before login and can be overridden',async({pa
  await expect(page.locator('html')).toHaveAttribute('data-theme','light');
  await page.reload();await expect(page.locator('html')).toHaveAttribute('data-theme','light');
  await page.getByRole('button',{name:'Bật giao diện tối',exact:true}).click();
- await expect(page.locator('#login-email')).toHaveCSS('background-color','rgb(28, 37, 32)');
+ await expect(page.locator('#login-email')).toHaveCSS('background-color','rgb(24, 39, 53)');
  await page.screenshot({path:info.outputPath('dark-login.png'),fullPage:false});
 });
 
@@ -37,8 +37,8 @@ test('register keeps the login surface hierarchy in dark mode',async({page},info
  await page.route('**/auth/google/config',route=>route.fulfill({json:{enabled:false}}));
  await page.goto('/register');
  await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
- await expect(page.locator('.prep-auth-form')).toHaveCSS('background-color','rgba(37, 44, 40, 0.96)');
- await expect(page.locator('.form-input').first()).toHaveCSS('background-color','rgb(28, 37, 32)');
+ await expect(page.locator('.prep-auth-form')).toHaveCSS('background-color','rgba(27, 43, 58, 0.96)');
+ await expect(page.locator('.form-input').first()).toHaveCSS('background-color','rgb(24, 39, 53)');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:info.outputPath('dark-register.png'),fullPage:false});
 });

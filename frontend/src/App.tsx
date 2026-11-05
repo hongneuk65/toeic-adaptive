@@ -1,6 +1,7 @@
 import './styles/color-theme.css';
 import { ThemeToggle } from './components/ui/ThemeToggle';
 import './styles/site-nature-theme.css';
+import './styles/study-polish.css';
 import './styles/learning-motion.css';
 import { useLearningMotion } from './hooks/useLearningMotion';
 import { AmbientBackground } from './components/ambient/AmbientBackground';

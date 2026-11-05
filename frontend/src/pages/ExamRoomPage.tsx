@@ -53,14 +53,19 @@ export function ExamRoom({ exam }: { exam: ExamSession }) {
   const latestAnswers = useRef(answers);
   const revision = useRef(exam.draftRevision ?? 0);
   const savedAnswers = useRef(JSON.stringify(Object.fromEntries((exam.draftAnswers ?? []).map(answer => [answer.questionId, answer.selectedAnswer]))));
-  const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error' | 'conflict'>(() => {
+  const [saveState, setSaveState] = useState<'saved' | 'queued' | 'saving' | 'error' | 'conflict'>(() => {
     const same = JSON.stringify(answers) === JSON.stringify(Object.fromEntries((exam.draftAnswers ?? []).map(answer => [answer.questionId, answer.selectedAnswer])));
     if (same) return 'saved';
     const localRevision = readDraftRevision(attemptId);
-    return (exam.draftRevision ?? 0) > (localRevision ?? 0) ? 'conflict' : 'saving';
+    return (exam.draftRevision ?? 0) > (localRevision ?? 0) ? 'conflict' : 'queued';
   });
   const [saveRetry, setSaveRetry] = useState(0);
   const saveInFlight = useRef(false);
+  const dirtySince = useRef<number | null>(null);
+  const retryAfter = useRef(0);
+  const failedSaves = useRef(0);
+  const handledRetry = useRef(0);
+  const urgentSave = useRef(false);
   const [saveComplete, setSaveComplete] = useState(0);
   const [timeLeft, setTimeLeft] = useState(() => remainingSeconds(exam));
   const [submitting, setSubmitting] = useState(false);
@@ -105,13 +110,35 @@ export function ExamRoom({ exam }: { exam: ExamSession }) {
     }
   }, [activeGroupKey]);
 
+  useEffect(() => {
+    const flush = () => {
+      if (JSON.stringify(latestAnswers.current) === savedAnswers.current) return;
+      urgentSave.current = true; setSaveRetry(value => value + 1);
+    };
+    const visibility = () => { if (document.hidden) flush(); };
+    document.addEventListener('visibilitychange', visibility);
+    window.addEventListener('online', flush);
+    return () => { document.removeEventListener('visibilitychange', visibility); window.removeEventListener('online', flush); };
+  }, []);
+
   const expired = timeLeft <= 0;
   const conflicted = saveState === 'conflict';
   useEffect(() => {
     const serialized = JSON.stringify(answers);
-    if (serialized === savedAnswers.current || submitting || expired || conflicted) return;
+    if (serialized === savedAnswers.current) { dirtySince.current = null; return; }
+    if (submitting || expired || conflicted) return;
+    const now = Date.now();
+    dirtySince.current ??= now;
+    const manualRetry = saveRetry !== handledRetry.current;
+    handledRetry.current = saveRetry;
+    const urgent = urgentSave.current || manualRetry;
+    urgentSave.current = false;
+    if (urgent) retryAfter.current = 0;
+    const deadlineFlush = now + Math.max(0, timeLeft * 1000 - 3000);
+    const scheduledAt = urgent ? now : Math.max(retryAfter.current, Math.min(dirtySince.current + 30000, deadlineFlush));
     const timer = window.setTimeout(async () => {
-      if (saveInFlight.current) return;
+      if (saveInFlight.current || submittingRef.current) return;
+      if (!navigator.onLine) { setSaveState('error'); return; }
       saveInFlight.current = true;
       setSaveState('saving');
       try {
@@ -121,10 +148,14 @@ export function ExamRoom({ exam }: { exam: ExamSession }) {
         });
         revision.current = saved.draftRevision;
         savedAnswers.current = serialized;
+        failedSaves.current = 0; retryAfter.current = 0;
+        dirtySince.current = JSON.stringify(latestAnswers.current) === serialized ? null : Date.now();
         saveAnswers(attemptId, latestAnswers.current, saved.draftRevision);
-        setSaveState(JSON.stringify(latestAnswers.current) === serialized ? 'saved' : 'saving');
+        setSaveState(JSON.stringify(latestAnswers.current) === serialized ? 'saved' : 'queued');
         setSaveComplete(value => value + 1);
       } catch (cause) {
+        failedSaves.current++;
+        retryAfter.current = Date.now() + Math.min(120000, 30000 * 2 ** (failedSaves.current - 1));
         // A PATCH may have committed even when its response was lost. Reconcile
         // before retrying the same revision, which would otherwise conflict.
         let reconciled = false;
@@ -138,23 +169,25 @@ export function ExamRoom({ exam }: { exam: ExamSession }) {
             savedAnswers.current = serialized;
             saveAnswers(attemptId, latestAnswers.current, revision.current);
             reconciled = true;
+            failedSaves.current = 0; retryAfter.current = 0;
+            dirtySince.current = JSON.stringify(latestAnswers.current) === serialized ? null : Date.now();
             setSaveComplete(value => value + 1);
           } else if ((status.draftRevision ?? 0) > revision.current) conflict = true;
         } catch { /* Preserve the local draft while offline or reauthenticating. */ }
-        setSaveState(reconciled ? JSON.stringify(latestAnswers.current) === serialized ? 'saved' : 'saving' : conflict ? 'conflict' : 'error');
+        setSaveState(reconciled ? JSON.stringify(latestAnswers.current) === serialized ? 'saved' : 'queued' : conflict ? 'conflict' : 'error');
       } finally {
         saveInFlight.current = false;
       }
-    }, 500);
+    }, Math.max(0, scheduledAt - now));
     return () => window.clearTimeout(timer);
-  }, [answers, attemptId, submitting, expired, saveRetry, saveComplete, conflicted, navigate]);
+  }, [answers, attemptId, submitting, expired, timeLeft, saveRetry, saveComplete, conflicted, navigate]);
 
   const handleSelect = (index: number, option: string) => {
     if (timeLeft <= 0 || submittingRef.current || conflicted || !activeGroup || !activeGroup.indices.includes(index)) return;
     const next = { ...answers, [questions[index].id]: option };
     latestAnswers.current = next;
     setAnswers(next);
-    setSaveState('saving');
+    setSaveState('queued');
     if (!listening) setCurrentIndex(index);
     setStorageUnavailable(!saveAnswers(attemptId, next, revision.current));
   };
@@ -284,7 +317,7 @@ export function ExamRoom({ exam }: { exam: ExamSession }) {
     </div>
     <footer className="exam-footer">
       {listening ? <p className="exam-listening-status" role="status">Listening{exam.listeningPlan ? ` · ${formatTime(exam.listeningPlan.targetSeconds)}` : ""} · Câu {groupLabel}<span>Hết audio có thời gian chọn đáp án, sau đó tự chuyển câu.</span></p> : <><button className="exam-nav-button" disabled={previous === currentIndex || submitting} onClick={() => navigateReading(previous)}>Câu trước</button><div className="exam-palette-anchor" ref={paletteRef} onKeyDown={event => { if (event.key === 'Escape' && paletteOpen) { event.preventDefault(); closePalette(); } }}><button className="exam-palette-trigger" ref={paletteTrigger} aria-expanded={paletteOpen} aria-controls="exam-palette" onClick={() => setPaletteOpen(value => !value)}>Câu {number(currentIndex)} <span aria-hidden="true">{paletteOpen ? '▾' : '▴'}</span></button>{paletteOpen && <div id="exam-palette" className="exam-palette"><div className="exam-palette-heading"><strong>Reading</strong><span><i className="exam-green-dot" /> Đã chọn · Xám: chưa làm</span></div><div className="exam-palette-grid">{questions.map((question, index) => question.part >= 5 && <button key={question.id} disabled={submitting} data-answered={!!answers[question.id] || undefined} aria-current={index === currentIndex ? 'step' : undefined} aria-label={`Câu ${number(index)}, ${answers[question.id] ? 'đã chọn' : 'chưa làm'}`} onClick={() => { if (index === currentIndex) closePalette(); else { navigateReading(index); setPaletteOpen(false); } }}>{number(index)}</button>)}</div></div>}</div><button className="exam-nav-button" disabled={next === currentIndex || submitting} onClick={() => navigateReading(next)}>Câu tiếp</button></>}
-      <span className="exam-saving-label" role="status">{saveState === 'saving' ? 'Đang lưu máy chủ…' : saveState === 'error' || saveState === 'conflict' ? 'Chưa đồng bộ máy chủ' : 'Đã lưu máy chủ'}</span>
+      <span className="exam-saving-label" role="status">{saveState === 'queued' ? 'Đã lưu trên máy · chờ đồng bộ' : saveState === 'saving' ? 'Đang lưu máy chủ…' : saveState === 'error' || saveState === 'conflict' ? 'Chưa đồng bộ máy chủ' : 'Đã lưu máy chủ'}</span>
     </footer>
   </div>;
 }

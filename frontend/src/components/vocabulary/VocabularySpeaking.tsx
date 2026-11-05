@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api, getErrorMessage } from '../../lib/api';
-import { SpeakingRecorder } from '../listening/SpeakingRecorder';
 import { BrowserSpeechInput } from './BrowserSpeechInput';
 import { useAuth } from '../../auth/useAuth';
 
@@ -21,11 +20,9 @@ function SpeakingExercise({ card, userId, onBusyChange }: { card: SpeakingCard; 
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [audioError, setAudioError] = useState('');
-  const [recorded, setRecorded] = useState(false);
   const [speechActive, setSpeechActive] = useState(false);
   const [aiFeedbackAvailable, setAiFeedbackAvailable] = useState<boolean | null>(null);
   const request = useRef<AbortController | null>(null);
-  const onRecorded = useCallback(() => setRecorded(true), []);
   useEffect(() => {
     const controller = new AbortController();
     void api<{ aiFeedbackAvailable?: boolean }>('/vocabulary/practice-capabilities', { signal: controller.signal }).then(value => {
@@ -90,8 +87,6 @@ function SpeakingExercise({ card, userId, onBusyChange }: { card: SpeakingCard; 
       {card.example && <details className="text-sm"><summary className="cursor-pointer py-2">Câu mẫu</summary><p className="break-words">{card.example}</p></details>}
       {audioError && <p role="alert" className="text-sm text-rose-800">{audioError}</p>}
     </header>
-    <details className="text-sm"><summary className="cursor-pointer py-2">Ghi âm để tự nghe lại</summary><fieldset disabled={pending || speechActive} className="min-w-0"><SpeakingRecorder maximumSeconds={60} onRecorded={onRecorded} /></fieldset></details>
-    {recorded && <p role="status" className="text-sm text-ink-medium">Bạn có thể nghe lại bản ghi, rồi gõ hoặc nói để nhập câu.</p>}
     <BrowserSpeechInput disabled={pending} onActiveChange={setSpeechActive} onTranscript={text => {
       const next = `${response.trim()}${response.trim() ? ' ' : ''}${text}`;
       updateResponse(next);

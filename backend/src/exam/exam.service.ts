@@ -91,7 +91,7 @@ export class ExamService {
     return attempt;
   }
 
-  private assertOpen(attempt: ExamAttempt) {
+  private assertOpen(attempt: Pick<ExamAttempt, 'submittedAt' | 'questionIds'>) {
     if (attempt.submittedAt) throw new BadRequestException('Bài thi này đã được nộp trước đó');
     if (!attempt.questionIds.length) {
       throw new BadRequestException('Lượt thi cũ chưa lưu danh sách câu hỏi. Vui lòng tạo lượt thi mới.');
@@ -162,16 +162,26 @@ export class ExamService {
     return Array.isArray(attempt.draftAnswers) ? attempt.draftAnswers as unknown as {questionId: number; selectedAnswer: string}[] : [];
   }
 
-  private validateAnswers(attempt: ExamAttempt, answers: {questionId: number; selectedAnswer: string}[]) {
-    if (new Set(answers.map(a => a.questionId)).size !== answers.length || answers.some(a => !attempt.questionIds.includes(a.questionId) || !/^[ABCD]$/.test(a.selectedAnswer)))
+  private validateAnswers(attempt: Pick<ExamAttempt, 'questionIds'>, answers: {questionId: number; selectedAnswer: string}[]) {
+    const allowed = new Set(attempt.questionIds);
+    if (new Set(answers.map(a => a.questionId)).size !== answers.length || answers.some(a => !allowed.has(a.questionId) || !/^[ABCD]$/.test(a.selectedAnswer)))
       throw new BadRequestException('Danh sách đáp án bị trùng hoặc chứa câu hỏi ngoài đề');
   }
 
   async saveDraft(userId: number, id: number, dto: {revision: number; answers: {questionId: number; selectedAnswer: string}[]}) {
-    const attempt = await this.getOwnedAttempt(userId, id);
+    // Draft sync does not need the large frozen question snapshot or previous answers.
+    const attempt = await this.prisma.examAttempt.findUnique({
+      where: { id }, select: { id: true, userId: true, submittedAt: true, questionIds: true, deadlineAt: true },
+    });
+    if (!attempt) throw new NotFoundException('Không tìm thấy lượt thi');
+    if (attempt.userId !== userId) throw new ForbiddenException('Bạn không có quyền truy cập bài thi này');
     this.assertOpen(attempt);
     this.validateAnswers(attempt, dto.answers);
-    const deadline = attempt.deadlineAt ?? this.deadline(attempt.examType, attempt.selectedParts, await this.questionsFor(attempt), attempt.startedAt);
+    let deadline = attempt.deadlineAt;
+    if (!deadline) {
+      const legacy = await this.getOwnedAttempt(userId, id);
+      deadline = this.deadline(legacy.examType, legacy.selectedParts, await this.questionsFor(legacy), legacy.startedAt);
+    }
     if (Date.now() >= deadline.getTime()) throw new BadRequestException('Đã hết thời gian làm bài; nộp bài để chấm bản nháp đã lưu.');
     const savedAt = new Date();
     const saved = await this.prisma.examAttempt.updateMany({

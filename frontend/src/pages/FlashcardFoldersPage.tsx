@@ -1,3 +1,4 @@
+import { folderCover } from '../components/vocabulary/folderCover';
 import { Pagination } from '../components/ui/Pagination';
 import { ActivitySuggestions } from '../components/ActivitySuggestions';
 import '../styles/prep-knowledge.css';
@@ -134,14 +135,15 @@ export const FlashcardFoldersPage: React.FC = () => {
       ) : (
         <ul className="prep-folder-catalog">
           {visibleFolders.map(folder => <li key={folder.id} className="prep-folder-tile" data-owned={folder.isOwner || undefined}>
-            <div className="vocabulary-book-heading"><span className="vocabulary-book-mark" aria-hidden="true">{folder.name.trim().slice(0, 1).toLocaleUpperCase('vi-VN')}</span><p className="prep-folder-eyebrow">{folder.count} từ<span>{folder.isOwner ? 'Sổ của bạn' : 'Thư viện'}</span></p></div>
+            <Link className="folder-card-link" to={`/flashcards/${folder.id}`} aria-label={folder.name}>
+            <img className="vocabulary-folder-cover" src={folderCover(folder.name)} alt="" width="480" height="240" loading="lazy" decoding="async" />
+            <div className="vocabulary-book-heading"><p className="prep-folder-eyebrow">{folder.count} từ<span>{folder.isOwner ? 'Sổ của bạn' : 'Thư viện'}</span></p></div>
             <div className="min-w-0 vocabulary-folder-content">
-              <h2 className="text-lg font-semibold"><Link className="folder-open-link text-left break-words" to={`/flashcards/${folder.id}`}>{folder.name}</Link></h2>
+              <h2 className="text-lg font-semibold">{folder.name}</h2>
               {folder.description && <p className="vocabulary-folder-description text-sm leading-6 text-ink-medium break-words">{folder.description}</p>}
             </div>
-            <div className="vocabulary-folder-open-row"><Link to={`/flashcards/${folder.id}`} className="vocabulary-open-set" aria-label={`Học bộ từ ${folder.name}`}>Học bộ từ</Link></div>
+            </Link>
             <div className="vocabulary-folder-footer">
-              <details className="vocabulary-folder-details"><summary>Thông tin bộ từ</summary><div><p>{folder.isOwner ? 'Của bạn' : `Người tạo: ${folder.authorName}`}</p><p>Mã: {folder.code}</p>{folder.description && <p>{folder.description}</p>}</div></details>
               {folder.isOwner && <button onClick={event => handleDeleteFolder(folder.id, folder.name, event)} className="folder-delete-button min-h-11 px-3 text-sm text-rose-800 study-action-button" aria-label={`Xóa thư mục ${folder.name}`}>Xóa</button>}
             </div>
           </li>)}

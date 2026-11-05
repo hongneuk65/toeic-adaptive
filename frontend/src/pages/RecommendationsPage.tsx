@@ -26,12 +26,7 @@ function PlanCard({ item, index, availableSkills, onPractice }: { item: Learning
   return <article className={`topic-card learning-plan-card${index === 0 ? ' topic-card-featured' : ''}`}>
     <div className="topic-card-top"><span className="topic-step">{String(index + 1).padStart(2, '0')}</span><span className="topic-status">{PLAN_STATUS[item.priority]}</span></div>
     <p className="topic-parts">Part {item.part}</p><h3>{item.skillName}</h3>
-    {item.reasons[0] && <p className="mt-3 text-sm leading-6">{item.reasons[0]}</p>}
     {dueLabel && <p className="topic-evidence">Ôn từ: <time dateTime={item.reviewDueAt!}>{dueLabel}</time></p>}
-    {(item.reasons.length > 1 || item.foundations.length > 0) && <details className="mt-3 text-sm leading-6"><summary className="cursor-pointer rounded py-2 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">Vì sao gợi ý?</summary>
-      {item.reasons.length > 1 && <ul className="learning-plan-reasons" aria-label={`Lý do gợi ý ${item.skillName}`}>{item.reasons.slice(1).map((reason, i) => <li key={`${i}-${reason}`}>{reason}</li>)}</ul>}
-      {item.foundations.length > 0 && <div className="learning-plan-foundations"><p>Kiến thức nền:</p>{item.foundations.map(foundation => availableSkills.some(skill => skill.skillId === foundation.skillId) ? <button key={foundation.skillId} className="topic-text-link study-action-button" onClick={() => onPractice(foundation.skillId)} aria-label={`Luyện nền tảng ${foundation.skillName}`}>{foundation.skillName}</button> : <span key={foundation.skillId}>{foundation.skillName}</span>)}</div>}
-    </details>}
     <div className="topic-actions">
       <button className={index === 0 ? 'primary-button' : 'secondary-button'} onClick={() => onPractice(item.skillId)} disabled={!availableSkills.some(skill => skill.skillId === item.skillId)} aria-label={`Luyện ${item.skillName}`}>Luyện kỹ năng</button>
       {item.lesson && <Link className="topic-text-link study-action-button" to={`/theory?lesson=${item.lesson.id}`}>Học kiến thức</Link>}
@@ -83,11 +78,13 @@ export function RecommendationsPage() {
     <PageHeader variant="compact" title="Gợi ý học tiếp" actions={<Link className="secondary-button" to="/curriculum">Lộ trình học</Link>} />
     {loading && !profile ? <section className="topic-loading" role="status" aria-busy="true">Đang tải gợi ý…<div className="skeleton-block" aria-hidden="true" /></section> : !profile ? <section role="alert" className="status-message"><h2>Chưa tải được gợi ý học</h2><p>{error || 'Vui lòng thử lại.'}</p><button className="primary-button" onClick={reload}>Thử lại</button></section> : <>
       {error && <p className="status-message" role="alert">Chưa cập nhật được tiến độ. <button className="text-action" onClick={reload}>Thử lại</button></p>}
-      <section aria-labelledby="today-topics-title">
-        <div className="topic-section-heading"><h2 id="today-topics-title">Ưu tiên hôm nay</h2></div>
-        {learningPlan ? planPriorities.length ? <div className="topic-priorities">{planPriorities.map((item, index) => <PlanCard key={item.skillId} item={item} index={index} availableSkills={profile.skills} onPractice={practiceSkill} />)}</div> : <div className="topic-empty"><h3>Chưa có kỹ năng sẵn sàng để gợi ý</h3><p>Chọn bài trong thư viện để bắt đầu.</p><Link className="secondary-button" to="/theory">Mở thư viện kiến thức</Link></div> : priorities.length ? <div className="topic-priorities">{priorities.map((topic, index) => <TopicCard key={topic.id} topic={topic} index={index} onPractice={practice} featured={index === 0} />)}</div> : <div className="topic-empty"><h3>Chưa có chủ đề phù hợp</h3><p>Chọn bài trong thư viện để bắt đầu.</p><Link className="secondary-button" to="/theory">Mở thư viện kiến thức</Link></div>}
+      <div className="recommendation-workspace">
+      <section className="recommendation-session" aria-labelledby="today-topics-title">
+        <div className="topic-section-heading"><h2 id="today-topics-title">Buổi học tiếp theo</h2></div>
+        {learningPlan ? planPriorities.length ? <div className="topic-priorities">{planPriorities.map((item, index) => <PlanCard key={item.skillId} item={item} index={index} availableSkills={profile.skills} onPractice={practiceSkill} />)}</div> : <div className="topic-empty"><h3>Chưa có kỹ năng sẵn sàng để gợi ý</h3><p>Chọn bài từ thư viện.</p><Link className="secondary-button" to="/theory">Mở thư viện kiến thức</Link></div> : priorities.length ? <div className="topic-priorities">{priorities.map((topic, index) => <TopicCard key={topic.id} topic={topic} index={index} onPractice={practice} featured={index === 0} />)}</div> : <div className="topic-empty"><h3>Chưa có chủ đề phù hợp</h3><p>Chọn bài từ thư viện.</p><Link className="secondary-button" to="/theory">Mở thư viện kiến thức</Link></div>}
       </section>
       <LearnerOverview skills={profile.skills} onPractice={practiceSkill} />
+      </div>
       <details className="topic-browse">
         <summary className="topic-section-heading"><h2>Chủ đề khác</h2><span>{topics.length} chủ đề</span></summary>
         <div className="topic-section-heading"><div className="topic-filters" role="group" aria-label="Lọc chủ đề">{([['all', 'Tất cả'], ['listening', 'Nghe'], ['reading', 'Đọc & ngữ pháp']] as const).map(([value, label]) => <button key={value} aria-pressed={filter === value} onClick={() => { setFilter(value); setPage(1); }}>{label}</button>)}</div></div>

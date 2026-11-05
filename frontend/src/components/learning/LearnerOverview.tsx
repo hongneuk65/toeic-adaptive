@@ -20,13 +20,13 @@ export function LearnerOverview({ skills, onPractice }: { skills: SkillMasteryIt
       <div><dt>Lượt luyện kỹ năng</dt><dd>{practiceCount}</dd></div>
       <div><dt>Lần luyện gần nhất</dt><dd className="learner-overview-date">{lastPracticed ? <time dateTime={lastPracticed.toISOString()}>{new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' }).format(lastPracticed)}</time> : 'Chưa ghi nhận'}</dd></div>
     </dl>
-    <div className="learner-parts" aria-label="Mức kỹ năng theo Part">{PART_NAMES.map((name, index) => {
+    <div className="learner-parts learner-part-chart" aria-label="Biểu đồ ước lượng theo Part">{PART_NAMES.map((name, index) => {
       const part = index + 1;
       const available = skills.filter(skill => skill.part === part);
       const observations = available.filter(practiced);
       const estimates = observations.filter(hasEstimate);
       const estimate = estimates.length ? estimates.reduce((sum, skill) => sum + skill.masteryScore, 0) / estimates.length : null;
-      return <article className="learner-part" key={part} aria-label={`Part ${part}`}><h3>Part {part}</h3><p>{name}</p>{estimate === null ? <strong className="learner-part-unknown">Chưa đủ dữ liệu</strong> : <><strong>{percent(estimate)}<span>%</span></strong><meter min={0} max={1} value={estimate} aria-label={`Ước lượng kỹ năng đã luyện Part ${part}`}>{percent(estimate)}%</meter></>}<small>{observations.length}/{available.length} kỹ năng đã luyện{estimate !== null && observations.length < available.length ? ' · một phần' : ''}</small></article>;
+      return <article className="learner-part" key={part} aria-label={`Part ${part}`}><h3>Part {part}</h3><p>{name}</p>{estimate === null ? <><strong className="learner-part-unknown">Chưa đủ dữ liệu</strong><svg className="learner-bar" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="1" width="98" height="10" rx="5" className="learner-bar-missing" /></svg></> : <><strong>{percent(estimate)}<span>%</span></strong><svg className="learner-bar" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><rect width="100" height="12" rx="6" className="learner-bar-track" /><rect width={percent(estimate)} height="12" rx="6" className="learner-bar-value" /></svg><meter min={0} max={1} value={estimate} aria-label={`Ước lượng kỹ năng đã luyện Part ${part}`}>{percent(estimate)}%</meter></>}<small>{observations.length}/{available.length} kỹ năng đã luyện{estimate !== null && observations.length < available.length ? ' · một phần' : ''}</small></article>;
     })}</div>
     {focus.length > 0 && <div className="learner-focus"><h3>Có thể củng cố tiếp</h3><ul>{focus.map(skill => <li key={skill.skillId}><div><strong>{skill.skillName}</strong><span>Part {skill.part} · Ước lượng {percent(skill.masteryScore)}% · {skill.practiceCount} lượt luyện</span></div><button className="study-action-button" onClick={() => onPractice(skill.skillId)} aria-label={`Củng cố ${skill.skillName}`}>Luyện kỹ năng</button></li>)}</ul></div>}
     <p className="learner-overview-note">Ước lượng kỹ năng, không phải điểm TOEIC.</p>

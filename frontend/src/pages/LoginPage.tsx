@@ -37,7 +37,7 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <AuthShell title="Đăng nhập" description="Đăng nhập để tiếp tục lộ trình luyện TOEIC của bạn." footer={<>Chưa có tài khoản? <Link className="font-semibold text-accent-coral hover:underline" to="/register">Đăng ký</Link></>}>
+    <AuthShell title="Đăng nhập" description="Tiếp tục việc học của bạn." footer={<>Chưa có tài khoản? <Link className="font-semibold text-accent-coral hover:underline" to="/register">Đăng ký</Link></>}>
       {location.state?.registered && <p role="status" className="mb-4 text-sm text-accent-navy">Đã tạo tài khoản. Đăng nhập để bắt đầu học.</p>}
       {errorMessage && <p role="alert" className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{errorMessage}</p>}
       <GoogleSignIn />

@@ -1,0 +1,244 @@
+/* One restrained palette and a clear hierarchy across study surfaces. */
+#root .nature-app{--nature-ink:#22334b;--nature-muted:#5e6d80;--nature-line:#dce3e9;--nature-surface:#fff;--nature-soft:#f0f5f6;--ui-ink:#22334b;--ui-muted:#5e6d80;--ui-line:#dce3e9;--ui-blue:#147568;--ui-blue-soft:#e7f3ef;color:var(--nature-ink)}
+#root .nature-app .ambient-background{background:#f5f7f9}
+#root .nature-app .ambient-background-photo{opacity:.15;background-image:linear-gradient(90deg,#f5f7f9 10%,#f5f7f980),url('/images/garden-study.webp')}
+#root .nature-app .ambient-background-light{opacity:.015;animation:none}
+#root .nature-app :is(.study-layout[data-section],.prep-home){--study-ink:var(--nature-ink);--study-navy:var(--nature-ink);--study-blue:#147568;--study-line:var(--nature-line);--workspace-muted:var(--nature-muted);--workspace-surface:#fff;--workspace-soft:#f0f5f6;--ui-ink:var(--nature-ink);--ui-muted:var(--nature-muted);--ui-line:var(--nature-line);--ui-blue:#147568;--ui-blue-soft:#e7f3ef;--prep-ink:var(--nature-ink);--prep-navy:var(--nature-ink);--prep-blue:#147568}
+#root .nature-app :is(.app-header,.app-navigation-capsule){background:#ffffffed;border-color:var(--nature-line);box-shadow:none;backdrop-filter:none}
+#root .nature-app :is(.app-brand,.learning-nav-link,.nav-dropdown>summary,.app-account-action){color:var(--nature-ink)}
+#root .nature-app :is(.learning-nav-link[aria-current=page],.nav-dropdown[data-active=true]>summary){background:#e7f3ef;color:#116458}
+#root .nature-app :is(.learning-nav-link,.nav-dropdown>summary){font-size:13px;letter-spacing:0}
+#root .nature-app :is(.primary-button,.study-primary-button,.prep-home-hero-cta){background:#147568;color:#fff;border:1px solid #147568;box-shadow:none;border-radius:10px;font-weight:600}
+#root .nature-app :is(.primary-button,.study-primary-button,.prep-home-hero-cta):hover{background:#0e6055;border-color:#0e6055}
+#root .nature-app :is(.secondary-button,.study-action-button){background:#fff;color:#334c62;border:1px solid #cfdae3;box-shadow:none;border-radius:10px}
+#root .nature-app :is(.secondary-button,.study-action-button):hover{background:#f0f5f6}
+#root .nature-app :is(.page-header h1,.prep-home-heading h2){color:var(--nature-ink);letter-spacing:-.035em;font-weight:650}
+#root .nature-app .page-header p{color:var(--nature-muted);font-size:14px;line-height:1.7;max-width:640px}
+#root .nature-app :is(input,select,textarea){border-color:#cfdae3;accent-color:#147568}
+#root .nature-app :is(a,button,input,select,textarea):focus-visible{outline:3px solid #147568;outline-offset:3px}
+#root .nature-app .prep-home.home-studio .prep-home-hero-content{gap:44px;align-items:center}
+#root .nature-app .prep-home.home-studio .prep-home-hero h1{color:#22334b;font-size:clamp(34px,3.2vw,46px);font-weight:650;line-height:1.2;letter-spacing:-.045em}
+#root .nature-app .prep-home.home-studio .prep-home-hero h1 span{color:#147568}
+#root .nature-app .prep-home.home-studio .home-studio-eyebrow{color:#607286;font-size:10px;letter-spacing:.12em}
+#root .nature-app .prep-home.home-studio .home-studio-intro{max-width:340px;font-size:14px;line-height:1.75;color:#5e6d80;margin:14px 0 0}
+#root .nature-app .prep-home.home-studio .home-discover-dock{margin-top:20px}
+#root .nature-app .prep-home.home-studio .home-studio-panel{background:#fff;border:1px solid #dce3e9;border-radius:16px;box-shadow:0 8px 24px #22334b05;padding:24px}
+#root .nature-app .prep-home.home-studio .home-studio-panel .prep-home-heading h2{font-size:20px;color:#22334b}
+#root .nature-app .prep-home.home-studio .prep-home-progress-content h3{font-size:15px;color:#334c62}
+#root .nature-app .prep-home.home-studio .prep-home-progress-content p{font-size:13px;color:#5e6d80}
+#root .nature-app .prep-home.home-studio .prep-home-blue-button{background:#e7f3ef;border-color:#d1e6de;color:#116458;border-radius:9px;font-size:13px}
+#root .nature-app .prep-home.home-studio .prep-home-real-stats{border-color:#e6ebf0}
+#root .nature-app .prep-home.home-studio .prep-home-real-stats dd{color:#22334b;font-size:24px;font-weight:600}
+#root .nature-app .prep-home.home-studio .prep-home-real-stats dt{color:#5e6d80;font-size:12px}
+#root .nature-app .prep-home.home-studio .prep-home-programs{padding-top:28px}
+#root .nature-app .prep-home.home-studio .prep-home-programs>.prep-home-heading{margin-bottom:24px;align-items:center}
+#root .nature-app .prep-home.home-studio .prep-home-programs .prep-home-heading h2{font-size:24px}
+.home-study-groups{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:28px}
+.home-study-group{min-width:0}
+.home-study-group-heading{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.home-study-group-heading h3{font-size:12px!important;letter-spacing:.06em!important;color:#607286;font-weight:600}
+.home-study-group-heading:after{content:'';height:1px;flex:1;background:#dce3e9}
+#root .nature-app .home-study-group .home-studio-paths{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#root .nature-app .home-study-group:last-child .home-studio-paths{grid-template-columns:repeat(2,minmax(0,1fr))}
+#root .nature-app .home-study-group .home-studio-path{grid-column:auto}
+#root .nature-app .home-studio-path>a{background:#fff;border-color:#dce3e9;border-radius:14px;min-height:185px;padding:18px;box-shadow:none;color:#22334b}
+#root .nature-app .home-studio-path>a>div{margin-top:18px}
+#root .nature-app .home-studio-path h3{font-size:19px;font-weight:600;color:#22334b;line-height:1.4}
+#root .nature-app .home-studio-path p{font-size:13px;color:#5e6d80;line-height:1.6}
+#root .nature-app .home-studio-path-number{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:#edf4f7;color:#406886;letter-spacing:0}
+#root .nature-app .home-study-group:last-child .home-studio-path-number{background:#e7f3ef;color:#147568}
+#root .nature-app .home-studio-path-action{color:#147568;font-size:13px;padding-top:18px}
+#root .nature-app .home-studio-path>a:hover{border-color:#9ac6bb;background:#fbfdfc;box-shadow:0 8px 20px #22334b08;transform:translateY(-3px)}
+#root .nature-app .study-footer{background:#f0f4f6;border-color:#dce3e9}
+#root .nature-app .study-footer-mark{background:#147568}
+#root .nature-app .study-footer :is(p,nav a,.study-footer-bottom){color:#5e6d80;font-size:12px}
+#root .nature-app :is(.theme-toggle,.ambient-motion-toggle){background:#fff;color:#53667a;border-color:#dce3e9}
+html[data-theme=dark] #root .nature-app{--nature-ink:#e4edf4;--nature-muted:#a6b7c7;--nature-line:#344759;--nature-surface:#1b2b3a;--nature-soft:#223647}
+html[data-theme=dark] #root .nature-app .ambient-background{background:#12202d}
+html[data-theme=dark] #root .nature-app .ambient-background-photo{opacity:.06}
+html[data-theme=dark] #root .nature-app :is(.app-header,.app-navigation-capsule,.home-studio-panel,.home-studio-path>a,.theme-toggle,.ambient-motion-toggle){background:#1b2b3a;color:#e4edf4;border-color:#344759}
+html[data-theme=dark] #root .nature-app .prep-home.home-studio :is(h1,h2,h3,.prep-home-real-stats dd){color:#e4edf4}
+html[data-theme=dark] #root .nature-app .prep-home.home-studio :is(p,.prep-home-real-stats dt){color:#a6b7c7}
+html[data-theme=dark] #root .nature-app .home-studio-path-action{color:#82d3bc}
+html[data-theme=dark] #root .nature-app :is(.secondary-button,.study-action-button){background:#223647;color:#d3e2ee;border-color:#344759}
+html[data-theme=dark] #root .nature-app .study-footer{background:#162634}
+@media(max-width:1050px){.home-study-groups{grid-template-columns:1fr;gap:24px}#root .nature-app .home-study-group:last-child .home-studio-paths{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){#root .nature-app .prep-home.home-studio .prep-home-hero h1{font-size:34px}#root .nature-app .prep-home.home-studio .prep-home-hero-content{gap:24px}#root .nature-app .prep-home.home-studio .home-studio-panel{padding:20px}#root .nature-app .prep-home.home-studio .prep-home-programs>.prep-home-heading{align-items:flex-start;gap:12px}#root .nature-app .prep-home.home-studio .prep-home-programs .prep-home-heading h2{font-size:22px}#root .nature-app .prep-home-programs .study-action-button{font-size:12px;padding:8px 10px;min-height:44px}#root .nature-app .home-study-group .home-studio-paths{grid-template-columns:repeat(2,minmax(0,1fr))}#root .nature-app .home-studio-path>a{display:flex;min-height:180px;padding:16px}#root .nature-app .home-studio-path:last-child>a>div{margin-top:18px}#root .nature-app .home-studio-path:last-child .home-studio-path-action{padding-top:18px}#root .nature-app .home-study-group:first-child .home-studio-path:last-child{grid-column:1/-1}#root .nature-app .home-study-group:first-child .home-studio-path:last-child>a{min-height:120px;display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:14px}#root .nature-app .home-study-group:first-child .home-studio-path:last-child>a>div{margin:0}#root .nature-app .home-study-group:first-child .home-studio-path:last-child .home-studio-path-action{padding:0}.home-study-groups{gap:24px}}
+@media(prefers-reduced-motion:reduce){#root .nature-app .home-studio-path>a:hover{transform:none}}
+/* Keep navigation secondary to the learner's next action. */
+#root .nature-app .home-layout .app-start-action{display:none}
+#root .nature-app .app-start-action{background:#147568;color:#fff;border-radius:10px;box-shadow:none}
+#root .nature-app .app-brand-mark{background:#147568}
+#root .nature-app .prep-home-programs .study-action-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 14px;font-size:13px;text-decoration:none;white-space:nowrap}
+#root .nature-app .prep-home.home-studio .home-studio-intro{max-width:410px}
+html[data-theme=dark] #root .nature-app .prep-home.home-studio :is(.home-studio-panel,.home-studio-path>a){background:#1b2b3a;border-color:#344759;color:#e4edf4}
+html[data-theme=dark] #root .nature-app .home-study-group-heading h3{color:#a6b7c7}
+html[data-theme=dark] #root .nature-app .home-study-group-heading:after{background:#344759}
+html[data-theme=dark] #root .nature-app .home-studio-path-number{background:#2a4052;color:#bdd9ed}
+html[data-theme=dark] #root .nature-app .home-study-group:last-child .home-studio-path-number{background:#1f433e;color:#82d3bc}
+html[data-theme=dark] #root .nature-app :is(.learning-nav-link[aria-current=page],.nav-dropdown[data-active=true]>summary){background:#1f433e;color:#a4e2d1}
+html[data-theme=dark] #root .nature-app :is(.nav-dropdown-panel,.mobile-learning-nav){background:#1b2b3a;border-color:#344759}
+@media(max-width:760px){#root .nature-app .app-header-inner{padding:12px 16px;gap:10px;align-items:flex-start}#root .nature-app .app-navigation-capsule{flex:1;width:auto;border:0;border-radius:0;padding:0;background:transparent}#root .nature-app .app-header-actions{display:flex;flex-direction:row;align-items:center;padding:0;gap:6px;max-width:none}#root .nature-app .app-start-action{display:none}#root .nature-app .app-header-actions .app-account-action{font-size:11px;min-height:44px;padding:6px}#root .nature-app .mobile-learning-navigation{border:0;margin-top:2px}#root .nature-app .mobile-nav-trigger{padding:0;min-height:36px;font-size:12px;gap:22px;width:fit-content;color:#5e6d80}#root .nature-app .mobile-learning-nav{position:fixed;top:100px;left:16px;right:16px;width:auto;max-height:calc(100dvh - 120px);overflow-y:auto;background:#fff;border:1px solid #dce3e9}#root .nature-app .prep-home.home-studio .prep-home-hero{padding-top:124px}#root .nature-app .study-layout .app-content{padding-top:118px}#root .nature-app .prep-home.home-studio .home-studio-welcome{padding:0}#root .nature-app .prep-home.home-studio .home-studio-intro{margin-top:10px;font-size:13px}#root .nature-app .prep-home.home-studio .home-studio-eyebrow{margin-bottom:10px}#root .nature-app .prep-home.home-studio .home-discover-dock{margin-top:14px}#root .nature-app .prep-home.home-studio .prep-home-hero-cta{min-height:44px;padding:10px 18px}#root .nature-app .prep-home.home-studio .prep-home-programs>.prep-home-heading{flex-wrap:wrap}#root .nature-app .prep-home.home-studio .prep-home-programs .prep-home-heading h2{font-size:22px;max-width:none}}
+@media(min-width:1051px){#root .nature-app .prep-home.home-studio .prep-home-hero{padding-top:112px;padding-bottom:16px}}
+@media(max-width:760px){#root .nature-app .study-layout .app-content{padding-top:24px}#root .nature-app .prep-home-programs .study-action-button{background:transparent;border:0;padding:0;min-height:32px;color:#147568}}
+html[data-theme=dark] #root .nature-app .study-layout[data-section]{--workspace-surface:#1b2b3a;--workspace-soft:#223647;--ui-blue:#82d3bc;--ui-blue-soft:#1f433e;--study-blue:#82d3bc}
+/* Night mode uses the same teal accent, with complete surface/text pairs. */
+html[data-theme=dark] #root .nature-app .prep-home.home-studio .prep-home-hero h1 span{color:#82d3bc;background:none;-webkit-text-fill-color:#82d3bc}
+html[data-theme=dark] #root .nature-app .prep-home.home-studio .prep-home-hero-cta,html[data-theme=dark] #root .nature-app .study-layout .primary-button{background:#147568;border-color:#438e82;color:#fff}
+html[data-theme=dark] #root .nature-app .prep-home.home-studio .prep-home-programs>.prep-home-heading{background:transparent;border:0;border-radius:0;padding:0}
+html[data-theme=dark] #root .nature-app .prep-home.home-studio .home-studio-path .home-studio-path-number{background:#2a4052;color:#bdd9ed}
+html[data-theme=dark] #root .nature-app .prep-home.home-studio .home-study-group:last-child .home-studio-path-number{background:#1f433e;color:#82d3bc}
+html[data-theme=dark] #root .nature-app .prep-home.home-studio .home-studio-path .home-studio-path-action{color:#82d3bc}
+html[data-theme=dark] #root .nature-app .prep-home.home-studio .prep-home-programs .study-action-button{background:#223647;border-color:#344759;color:#d3e2ee}
+html[data-theme=dark] #root .nature-app .app-header .theme-toggle{background:#223647;color:#d3e2ee;border-color:#344759}
+html[data-theme=dark] #root .nature-app .prep-home.home-studio .prep-home-real-stats,html[data-theme=dark] #root .nature-app .prep-home.home-studio .prep-home-resume-list li{border-color:#344759}
+/* Visible scenery, quiet translucent panels, and compact actionable suggestions. */
+#root .nature-app .ambient-background-photo{opacity:.5}
+#root .nature-app .prep-home.home-studio .home-studio-panel,#root .nature-app .home-studio-path>a{background:#ffffffc7}
+#root .nature-app .home-studio-path>a:hover{background:#ffffffe0}
+#root .nature-app .prep-home.home-studio .prep-home-resume-list li{border-radius:10px;overflow:hidden}
+#root .nature-app .prep-home.home-studio .prep-home-resume-list li:hover{background:#e7f3ef99;padding-inline:10px}
+#root .nature-app .prep-home.home-studio .home-studio-first-step,#root .nature-app .prep-home.home-studio .home-studio-focus{border-radius:10px}
+#root .nature-app .prep-home.home-studio .home-studio-first-step:hover{background:#e7f3ef66}
+#root .nature-app .vocabulary-studio .folder-open-link::after{display:block;z-index:1}
+#root .nature-app .vocabulary-studio .prep-folder-tile{background:#ffffffc7;cursor:pointer;min-height:160px;gap:12px}
+#root .nature-app .vocabulary-studio .vocabulary-folder-footer{border:0;padding:0;justify-content:flex-end}
+#root .nature-app .vocabulary-studio .vocabulary-folder-footer:empty{display:none}
+#root .nature-app .vocabulary-folder-description{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+#root .nature-app .activity-suggestions{padding:14px 16px;background:#ffffffb8;border:1px solid #dce3e9;border-radius:12px}
+#root .nature-app .activity-suggestion-link{padding:10px 12px;min-height:44px;display:flex;align-items:center;gap:10px;background:transparent;border-radius:9px}
+#root .nature-app .activity-suggestion-link strong{font-size:13px;line-height:1.5;min-width:0}
+#root .nature-app .activity-suggestion-priority{flex-shrink:0;font-size:10px;white-space:nowrap}
+#root .nature-app .activity-suggestion-link>p{font-size:12px}
+#root .nature-app .topic-recommendations{--topic-border:#dce3e9;--topic-muted:#5e6d80;--topic-ink:#22334b}
+.recommendation-workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;gap:24px}
+#root .nature-app .recommendation-session .topic-priorities{display:flex;flex-direction:column;gap:12px}
+#root .nature-app .recommendation-session .topic-card{background:#ffffffc7;border:1px solid #dce3e9;border-radius:14px;padding:18px 20px;min-height:0;color:#22334b}
+#root .nature-app .recommendation-session .topic-card-featured{background:#e7f3efdb;border-color:#b7d5cc}
+#root .nature-app .recommendation-session .topic-card-top{margin-bottom:8px}
+#root .nature-app .recommendation-session .topic-step{font-size:15px;color:#147568}
+#root .nature-app .recommendation-session .topic-card h3{font-size:18px;color:#22334b}
+#root .nature-app .recommendation-session .topic-parts,#root .nature-app .recommendation-session .topic-evidence{color:#5e6d80;font-size:11px;margin-block:6px}
+#root .nature-app .recommendation-session .topic-status{background:#e1ebe8;color:#35645c}
+#root .nature-app .recommendation-session .topic-actions{padding-top:10px;gap:10px}
+#root .nature-app .recommendation-session .topic-card-featured .primary-button{background:#147568;border-color:#147568;color:#fff}
+#root .nature-app .recommendation-session .topic-card-featured .study-action-button{background:transparent;color:#35645c;border-color:#b7d5cc}
+#root .nature-app .learner-overview{background:#ffffffc7;border-color:#dce3e9;border-radius:14px}
+#root .nature-app .learner-part-chart{display:flex;flex-direction:column;border:0;gap:10px;overflow:visible}
+#root .nature-app .learner-part-chart .learner-part{display:grid;grid-template-columns:44px minmax(0,1fr) 48px;align-items:center;column-gap:12px;row-gap:3px;padding:7px 0;background:transparent;border:0}
+#root .nature-app .learner-part-chart .learner-part h3{grid-column:1;grid-row:1/3;font-size:12px}
+#root .nature-app .learner-part-chart .learner-part>p{grid-column:2;grid-row:1;min-height:0;margin:0;font-size:11px}
+#root .nature-app .learner-part-chart .learner-part>strong{grid-column:3;grid-row:1/3;font-size:15px;justify-self:end}
+#root .nature-app .learner-part-chart .learner-part>strong.learner-part-unknown{font-size:9px;line-height:1.4;min-height:0;max-width:48px}
+#root .nature-app .learner-part-chart .learner-part>small{grid-column:2/4;font-size:10px;margin:0}
+#root .nature-app .learner-part-chart .learner-part>meter{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.learner-bar{grid-column:2;grid-row:2;height:10px;width:100%;overflow:visible}
+.learner-bar-track{fill:#e3ebf0}.learner-bar-value{fill:#4587b7}.learner-bar-missing{fill:transparent;stroke:#a6b7c7;stroke-width:1;stroke-dasharray:3 3}
+#root .nature-app .learner-focus ul{display:flex;flex-direction:column;gap:0}
+#root .nature-app .learner-focus li{flex-direction:row;align-items:center;border:0;border-top:1px solid #dce3e9;border-radius:0;padding:10px 0}
+#root .nature-app .learner-focus li .study-action-button{flex-shrink:0;min-height:40px;font-size:11px}
+#root .nature-app .learner-overview-stats dd{font-size:22px}
+#root .nature-app .learner-overview-stats .learner-overview-date{font-size:13px}
+#root .nature-app .exam-workbench .exam-option[data-selected]{background:#e8f1ff;border-color:#3175cc;box-shadow:inset 3px 0 #3175cc;color:#153f78}
+#root .nature-app .exam-workbench .exam-option[data-selected] .exam-option-letter{background:#3175cc;border-color:#3175cc;color:#fff}
+#root .nature-app .exam-workbench .exam-option input{accent-color:#3175cc}
+#root .nature-app .exam-palette-grid button[data-answered]{background:#3175cc;border-color:#3175cc;color:#fff}
+/* A single complete night palette; no white or olive panels among dark surfaces. */
+html[data-theme=dark] #root .nature-app{--night-reading:#1b2b3a;--night-text:#dce7ef;--night-muted:#a6b7c7}
+html[data-theme=dark] #root .nature-app .ambient-background-photo{opacity:.28}
+html[data-theme=dark] #root .nature-app :is(.study-layout[data-section],.prep-home){--studio-surface:#1b2b3ae8;--studio-soft:#223647;--studio-ink:#dce7ef;--studio-muted:#a6b7c7;--studio-line:#344759;--studio-accent:#82d3bc}
+html[data-theme=dark] #root .nature-app .topic-recommendations{--topic-border:#344759;--topic-muted:#a6b7c7;--topic-ink:#dce7ef}
+html[data-theme=dark] #root .nature-app :is(.recommendation-session .topic-card,.learner-overview,.activity-suggestions,.vocabulary-studio .prep-folder-tile,.curriculum-surface,.theory-reader,.theory-catalog,.prep-learning-card,.prep-library-filters){background:#1b2b3ae8;color:#dce7ef;border-color:#344759;box-shadow:none}
+html[data-theme=dark] #root .nature-app .prep-home.home-studio :is(.home-studio-panel,.home-studio-path>a){background:#1b2b3ae0}
+html[data-theme=dark] #root .nature-app .recommendation-session .topic-card-featured{background:#203e40e8;border-color:#406663}
+html[data-theme=dark] #root .nature-app .recommendation-session :is(.topic-card h3,.topic-step){color:#dce7ef}
+html[data-theme=dark] #root .nature-app .recommendation-session :is(.topic-parts,.topic-evidence){color:#a6b7c7}
+html[data-theme=dark] #root .nature-app :is(.topic-status,.activity-suggestion-priority){background:#29433f;color:#a4d8c8}
+html[data-theme=dark] #root .nature-app .recommendation-session .topic-card-featured .study-action-button{background:#223647;color:#c4ded9;border-color:#406663}
+html[data-theme=dark] #root .nature-app .learner-part-chart .learner-part{background:transparent;color:#dce7ef}
+html[data-theme=dark] #root .nature-app .learner-bar-track{fill:#304456}
+html[data-theme=dark] #root .nature-app .learner-bar-value{fill:#79aed8}
+html[data-theme=dark] #root .nature-app .learner-bar-missing{stroke:#667f93}
+html[data-theme=dark] #root .nature-app .learner-focus li{border-color:#344759}
+html[data-theme=dark] #root .nature-app .prep-home.home-studio :is(.prep-home-resume-list li:hover,.home-studio-first-step:hover){background:#29413f}
+html[data-theme=dark] #root .nature-app .exam-workbench .exam-option[data-selected]{background:#203e61;border-color:#6aa8ef;color:#e2eeff;box-shadow:inset 3px 0 #6aa8ef}
+html[data-theme=dark] #root .nature-app .exam-workbench .exam-option[data-selected] .exam-option-letter{background:#3571b8;border-color:#79ace5;color:#fff}
+html[data-theme=dark] #root .nature-app .study-layout :is(input,select,textarea){background:#182735;color:#dce7ef;border-color:#40586d}
+html[data-theme=dark] #root .nature-app .study-layout :is(.activity-suggestion-link,.topic-library-item,.topic-next-paths>a,.learner-focus li){background:transparent;color:#dce7ef;border-color:#344759}
+html[data-theme=dark] #root .nature-app .study-layout :is(.activity-suggestion-link strong,.topic-library-item h3,.topic-next-paths h2){color:#dce7ef}
+@media(max-width:1000px){.recommendation-workspace{grid-template-columns:1fr}}
+@media(max-width:600px){#root .nature-app .recommendation-session .topic-card{padding:16px}#root .nature-app .learner-overview-heading{flex-direction:row}#root .nature-app .learner-overview-heading h2{font-size:18px}#root .nature-app .learner-overview-heading>a{font-size:11px;padding:8px}#root .nature-app .activity-suggestion-link{flex-wrap:wrap}#root .nature-app .learner-part-chart .learner-part:last-child{grid-column:auto}}
+#root .nature-app .learner-part-chart{gap:5px}
+#root .nature-app .learner-part-chart .learner-part{padding:3px 0;row-gap:1px}
+#root .nature-app .learner-part-chart .learner-part>small{font-size:9px;line-height:1.4}
+#root .nature-app .learner-part-chart .learner-part>p{font-size:10px;line-height:1.4}
+#root .nature-app .learner-overview-stats{padding:14px 0;gap:12px}
+#root .nature-app .learner-focus{margin-top:14px}
+#root .nature-app .learner-focus li{padding:7px 0}
+html[data-theme=dark] #root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio{--studio-surface:#1b2b3ae0;--studio-soft:#223647;--studio-line:#344759;--studio-ink:#dce7ef;--studio-muted:#a6b7c7;--studio-accent:#82d3bc}
+html[data-theme=dark] #root .nature-app .study-layout[data-section=flashcards] :is(.activity-suggestions,.vocabulary-library-toolbar){background:#1b2b3ae0;color:#dce7ef;border-color:#344759}
+html[data-theme=dark] #root .nature-app .study-layout[data-section=flashcards] :is(.activity-suggestion-link,input){background:#182735;color:#dce7ef;border-color:#40586d}
+html[data-theme=dark] #root .nature-app .study-layout .topic-next-paths .topic-path-icon{background:#2a4052;color:#bdd9ed}
+html[data-theme=dark] #root .nature-app .study-layout .recommendation-session .topic-status{background:#29433f;color:#a4d8c8}
+#root .nature-app .activity-suggestion-link{flex-direction:row;justify-content:flex-start;text-align:left}
+#root .nature-app .activity-suggestion-link>strong{flex:1}
+#root .nature-app .activity-suggestion-link>p{flex-basis:100%}
+#root .nature-app .activity-suggestion-priority{padding:3px 6px;border-radius:5px;background:#e7f3ef;color:#35645c}
+#root .nature-app .activity-suggestion-link:has(p){flex-wrap:wrap}
+html[data-theme=dark] #root .nature-app .activity-suggestion-priority{background:#29433f;color:#a4d8c8}
+/* Only the scenery overlay changes; content surfaces keep their previous opacity. */
+#root .nature-app .ambient-background-photo{opacity:.7;background-image:linear-gradient(90deg,#f5f7f980 10%,#f5f7f940),url('/images/garden-study.webp')}
+html[data-theme=dark] #root .nature-app .ambient-background-photo{opacity:.4;background-image:linear-gradient(95deg,#12202d80,#12202d40 48%,#12202d60),url('/images/garden-study-night.webp')}
+/* The link itself owns the entire folder surface; delete remains a separate button. */
+#root .nature-app .vocabulary-studio .prep-folder-tile{padding:0;overflow:hidden;gap:0;position:relative}
+#root .nature-app .vocabulary-studio .folder-card-link{display:flex;flex-direction:column;gap:14px;flex:1;min-height:165px;padding:20px;color:inherit;text-decoration:none;border-radius:inherit}
+#root .nature-app .vocabulary-studio .folder-card-link:focus-visible{outline-offset:-4px}
+#root .nature-app .vocabulary-studio .vocabulary-folder-footer{padding:0 12px 10px;border:0}
+#root .nature-app .vocabulary-studio .vocabulary-folder-footer:empty{display:none}
+#root .nature-app .speaking-microphone{display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 12px;text-align:center}
+#root .nature-app .speaking-mic-button{display:grid;place-items:center;width:80px;height:80px;border-radius:50%;background:#147568;color:#fff;border:5px solid #dcefe9;box-shadow:0 0 0 6px #1475680d;cursor:pointer;flex-shrink:0}
+#root .nature-app .speaking-mic-button:hover{background:#106458}
+#root .nature-app .speaking-mic-button[aria-pressed=true]{background:#b43b51;border-color:#f4dce2;box-shadow:0 0 0 6px #b43b5112}
+#root .nature-app .speaking-mic-button:disabled{opacity:.55;cursor:wait}
+.speaking-stop-icon{display:block;width:22px;height:22px;border-radius:5px;background:currentColor}
+.speaking-mic-status{font-size:13px;color:var(--nature-ink)}
+.speaking-mic-note{font-size:11px;line-height:1.6;max-width:390px;color:var(--nature-muted)}
+.speaking-playback{width:min(100%,420px);height:42px}
+.speaking-interim{font-size:14px;color:var(--nature-muted);overflow-wrap:anywhere;max-width:100%}
+html[data-theme=dark] #root .nature-app .speaking-mic-button{border-color:#2c514d;color:#fff;background:#147568}
+html[data-theme=dark] #root .nature-app .speaking-mic-button[aria-pressed=true]{background:#a94055;border-color:#573342}
+#root .nature-app .vocabulary-studio .prep-folder-tile[data-owned] .folder-card-link{padding-bottom:62px}
+#root .nature-app .vocabulary-studio .vocabulary-folder-footer{position:absolute;right:10px;bottom:8px;padding:0;z-index:2;pointer-events:none}
+#root .nature-app .vocabulary-studio .vocabulary-folder-footer button{pointer-events:auto}
+#root .nature-app .vocabulary-studio .vocabulary-practice-modes{grid-template-columns:repeat(6,minmax(0,1fr))}
+#root .nature-app .vocabulary-studio .folder-card-link{padding-top:0;overflow:hidden}
+.vocabulary-folder-cover{display:block;width:calc(100% + 40px);max-width:none;height:132px;object-fit:cover;margin:0 -20px 0;flex-shrink:0}
+#root .nature-app .vocabulary-studio .vocabulary-book-heading{gap:10px}
+#root .nature-app .vocabulary-studio .vocabulary-book-mark{display:none}
+#root .nature-app .vocabulary-studio .prep-folder-eyebrow{display:flex;gap:8px;font-size:12px;align-items:center}
+#root .nature-app .vocabulary-studio .prep-folder-eyebrow span{display:inline;margin:0;font-size:11px}
+#root .nature-app .vocabulary-studio .prep-folder-tile h2{font-size:18px}
+.vocabulary-flip-session{max-width:650px;margin:0 auto;padding:12px 0}
+#root .nature-app .vocabulary-flip-card{display:block;width:100%;height:300px;background:transparent;border:0;padding:0;perspective:1200px;border-radius:22px;color:var(--nature-ink);cursor:pointer}
+.vocabulary-flip-inner{display:block;position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.vocabulary-flip-inner.is-flipped{transform:rotateY(180deg)}
+#root .nature-app .vocabulary-flip-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:30px;border:1px solid var(--nature-line);border-radius:22px;backface-visibility:hidden;background:#ffffffe0;overflow:auto;overflow-wrap:anywhere}
+#root .nature-app .vocabulary-flip-back{transform:rotateY(180deg);background:#e7f3efe8}
+.vocabulary-flip-label{font-size:10px;letter-spacing:.16em;color:var(--nature-muted)}
+.vocabulary-flip-word{font-size:clamp(28px,4vw,44px);font-weight:650;line-height:1.25}
+.vocabulary-flip-meaning{font-size:clamp(24px,3vw,32px);font-weight:600;line-height:1.4}
+.vocabulary-flip-phonetic,.vocabulary-flip-example{font-size:15px;line-height:1.7;color:var(--nature-muted);max-width:440px}
+.vocabulary-flip-hint{font-size:11px;color:var(--nature-muted);margin-top:8px}
+.vocabulary-flip-tools{display:flex;align-items:center;justify-content:space-between;padding:12px 0;gap:12px;font-size:11px;color:var(--nature-muted)}
+.vocabulary-flip-rating{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+html[data-theme=dark] #root .nature-app .vocabulary-flip-face{background:#1b2b3ae8;color:#dce7ef;border-color:#40586d}
+html[data-theme=dark] #root .nature-app .vocabulary-flip-back{background:#203e40ed}
+html[data-theme=dark] #root .nature-app .vocabulary-folder-cover{filter:brightness(.8)}
+@media(max-width:639px){#root .nature-app .vocabulary-studio .vocabulary-practice-modes{grid-template-columns:repeat(3,minmax(0,1fr))}.vocabulary-folder-cover{height:115px}#root .nature-app .vocabulary-flip-card{height:280px}#root .nature-app .vocabulary-flip-face{padding:22px}}
+@media(prefers-reduced-motion:reduce){.vocabulary-flip-inner{transition:none}}
+#root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio .folder-card-link{padding:0 18px 18px;gap:12px;min-height:240px}
+#root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio .prep-folder-tile[data-owned] .folder-card-link{padding-bottom:56px}
+#root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio .folder-card-link>.vocabulary-folder-cover{width:calc(100% + 36px);max-width:none;height:145px;margin:0 -18px;object-fit:cover;border-radius:0;display:block}
+#root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio .vocabulary-book-heading{display:block;margin:0;padding:0}
+#root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio .prep-folder-eyebrow{display:flex;gap:8px;align-items:center;font-size:12px}
+#root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio .prep-folder-eyebrow span{display:inline;margin:0;font-size:11px}

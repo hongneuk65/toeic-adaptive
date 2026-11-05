@@ -36,16 +36,11 @@ test('learning plan explains review, opens the selected skill and survives profi
   const card = page.locator('.learning-plan-card');
   await expect(card).toHaveCount(1);
   await expect(card).toContainText('Đến hạn ôn');
-  await expect(card).toContainText(review.reasons[0]);
+  await expect(card.getByText('Vì sao gợi ý?', { exact: true })).toHaveCount(0);
   await expect(card.locator('time')).toHaveText('04/10/2026');
   await expect(card.getByRole('link', { name: 'Học kiến thức' })).toHaveAttribute('href', '/theory?lesson=17');
   await page.screenshot({ path: testInfo.outputPath('learning-plan.png'), fullPage: true });
-  await expect(card.getByRole('button', { name: 'Luyện nền tảng Từ loại' })).toBeHidden();
-  await card.getByText('Vì sao gợi ý?', { exact: true }).click();
-  await card.getByRole('button', { name: 'Luyện nền tảng Từ loại' }).click();
   const dialog = page.getByRole('dialog', { name: 'Luyện kỹ năng', exact: true });
-  await expect(dialog.getByRole('heading', { name: 'Từ loại (Part 5)' })).toBeVisible();
-  await dialog.getByRole('button', { name: 'Đóng', exact: true }).click();
   await card.getByRole('button', { name: 'Luyện Hòa hợp chủ vị', exact: true }).click();
   await expect(dialog.getByRole('heading', { name: 'Hòa hợp chủ vị (Part 5)' })).toBeVisible();
   await dialog.getByRole('button', { name: 'A. is', exact: true }).click();
@@ -55,7 +50,7 @@ test('learning plan explains review, opens the selected skill and survives profi
   await expect(dialog.getByRole('heading', { name: 'Hòa hợp chủ vị (Part 5)' })).toBeVisible();
   await dialog.getByRole('button', { name: 'Câu tiếp theo', exact: true }).click();
   await expect(dialog.getByRole('button', { name: 'Kiểm tra đáp án', exact: true })).toBeVisible();
-  expect(requestedSkills.filter((id, index) => !index || id !== requestedSkills[index - 1])).toEqual([2, 1]);
+  expect(requestedSkills.filter((id, index) => !index || id !== requestedSkills[index - 1])).toEqual([1]);
   await dialog.getByRole('button', { name: 'Đóng', exact: true }).click();
   await expect(page.getByText('Chưa có kỹ năng sẵn sàng để gợi ý')).toBeVisible();
   await expect(page.locator('.learning-plan-card')).toHaveCount(0);

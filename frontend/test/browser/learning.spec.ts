@@ -40,16 +40,19 @@ async function fixture(page: Page, options: { lostDraft?: boolean; lostSubmit?: 
     if (path === '/rag/chat-history') return json([]);
     if (path === '/flashcards/folders/1') return json({ id: 1, name: 'Office vocabulary', count: 2, isOwner: true });
     if (path === '/flashcards/folders/1/cards') return json([{ id: 1, word: 'invoice', meaning: 'hóa đơn' }, { id: 2, word: 'meeting', meaning: 'cuộc họp' }]);
+    if (path === '/flashcards/cards/1/review') return json({ cardId: 1, known: true, reviewCount: 1, dueAt: new Date(Date.now() + 600000).toISOString() });
     if (path === '/flashcards/folders/1/reviews') return json([{ cardId: 2, known: true, reviewCount: 1, intervalDays: 1, dueAt: new Date(Date.now() + 86400000).toISOString() }]);
     return json({ message: `Unexpected fixture route ${path}` }, 404);
   });
 }
 
 test('exam saves server draft, resumes and recovers a lost submission response', async ({ page }, testInfo) => {
+  await page.clock.install();
   await fixture(page, { lostDraft: true, lostSubmit: true });
   await page.goto('/exam/14');
   const answer = page.getByRole('radio', { name: 'A at', exact: true });
   await answer.check();
+  await page.clock.runFor(30050);
   await expect(page.getByText('Đã lưu máy chủ', { exact: true })).toHaveCount(1);
   await page.reload();
   await expect(answer).toBeChecked();
@@ -100,17 +103,22 @@ test('flashcard due filter and keyboard recall hide the answer until committed',
   await page.getByLabel('Câu trả lời của bạn').fill('invoice');
   await page.getByLabel('Câu trả lời của bạn').press('Enter');
   await expect(page.getByRole('paragraph').filter({ hasText: /^invoice$/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Lưu lượt ôn', exact: true }).click();
+  await page.getByRole('button', { name: 'Tiếp tục', exact: true }).click();
+  await page.getByText('Tùy chọn học', { exact: true }).click();
   await page.getByLabel('Lọc trạng thái ghi nhớ').selectOption('known');
   await expect(page.getByRole('heading', { name: 'cuộc họp', exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('flashcard.png'), fullPage: true });
 });
 
 test('structured reading table stays readable and answers remain reachable', async ({ page }, testInfo) => {
+  await page.clock.install();
   await fixture(page, { readingDocument: true });
   await page.goto('/exam/14');
   await expect(page.getByRole('table')).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Customer support' })).toBeVisible();
   await page.getByRole('radio', { name: 'A at', exact: true }).check();
+  await page.clock.runFor(30050);
   await expect(page.getByText('Đã lưu máy chủ', { exact: true })).toHaveCount(1);
   const overflow = await page.locator('body').evaluate(element => element.scrollWidth > element.clientWidth);
   expect(overflow).toBe(false);
@@ -228,10 +236,11 @@ test('typed retrieval preserves the first answer and attempt ID when saving is r
   await page.getByRole('button', { name: 'Lưu lượt ôn', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Lượt ôn chưa được xác nhận');
   await expect(page.getByLabel('Lọc trạng thái ghi nhớ')).toBeDisabled();
+  await page.getByText('Tùy chọn học', { exact: true }).click();
   await expect(page.getByRole('button', { name: 'Tất cả thẻ', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Lưu lượt ôn', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Đã lưu lượt ôn', exact: true })).toBeDisabled();
-  await expect(page.getByRole('status').filter({ hasText: 'Lịch cá nhân hóa thử nghiệm' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Tiếp tục', exact: true })).toBeVisible();
   expect(requests).toHaveLength(2);
   expect(requests[0]).toEqual(requests[1]);
   expect(requests[0]).toMatchObject({ response: 'wrong', recallMode: 'typed', known: false });
@@ -241,17 +250,16 @@ test('typed retrieval preserves the first answer and attempt ID when saving is r
 
 test('vocabulary photo workspace keeps folder details and keyboard actions usable', async ({ page }, testInfo) => {
   await fixture(page);
-  const photo = page.waitForResponse(response => response.url().includes('/images/vocabulary-study-background.webp'));
+  const photo = page.waitForResponse(response => response.url().includes('/images/garden-study.webp'));
   await page.goto('/flashcards');
   await expect(page.getByRole('heading', { name: 'Thư mục từ vựng', exact: true })).toBeVisible();
   expect((await photo).ok()).toBe(true);
   const folder = page.locator('.prep-folder-tile').first();
   await expect(folder.getByRole('link', { name: 'Office vocabulary', exact: true })).toHaveAttribute('href', '/flashcards/1');
   await expect(folder.getByText('Mã: TOPIC1', { exact: true })).toBeHidden();
-  await folder.getByText('Thông tin bộ từ', { exact: true }).press('Enter');
-  await expect(folder.getByText('Mã: TOPIC1', { exact: true })).toBeVisible();
-  await folder.getByText('Thông tin bộ từ', { exact: true }).press('Enter');
-  await expect(folder.getByText('Mã: TOPIC1', { exact: true })).toBeHidden();
+  await expect(folder.getByText('Thông tin bộ từ', { exact: true })).toHaveCount(0);
+  await expect(folder.getByRole('link')).toHaveCount(1);
+  await folder.getByRole('link').click({ trial: true, position: { x: 8, y: 8 } });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('vocabulary-library.png'), fullPage: false });
   if (testInfo.project.name === 'desktop') {
@@ -261,4 +269,75 @@ test('vocabulary photo workspace keeps folder details and keyboard actions usabl
     expect(header!.height).toBeLessThanOrEqual(160);
     await page.screenshot({ path: testInfo.outputPath('vocabulary-library-tablet.png'), fullPage: false });
   }
+});
+
+for (const theme of ['light', 'dark']) test(`exam selected answer is blue in ${theme} mode`, async ({ page }) => {
+  await fixture(page);
+  await page.addInitScript(value => localStorage.setItem('toeic:color-theme', value), theme);
+  await page.goto('/exam/14');
+  await page.locator('.exam-option').first().click();
+  const selected = page.locator('.exam-option[data-selected]');
+  await expect(selected).toHaveCount(1);
+  await expect(selected).toHaveCSS('background-color', theme === 'dark' ? 'rgb(32, 62, 97)' : 'rgb(232, 241, 255)');
+  await expect(page.locator('.ambient-motion-toggle')).toHaveCount(0);
+});
+
+
+test('draft batches rapid changes, stays quiet when clean and submit sends unsynced answers', async ({ page }) => {
+  await page.clock.install(); await fixture(page);
+  const drafts: unknown[] = []; const submissions: { answers: {questionId: number; selectedAnswer: string}[] }[] = [];
+  page.on('request', request => { const path = new URL(request.url()).pathname; if (path.endsWith('/draft')) drafts.push(request.postDataJSON()); if (path.endsWith('/exam/submit')) submissions.push(request.postDataJSON()); });
+  await page.goto('/exam/14');
+  await page.getByRole('radio', { name: 'A at', exact: true }).check();
+  await page.clock.runFor(10000);
+  await page.getByRole('radio', { name: 'B in', exact: true }).check();
+  await page.clock.runFor(10000);
+  await page.getByRole('radio', { name: 'C on', exact: true }).check();
+  expect(drafts).toHaveLength(0);
+  expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem('exam_answers_14')!)[101])).toBe('C');
+  await page.clock.runFor(10100);
+  await expect.poll(() => drafts.length).toBe(1);
+  await expect(page.getByText('Đã lưu máy chủ', { exact: true })).toBeVisible();
+  expect(drafts[0]).toMatchObject({ answers: [{questionId: 101, selectedAnswer: 'C'}] });
+  await page.clock.runFor(60000); expect(drafts).toHaveLength(1);
+  await page.getByRole('radio', { name: 'D for', exact: true }).check();
+  await page.getByRole('button', { name: 'Nộp bài', exact: true }).click();
+  await expect(page).toHaveURL(/\/exam\/14\/review$/);
+  expect(submissions).toHaveLength(1);
+  expect(submissions[0].answers).toEqual([{questionId:101,selectedAnswer:'D'}]);
+  expect(drafts).toHaveLength(1);
+});
+
+test('dirty draft flushes before the deadline and when the tab becomes hidden', async ({ page }) => {
+  await page.clock.install(); await fixture(page);
+  const drafts: unknown[] = [];
+  page.on('request', r => { if (new URL(r.url()).pathname.endsWith('/draft')) drafts.push(r.postDataJSON()); });
+  await page.goto('/exam/14');
+  await page.getByRole('radio', { name: 'A at', exact: true }).check();
+  await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
+  await page.clock.runFor(20);
+  await expect.poll(() => drafts.length).toBe(1);
+  await expect(page.getByText('Đã lưu máy chủ', { exact: true })).toBeVisible();
+  await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
+  await page.clock.runFor(1190000);
+  await page.getByRole('radio', { name: 'B in', exact: true }).check();
+  await page.clock.runFor(7100);
+  await expect.poll(() => drafts.length).toBe(2);
+  expect(drafts[1]).toMatchObject({ answers: [{questionId:101,selectedAnswer:'B'}] });
+});
+
+test('draft failures back off while preserving immediate local answers', async ({ page }) => {
+  await page.clock.install(); await fixture(page);
+  let attempts = 0;
+  await page.route('**/api/exam/14/draft', r => { attempts++; return r.abort(); });
+  await page.goto('/exam/14');
+  await page.getByRole('radio', { name: 'A at', exact: true }).check();
+  await page.clock.runFor(30100);
+  await expect(page.getByText('Chưa lưu được lên máy chủ.', { exact: false })).toBeVisible();
+  expect(attempts).toBe(1);
+  await page.getByRole('radio', { name: 'B in', exact: true }).check();
+  await page.clock.runFor(29000); expect(attempts).toBe(1);
+  expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem('exam_answers_14')!)[101])).toBe('B');
+  await page.clock.runFor(1100);
+  await expect.poll(() => attempts).toBe(2);
 });
