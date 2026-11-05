@@ -1,3 +1,4 @@
+import { MediaButton } from '../components/ui/MediaButton';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -73,7 +74,7 @@ function ListeningScript({ text }: { text: string }) {
     utterance.onerror = event => { setPlaying(false); if (event.error !== 'interrupted' && event.error !== 'canceled') setError('Chưa phát được giọng đọc. Bạn có thể mở bản chép lời bên dưới.'); };
     setPlaying(true); window.speechSynthesis.speak(utterance);
   };
-  return <section className="curriculum-context" aria-label="Nội dung nghe"><h3>Bài nghe</h3><p className="curriculum-muted">Giọng đọc tổng hợp của thiết bị; không phải bản thu nhiều người nói chuẩn hóa.</p><div className="curriculum-audio-controls"><button className="secondary-button" type="button" onClick={play} disabled={!available}>{playing ? 'Nghe lại từ đầu' : 'Nghe bài'}</button>{playing && <button className="secondary-button" type="button" onClick={() => { window.speechSynthesis.cancel(); setPlaying(false); }}>Dừng nghe</button>}</div>{!available && <p role="status">Trình duyệt này chưa hỗ trợ giọng đọc. Bạn có thể dùng bản chép lời để học nội dung.</p>}{error && <p role="status">{error}</p>}<details><summary>Xem bản chép lời</summary><p lang="en">{text}</p></details></section>;
+  return <section className="curriculum-context" aria-label="Nội dung nghe"><h3>Bài nghe</h3><p className="curriculum-muted">Giọng đọc tổng hợp của thiết bị; không phải bản thu nhiều người nói chuẩn hóa.</p><div className="curriculum-audio-controls"><MediaButton label={playing ? 'Dừng nghe' : 'Nghe bài'} active={playing} onClick={() => { if (playing) { window.speechSynthesis.cancel(); setPlaying(false); } else play(); }} disabled={!available} /></div>{!available && <p role="status">Trình duyệt này chưa hỗ trợ giọng đọc. Bạn có thể dùng bản chép lời để học nội dung.</p>}{error && <p role="status">{error}</p>}<details><summary>Xem bản chép lời</summary><p lang="en">{text}</p></details></section>;
 }
 function QuestionContext({ unit, questions }: { unit: CurriculumUnit; questions: CurriculumQuestion[] }) {
   const hasReading = questions.some(question => question.kind === 'reading');

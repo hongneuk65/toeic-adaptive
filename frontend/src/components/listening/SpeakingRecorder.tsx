@@ -1,3 +1,5 @@
+import { MediaButton } from '../ui/MediaButton';
+import { AudioClipPlayer } from '../ui/AudioClipPlayer';
 import { useEffect, useRef, useState } from 'react';
 
 export function SpeakingRecorder({ maximumSeconds, onRecorded }: { maximumSeconds: number; onRecorded(): void }) {
@@ -28,10 +30,11 @@ export function SpeakingRecorder({ maximumSeconds, onRecorded }: { maximumSecond
     } catch (cause) { stream.current?.getTracks().forEach(track => track.stop()); if (active.current) setError(cause instanceof DOMException && cause.name === 'NotAllowedError' ? 'Bạn chưa cho phép microphone. Cấp quyền trong trình duyệt rồi ghi lại, hoặc chuyển sang chép câu.' : cause instanceof Error ? cause.message : 'Không mở được microphone.'); }
     finally { if (active.current) setRequesting(false); }
   };
-  return <div className="space-y-3">
-    <p className="text-sm text-ink-medium">Ghi âm để tự đối chiếu · không chấm phát âm tự động. Bản ghi chỉ ở trình duyệt, tự bỏ khi rời bài.</p>
-    <button disabled={requesting} className="primary-button" onClick={() => recording ? recorder.current?.stop() : void record()}>{requesting ? 'Đang mở microphone...' : recording ? `Dừng ghi · ${seconds}/${maximumSeconds}s` : url ? 'Ghi âm lại' : 'Bắt đầu ghi âm'}</button>
-    {url && <audio src={url} controls className="w-full" />}
+  return <div className="media-record-row">
+
+    <MediaButton kind="mic" label={requesting ? 'Đang mở microphone...' : recording ? 'Dừng ghi âm' : url ? 'Ghi âm lại' : 'Bắt đầu ghi âm'} active={recording} aria-pressed={recording} disabled={requesting} onClick={() => recording ? recorder.current?.stop() : void record()} />
+    <span className="media-record-time" role="status">{recording ? `${seconds} / ${maximumSeconds}s` : 'Ghi âm'}</span>
+    {url && <AudioClipPlayer src={url} label="Nghe lại bản ghi" />}
     {error && <p role="alert" className="text-sm text-rose-800">{error}</p>}
   </div>;
 }

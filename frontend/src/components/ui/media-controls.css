@@ -1,0 +1,40 @@
+#root .nature-app button.media-circle{display:inline-flex;align-items:center;justify-content:center;flex:0 0 46px;width:46px;height:46px;min-height:46px;min-width:46px;padding:0;border:1px solid #c7dbd6;border-radius:50%;background:#e7f3ef;color:#146c60;box-shadow:none;cursor:pointer;vertical-align:middle}
+#root .nature-app button.media-circle:hover{background:#d5eae3;border-color:#87b6a8}
+#root .nature-app button.media-circle:focus-visible{outline:3px solid #147568;outline-offset:3px}
+#root .nature-app button.media-circle:disabled{opacity:.5;cursor:not-allowed}
+#root .nature-app button.media-circle-mic{background:#147568;color:#fff;border-color:#147568}
+#root .nature-app button.media-circle-mic[data-active]{background:#ad3e54;color:#fff;border-color:#ad3e54}
+.audio-control-row{display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap}
+.audio-clip-control{flex:1;min-width:min(100%,180px);max-width:480px}
+.audio-seek{flex:1;width:80px;min-width:50px;accent-color:#147568;cursor:pointer;min-height:32px}
+.audio-time{font-size:11px;color:var(--nature-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.audio-control-row audio{display:none}
+.media-record-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-width:0}
+.media-record-time{font-size:12px;color:var(--nature-muted);min-width:60px}
+.media-record-row>[role=alert]{flex-basis:100%}
+#root .nature-app .speaking-microphone{display:grid;grid-template-columns:54px minmax(0,1fr);align-items:center;gap:8px 12px;padding:12px 0;text-align:left}
+#root .nature-app .speaking-microphone button.media-circle{grid-column:1;grid-row:1;flex-basis:54px;width:54px;height:54px;min-height:54px;min-width:54px;border-width:1px}
+#root .nature-app .speaking-microphone .speaking-mic-status{grid-column:2;grid-row:1;font-size:12px;margin:0}
+#root .nature-app .speaking-microphone :is(.speaking-interim,.speaking-mic-note,.audio-clip-control,[role=alert]){grid-column:1/-1;margin:0;max-width:none}
+#root .nature-app .speaking-mic-note{font-size:10px;line-height:1.5}
+#root .nature-app .vocabulary-speaking-layout{display:grid;grid-template-columns:1fr;gap:18px}
+#root .nature-app .vocabulary-speaking-layout>*{margin-top:0}
+#root .nature-app .vocabulary-speaking-layout>header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#root .nature-app .vocabulary-speaking-layout>header>h2{order:-1;width:auto;margin-right:auto}
+#root .nature-app .vocabulary-speaking-layout>header>p:first-child{display:none}
+#root .nature-app .vocabulary-speaking-layout>header>p{font-size:12px}
+#root .nature-app .vocabulary-speaking-layout>header>details{flex-basis:100%}
+@media(min-width:800px){#root .nature-app .vocabulary-speaking-layout{grid-template-columns:minmax(180px,.65fr) minmax(0,1.35fr);gap:18px 28px}#root .nature-app .vocabulary-speaking-layout>header{grid-column:1/-1}#root .nature-app .vocabulary-speaking-layout>.speaking-microphone{grid-column:1;grid-row:2;align-self:start}#root .nature-app .vocabulary-speaking-layout>form{grid-column:2;grid-row:2}#root .nature-app .vocabulary-speaking-layout>:not(header):not(form):not(.speaking-microphone){grid-column:1/-1}}
+html[data-theme=dark] #root .nature-app button.media-circle{background:#243d44;border-color:#3e6468;color:#a5dbcf}
+html[data-theme=dark] #root .nature-app button.media-circle-mic{background:#147568;color:#fff;border-color:#438e82}
+html[data-theme=dark] #root .nature-app button.media-circle-mic[data-active]{background:#a94055;border-color:#b76475}
+.listening-player-layout{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.listening-player-layout>.listening-audio-row{flex:1;min-width:min(100%,220px)}
+.listening-player-layout>:is(video,.listening-youtube,[role=alert]){flex-basis:100%;width:100%}
+.listening-player-layout>label{font-size:11px;flex-shrink:0}
+#root .nature-app .speaking-microphone>.audio-clip-control{min-width:0;width:100%}
+#root .nature-app .speaking-microphone>.audio-clip-control .audio-control-row{gap:8px}
+#root .nature-app button.media-circle-mic:hover{background:#106458;color:#fff;border-color:#106458}
+#root .nature-app button.media-circle-mic[data-active]:hover{background:#983449;color:#fff;border-color:#983449}
+#root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio .vocabulary-practice-modes{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media(max-width:639px){#root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio .vocabulary-practice-modes{grid-template-columns:repeat(3,minmax(0,1fr))}}

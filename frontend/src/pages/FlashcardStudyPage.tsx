@@ -1,3 +1,4 @@
+import { MediaButton } from '../components/ui/MediaButton';
 import { VocabularyFlipCard } from '../components/vocabulary/VocabularyFlipCard';
 import { VocabularySentencePractice } from '../components/vocabulary/VocabularySentencePractice';
 import { VocabularyPractice } from '../components/vocabulary/VocabularyPractice';
@@ -346,13 +347,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
                         </p>
                       )}
 
-                      <button
-                        type="button"
-                        onClick={(e) => playAudio(card.word, e)}
-                        className="secondary-button mt-3"
-                      >
-                        Phát âm
-                      </button>
+                      <MediaButton label="Phát âm" onClick={event => playAudio(card.word, event)} />
                     </div>
 
                     <p className="text-xs text-ink-pencil text-center">

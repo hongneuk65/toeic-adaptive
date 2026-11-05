@@ -1,3 +1,4 @@
+import { MediaButton } from '../ui/MediaButton';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, getErrorMessage } from '../../lib/api';
 
@@ -126,7 +127,7 @@ function PracticeQuestion({ mode, card, cards, onBusyChange, onCompleted, onReco
   return <section aria-label={mode === 'quiz' ? 'Trắc nghiệm từ vựng' : 'Nghe và gõ từ'} className="learning-surface vocabulary-recall space-y-5 p-5 sm:p-8">
     <div className="space-y-2 text-center">
       <p className="text-xs font-semibold uppercase tracking-wide text-accent-navy">{mode === 'quiz' ? 'Chọn từ phù hợp' : 'Nghe và gõ từ'}</p>
-      {mode === 'quiz' ? <h2 className="text-2xl font-bold text-ink-dark break-words">{card.meaning}</h2> : <div className="space-y-2"><button type="button" className="secondary-button" disabled={playing || pending} onClick={play}>{playing ? 'Đang đọc…' : 'Nghe từ'}</button><p className="text-xs text-ink-medium">Giọng đọc của trình duyệt · tiếng Anh</p></div>}
+      {mode === 'quiz' ? <h2 className="text-2xl font-bold text-ink-dark break-words">{card.meaning}</h2> : <div className="space-y-2"><MediaButton label={playing ? 'Đang đọc…' : 'Nghe từ'} active={playing} disabled={playing || pending} onClick={play} /></div>}
     </div>
     {audioError && <p role="alert" className="text-sm text-rose-800">{audioError}</p>}
     {!quizAvailable ? <p role="status" className="text-sm text-ink-medium">Cần ít nhất hai từ khác nhau trong bộ từ để tạo trắc nghiệm.</p> : <form className="space-y-3" onSubmit={event => { event.preventDefault(); void submit(); }}>

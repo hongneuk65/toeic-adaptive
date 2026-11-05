@@ -1,3 +1,4 @@
+import { MediaButton } from '../ui/MediaButton';
 import { useEffect, useRef, useState } from 'react';
 import { api, getErrorMessage } from '../../lib/api';
 import { BrowserSpeechInput } from './BrowserSpeechInput';
@@ -75,14 +76,14 @@ function SpeakingExercise({ card, userId, onBusyChange }: { card: SpeakingCard; 
     }
   };
 
-  return <section aria-label="Luyện nói với từ vựng" className="learning-surface vocabulary-recall space-y-5 p-5 sm:p-8">
+  return <section aria-label="Luyện nói với từ vựng" className="learning-surface vocabulary-recall vocabulary-speaking-layout p-5 sm:p-8">
     <header className="space-y-2">
       <p className="text-sm text-ink-medium">Nói một câu về công việc có dùng từ</p>
       <h2 className="text-2xl font-semibold text-ink-dark break-words">{card.word}</h2>
       <p className="text-sm text-ink-medium break-words">{card.meaning}{card.phonetic ? ` · ${card.phonetic}` : ''}</p>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className="secondary-button" onClick={() => listen(card.word)}>Nghe từ</button>
-        {card.example && <button type="button" className="secondary-button" onClick={() => listen(card.example!)}>Nghe câu mẫu</button>}
+        <MediaButton label="Nghe từ" onClick={() => listen(card.word)} />
+        {card.example && <MediaButton label="Nghe câu mẫu" onClick={() => listen(card.example!)} />}
       </div>
       {card.example && <details className="text-sm"><summary className="cursor-pointer py-2">Câu mẫu</summary><p className="break-words">{card.example}</p></details>}
       {audioError && <p role="alert" className="text-sm text-rose-800">{audioError}</p>}

@@ -1,3 +1,4 @@
+import { MediaButton } from '../ui/MediaButton';
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import type { ListeningSource } from '../../types/listening';
 import { playbackStart as getPlaybackStart, seekReady } from '../../lib/listening-playback';
@@ -28,6 +29,15 @@ export function ListeningPlayer({ source, ref, onPlayed }: { source: ListeningSo
   const pendingMediaPlay = useRef(false);
   useEffect(() => () => { pendingSeek.current = null; pendingMediaPlay.current = false; }, []);
   const [selectedRate, setSelectedRate] = useState(1);
+  const [playing, setPlaying] = useState(false);
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const toggleAudio = async () => {
+    const element = media.current; if (!element) return;
+    if (!element.paused) { element.pause(); return; }
+    setError('');
+    try { await element.play(); } catch { setError('Chưa phát được âm thanh. Hãy thử lại.'); }
+  };
   const playedCallback = useRef(onPlayed);
   useEffect(() => { playedCallback.current = onPlayed; }, [onPlayed]);
   useEffect(() => {
@@ -84,11 +94,10 @@ export function ListeningPlayer({ source, ref, onPlayed }: { source: ListeningSo
       void element.play().catch(() => { pendingMediaPlay.current = false; setError('Không phát được media. Kiểm tra đường dẫn hoặc bấm Phát trong trình phát.'); });
     }
   }, currentTime() { return source.kind === 'YOUTUBE' ? ready ? player.current?.getCurrentTime() ?? null : null : media.current?.currentTime ?? null; } }), [ready, source.kind]);
-  const mediaEvents = { onCanPlay: () => { setReady(true); setRates([.5, .75, 1, 1.25, 1.5]); }, onPlaying: () => { if (!media.current?.seeking) pendingMediaPlay.current = false; onPlayed(); }, onSeeked: () => { pendingMediaPlay.current = false; }, onError: () => setError('Không tải được audio/video. Hãy báo lỗi nguồn hoặc chọn bài mẫu.'), onTimeUpdate: () => { if (media.current && !media.current.seeking && !pendingMediaPlay.current && stopAt.current !== null && media.current.currentTime >= stopAt.current) { media.current.pause(); stopAt.current = null; } } };
-  return <div className="space-y-3">
-    {source.kind === 'YOUTUBE' ? <div ref={host} className="listening-youtube" /> : source.kind === 'VIDEO' ? <video ref={media as Ref<HTMLVideoElement>} src={source.url} controls preload="metadata" className="w-full rounded" {...mediaEvents} /> : <audio ref={media as Ref<HTMLAudioElement>} src={source.url} controls preload="metadata" className="w-full" {...mediaEvents} />}
+  const mediaEvents = { onCanPlay: () => { setReady(true); setRates([.5, .75, 1, 1.25, 1.5]); }, onPlay: () => setPlaying(true), onPause: () => setPlaying(false), onEnded: () => setPlaying(false), onLoadedMetadata: () => { const value = media.current?.duration; setDuration(value && Number.isFinite(value) ? value : 0); }, onPlaying: () => { if (!media.current?.seeking) pendingMediaPlay.current = false; onPlayed(); }, onSeeked: () => { pendingMediaPlay.current = false; }, onError: () => setError('Không tải được audio/video. Hãy báo lỗi nguồn hoặc chọn bài mẫu.'), onTimeUpdate: () => { setPosition(media.current?.currentTime ?? 0); if (media.current && !media.current.seeking && !pendingMediaPlay.current && stopAt.current !== null && media.current.currentTime >= stopAt.current) { media.current.pause(); stopAt.current = null; } } };
+  return <div className="listening-player-layout">
+    {source.kind === 'YOUTUBE' ? <div ref={host} className="listening-youtube" /> : source.kind === 'VIDEO' ? <video ref={media as Ref<HTMLVideoElement>} src={source.url} controls preload="metadata" className="w-full rounded" {...mediaEvents} /> : <div className="audio-control-row listening-audio-row"><audio ref={media as Ref<HTMLAudioElement>} src={source.url} preload="metadata" {...mediaEvents} /><MediaButton label={playing ? 'Tạm dừng bài nghe' : 'Phát bài nghe'} active={playing} onClick={() => void toggleAudio()} /><input className="audio-seek" type="range" aria-label="Vị trí bài nghe" min={0} max={duration || 1} step={.1} value={Math.min(position, duration || 1)} disabled={!duration} onChange={event => { if (media.current) { media.current.currentTime = Number(event.target.value); setPosition(Number(event.target.value)); } }} /><span className="audio-time">{Math.floor(position / 60)}:{String(Math.floor(position % 60)).padStart(2, '0')}</span></div>}
     <label className="flex items-center gap-2 text-sm text-ink-medium">Tốc độ phát <select aria-label="Tốc độ phát" disabled={!ready} value={selectedRate} onChange={event => { const rate = Number(event.target.value); setSelectedRate(rate); if (source.kind === 'YOUTUBE') player.current?.setPlaybackRate(rate); else if (media.current) media.current.playbackRate = rate; }} className="rounded border border-paper-kraft p-1">{rates.map(rate => <option key={rate} value={rate}>{rate}x</option>)}</select></label>
-    <p className="text-xs text-ink-medium">Nghe lại phát sớm 0,75 giây để hạn chế mất từ đầu câu.</p>
     {error && <p role="alert" className="text-sm text-rose-800">{error} {source.kind === 'YOUTUBE' && <a className="underline" href={source.url} target="_blank" rel="noopener noreferrer">Mở trên YouTube</a>}</p>}
   </div>;
 }

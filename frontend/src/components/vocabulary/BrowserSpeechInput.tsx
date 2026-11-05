@@ -1,3 +1,5 @@
+import { MediaButton } from '../ui/MediaButton';
+import { AudioClipPlayer } from '../ui/AudioClipPlayer';
 import { useEffect, useRef, useState } from 'react';
 
 interface Recognition {
@@ -35,7 +37,7 @@ export function BrowserSpeechInput({ disabled = false, onTranscript, onActiveCha
   useEffect(() => {
     live.current = true;
     return () => {
-      live.current = false; generation.current++;
+      live.current = false;
       const session = capture.current; capture.current = null;
       if (session) {
         clearInterval(session.timer);
@@ -126,12 +128,10 @@ export function BrowserSpeechInput({ disabled = false, onTranscript, onActiveCha
     } finally { starting.current = false; if (live.current) setOpening(false); }
   };
   return <div className="browser-speech-input speaking-microphone">
-    <button type="button" className="speaking-mic-button" aria-label={opening ? 'Đang mở microphone' : recording ? 'Dừng ghi âm' : url ? 'Ghi âm lại' : 'Bắt đầu ghi âm'} aria-pressed={recording} disabled={opening || (disabled && !recording)} onClick={() => recording ? stop() : void start()}>
-      {recording ? <span className="speaking-stop-icon" aria-hidden="true" /> : <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8" /></svg>}
-    </button>
+    <MediaButton kind="mic" label={opening ? 'Đang mở microphone' : recording ? 'Dừng ghi âm' : url ? 'Ghi âm lại' : 'Bắt đầu ghi âm'} active={recording} aria-pressed={recording} disabled={opening || (disabled && !recording)} onClick={() => recording ? stop() : void start()} />
     <p role="status" className="speaking-mic-status">{opening ? 'Đang mở mic…' : recording ? `Đang ghi · ${seconds}s / 60s` : url ? 'Nghe lại hoặc ghi câu mới' : 'Chạm mic để bắt đầu'}</p>
     {interim && <p className="speaking-interim" aria-live="polite">{interim}</p>}
-    {url && <audio controls src={url} className="speaking-playback" aria-label="Nghe lại câu vừa nói" />}
+    {url && <AudioClipPlayer src={url} className="speaking-playback" label="Nghe lại câu vừa nói" />}
     <p className="speaking-mic-note">{speechSupported ? 'Nói tiếng Anh để nhập câu. Nhận giọng nói có thể dùng dịch vụ của trình duyệt.' : 'Bạn có thể ghi âm nghe lại; hãy nhập câu bên dưới.'}</p>
     {error && <p role="alert" className="text-sm text-rose-800">{error}</p>}
   </div>;

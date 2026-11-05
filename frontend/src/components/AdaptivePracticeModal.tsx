@@ -1,3 +1,4 @@
+import { AudioClipPlayer } from './ui/AudioClipPlayer';
 import { useTutorContext, useQuestionTutorContext } from './rag/useTutorContext';
 import { notifyLearningProgress } from '../lib/learning-progress';
 import '../styles/exam-room.css';
@@ -139,13 +140,7 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
             {adaptiveData.selectedQuestion.part <= 2 && <p className="text-sm text-ink-medium">Luyện nghe: nghe và chọn {adaptiveData.selectedQuestion.part === 2 ? 'một trong ba' : 'một trong bốn'} đáp án. Nội dung lời thoại được ẩn khi trả lời.</p>}
 
             {adaptiveData.selectedQuestion.audioUrl && (
-              <div className="bg-paper-cream p-3 rounded border border-paper-kraft">
-                <p className="font-body text-xs text-ink-medium mb-1">File âm thanh câu hỏi:</p>
-                <audio controls className="w-full">
-                  <source src={adaptiveData.selectedQuestion.audioUrl} type="audio/mpeg" />
-                  Trình duyệt không hỗ trợ phát âm thanh.
-                </audio>
-              </div>
+              <AudioClipPlayer src={adaptiveData.selectedQuestion.audioUrl} label="Nghe câu hỏi" />
             )}
 
             {adaptiveData.selectedQuestion.part > 2 && <div className="font-exam font-bold text-ink-dark text-base">

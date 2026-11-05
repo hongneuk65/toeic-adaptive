@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTutorContext } from './useTutorContext';
-import { api, apiStream } from '../../lib/api';
+import { api, apiStream, getErrorMessage } from '../../lib/api';
 import { readJsonSse } from '../../lib/sse';
 import { AiMarkdown } from './AiMarkdown';
 import { DuckMascot } from '../mascot/DuckMascot';
@@ -149,12 +149,12 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
         if (frame === undefined) frame = requestAnimationFrame(flush);
       }
       flush();
-    } catch {
+    } catch (error) {
       if (controller.signal.aborted) return;
       flush();
       setMessages((prev) => prev.map((message) => (
         message.id === assistantMessageId
-          ? { ...message, content: `${message.content}${message.content ? '\n\n' : ''}Kết nối tạm gián đoạn. Câu trả lời chưa hoàn tất. Bạn vui lòng thử lại nhé!` }
+          ? { ...message, content: `${message.content}${message.content ? '\n\n' : ''}${getErrorMessage(error, 'Chưa kết nối được AI. Vui lòng thử lại.')}` }
           : message
       )));
     } finally {

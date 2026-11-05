@@ -60,8 +60,8 @@ test('unavailable status does not block learning or mislabel progress', async ({
   await page.goto('/dashboard');
   await expect(page.locator('.app-start-action')).toHaveText('Chọn bài học');
   await expect(page.getByRole('dialog')).not.toBeVisible();
-  await expect(page.getByText('Chưa tải được trạng thái học của bạn.', { exact: false })).toBeVisible();
-  await page.locator('.app-start-action').click();
+  await expect(page.getByText('Chưa tải được trạng thái học.', { exact: false })).toBeVisible();
+  await page.getByRole('main').getByRole('link', { name: 'Chọn bài học', exact: true }).click();
   await expect(page).toHaveURL(/recommendations$/);
 });
 

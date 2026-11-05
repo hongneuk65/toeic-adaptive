@@ -159,11 +159,14 @@ test('one microphone records, transcribes and offers playback without uploading 
   (window as unknown as { micFixture: typeof capture }).micFixture = capture;
   Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: async () => ({ getTracks: () => [{ stop: () => capture.stopped++ }] }) } });
   class FakeRecorder {
-   state = 'inactive'; mimeType = 'audio/webm';
+   state = 'inactive'; mimeType = 'audio/wav';
    ondataavailable: ((event: { data: Blob }) => void) | null = null;
    onstop: (() => void) | null = null;
    start() { this.state = 'recording'; capture.recorderStarts++; }
-   stop() { this.state = 'inactive'; queueMicrotask(() => { this.ondataavailable?.({ data: new Blob(['fixture-audio'], { type: this.mimeType }) }); this.onstop?.(); }); }
+   stop() { this.state = 'inactive'; queueMicrotask(() => { const buffer = new ArrayBuffer(48044); const view = new DataView(buffer);
+    const text = (offset: number, value: string) => { for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i)); };
+    text(0, 'RIFF'); view.setUint32(4, 48036, true); text(8, 'WAVE'); text(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true); view.setUint32(24, 8000, true); view.setUint32(28, 16000, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true); text(36, 'data'); view.setUint32(40, 48000, true);
+    this.ondataavailable?.({ data: new Blob([buffer], { type: this.mimeType }) }); this.onstop?.(); }); }
   }
   class FakeRecognition {
    lang = ''; continuous = false; interimResults = false;
@@ -184,6 +187,11 @@ test('one microphone records, transcribes and offers playback without uploading 
  await expect(page.getByRole('button', { name: 'Nhận góp ý AI', exact: true })).toBeDisabled();
  await page.getByRole('button', { name: 'Dừng ghi âm', exact: true }).click();
  await expect(page.locator('audio.speaking-playback')).toHaveAttribute('src', /^blob:/);
+ await expect.poll(() => page.locator('audio.speaking-playback').evaluate(e => Number.isFinite((e as HTMLAudioElement).duration) && (e as HTMLAudioElement).duration > 0)).toBe(true);
+ await page.getByRole('button', { name: 'Nghe lại câu vừa nói', exact: true }).click();
+ await expect(page.getByRole('button', { name: 'Tạm dừng · Nghe lại câu vừa nói', exact: true })).toBeVisible();
+ await page.getByRole('button', { name: 'Tạm dừng · Nghe lại câu vừa nói', exact: true }).click();
+ await expect(page.getByRole('button', { name: 'Nghe lại câu vừa nói', exact: true })).toBeVisible();
  await expect(page.getByRole('button', { name: 'Nhận góp ý AI', exact: true })).toBeEnabled();
  expect(await page.evaluate(() => (window as unknown as { micFixture: { recorderStarts: number; recognitionStarts: number } }).micFixture)).toMatchObject({ recorderStarts: 1, recognitionStarts: 1 });
  await page.screenshot({ path: info.outputPath('unified-microphone.png') });

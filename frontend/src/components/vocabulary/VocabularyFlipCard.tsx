@@ -1,3 +1,4 @@
+import { MediaButton } from '../ui/MediaButton';
 import { useState } from 'react';
 
 interface Card { id: number; word: string; meaning: string; phonetic?: string; example?: string }
@@ -18,7 +19,7 @@ export function VocabularyFlipCard({ card, pending, onReview }: { card: Card; pe
         <span className="vocabulary-flip-face vocabulary-flip-back" aria-hidden={!flipped}><span className="vocabulary-flip-label">NGHĨA</span><span className="vocabulary-flip-meaning">{card.meaning}</span>{card.example && <span className="vocabulary-flip-example" lang="en">{card.example}</span>}<span className="vocabulary-flip-hint">Chạm để xem từ ↻</span></span>
       </span>
     </button>
-    <div className="vocabulary-flip-tools"><button className="study-action-button" type="button" onClick={listen}>Nghe phát âm</button>{flipped && <span>Tự đánh giá</span>}</div>
+    <div className="vocabulary-flip-tools"><MediaButton label="Nghe phát âm" onClick={listen} />{flipped && <span>Tự đánh giá</span>}</div>
     {flipped && <div className="vocabulary-flip-rating"><button type="button" className="secondary-button" disabled={pending} onClick={() => void onReview(card.id, false)}>Cần ôn</button><button type="button" className="primary-button" disabled={pending} onClick={() => void onReview(card.id, true)}>Đã nhớ</button></div>}
     {audioError && <p role="status">{audioError}</p>}
   </section>;
