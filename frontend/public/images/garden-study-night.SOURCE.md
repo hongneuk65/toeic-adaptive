@@ -1,0 +1,1 @@
+Generated with built-in image_gen by editing garden-study.webp. Prompt: Preserve exact study room composition and all objects; change to nighttime forest with blue moonlight and warm indoor light on open book and desk; no new objects, logos, particles or fantasy effects. Compressed to WebP.

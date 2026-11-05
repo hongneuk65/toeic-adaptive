@@ -517,7 +517,14 @@ export class AdminService {
         throw new BadRequestException('Part phải trùng với kỹ năng');
     }
     return id
-      ? this.prisma.knowledgeChunk.update({ where: { id }, data: dto })
+      ? this.prisma.knowledgeChunk.update({ where: { id }, data: {
+          ...dto,
+          // An edited document needs a new review before retrieval can use it.
+          reviewStatus: 'DRAFT',
+          reviewedAt: null,
+          reviewedBy: null,
+          approvedContentHash: null,
+        } })
       : this.prisma.knowledgeChunk.create({ data: dto });
   }
   async saveSystemFlashcard(

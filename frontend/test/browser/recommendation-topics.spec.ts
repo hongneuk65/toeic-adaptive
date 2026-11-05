@@ -16,7 +16,7 @@ test('topic recommendations are compact, filterable and connect practice with th
   await expect(page.locator('.topic-library-item')).toHaveCount(6);
   await expect(page.locator('.topic-card').nth(1)).toContainText('Chưa đủ dữ liệu');
   await expect(page.locator('.topic-card').first()).toContainText('Dự đoán đúng 42%');
-  await expect(page.getByRole('link', { name: 'Học kiến thức →' }).first()).toHaveAttribute('href', '/theory?topic=topic-0&lesson=1');
+  await expect(page.getByRole('link', { name: 'Học kiến thức' }).first()).toHaveAttribute('href', '/theory?topic=topic-0&lesson=1');
   await page.getByRole('navigation', { name: 'Trang chủ đề' }).getByRole('button', { name: 'Trang 2', exact: true }).click();
   await expect(page.locator('.topic-library-item')).toHaveCount(6);
   await expect(page.locator('.topic-library-item').first()).toContainText('Chủ đề 7');

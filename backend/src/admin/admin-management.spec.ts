@@ -45,7 +45,7 @@ describe('Admin management protections', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
-    knowledgeChunk: { count: jest.fn(), deleteMany: jest.fn() },
+    knowledgeChunk: { count: jest.fn(), deleteMany: jest.fn(), findUnique: jest.fn(), update: jest.fn(), create: jest.fn() },
     flashcard: { findUnique: jest.fn(), update: jest.fn(), create: jest.fn() },
     flashcardFolder: { upsert: jest.fn() },
     readingReport: { findUnique: jest.fn(), update: jest.fn() },
@@ -58,6 +58,14 @@ describe('Admin management protections', () => {
     prisma.$transaction.mockImplementation((callback) => callback(prisma));
   });
   const question = { id: 1, part: 2, correctAnswer: 'A', optionD: '', skills: [{ skillId: 2 }], explanation: '[santa-ednet:q12]\nOld', passage: 'Old passage', audioUrl: '/old.mp3', stimulus: { groupId: 'g1', questionPosition: 1, documents: [{ id: 'old' }], audioDurationSeconds: 25 } };
+  it('returns edited tutor knowledge to draft instead of retaining obsolete approval', async () => {
+    prisma.knowledgeChunk.findUnique.mockResolvedValue({ id: 8, reviewStatus: 'APPROVED' });
+    const dto = { title: 'Updated rule', content: 'Revised content', part: 5, category: 'Grammar', keywords: ['rule'] };
+    await service.saveKnowledge(dto, 8);
+    expect(prisma.knowledgeChunk.update).toHaveBeenCalledWith({ where: { id: 8 }, data: {
+      ...dto, reviewStatus: 'DRAFT', reviewedAt: null, reviewedBy: null, approvedContentHash: null,
+    } });
+  });
   function currentQuestion(extra = {}) {
     prisma.question.findUnique.mockResolvedValue({ id: 1 });
     prisma.question.findUniqueOrThrow.mockResolvedValue({ ...question, ...extra });

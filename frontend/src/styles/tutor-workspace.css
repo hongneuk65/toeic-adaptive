@@ -1,0 +1,78 @@
+.nature-app [data-tutor-open=true] { --tutor-width:min(44vw,640px); }
+#root .nature-app [data-tutor-open=true] { width:calc(100% - var(--tutor-width)); }
+#root .nature-app [data-tutor-open=true] > .app-header { width:100%; }
+.tutor-workspace { position:fixed; inset:0 0 0 auto; width:var(--tutor-width,min(44vw,640px)); z-index:60; display:flex; flex-direction:column; min-width:0; background:var(--nature-surface,#fffefa); color:var(--nature-ink,#193d41); border-left:1px solid var(--nature-line,#d7e1db); box-shadow:-8px 0 28px #15231c0c; }
+.tutor-workspace-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:18px 22px; border-bottom:1px solid var(--nature-line); background:var(--nature-soft); }
+.tutor-workspace-header button,.tutor-workspace-context button { min-height:44px; padding:8px 10px; }
+.tutor-workspace-context { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 20px; border-bottom:1px solid var(--nature-line); font-size:13px; }
+.tutor-workspace-messages { min-height:0; flex:1; overflow-y:auto; overscroll-behavior:contain; padding:22px; display:flex; flex-direction:column; gap:24px; }
+.tutor-workspace .tutor-duck-intro { text-align:left; padding:12px 0; }
+.tutor-workspace .tutor-duck-intro button { background:var(--nature-soft); border:1px solid var(--nature-line); border-radius:12px; font-size:14px; min-height:44px; }
+.tutor-message { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.tutor-message-user { align-items:flex-end; }
+.tutor-message-content { font-size:15px; line-height:1.75; overflow-wrap:anywhere; width:100%; }
+.tutor-message-user .tutor-message-content { width:auto; max-width:92%; background:var(--nature-soft); border:1px solid var(--nature-line); border-radius:16px 16px 4px 16px; padding:12px 16px; white-space:pre-wrap; }
+.tutor-workspace-composer { padding:14px 20px max(14px,env(safe-area-inset-bottom)); border-top:1px solid var(--nature-line); background:var(--nature-soft); }
+.tutor-workspace-composer input { min-width:0; width:100%; border-radius:12px; min-height:46px; }
+.tutor-workspace-composer button { border-radius:12px; min-height:46px; }
+#root .nature-app [data-tutor-open=true] .home-studio-paths { grid-template-columns:repeat(2,minmax(0,1fr)); }
+#root .nature-app [data-tutor-open=true] .prep-home-hero-content { grid-template-columns:1fr; gap:20px; }
+#root .nature-app [data-tutor-open=true] .prep-library-layout { grid-template-columns:1fr; }
+#root .nature-app [data-tutor-open=true] .app-header-inner { flex-wrap:wrap; gap:8px; }
+#root .nature-app [data-tutor-open=true] .home-layout .app-header { position:relative; }
+#root .nature-app [data-tutor-open=true] .prep-home-hero { padding-top:190px; }
+#root .nature-app .tutor-practice-split { right:var(--tutor-width,min(44vw,640px)); z-index:50; }
+#root .nature-app .tutor-practice-split > [role=dialog] { max-height:90dvh; }
+@media(max-width:1099px) {
+ #root .nature-app [data-tutor-open=true] { width:100%; height:100dvh; min-height:0; overflow:hidden; }
+ #root .nature-app [data-tutor-open=true] > .app-header { flex-shrink:0; position:relative; }
+ #root .nature-app [data-tutor-open=true] > .learning-shell { flex:none; height:calc(50dvh - 100px); min-height:90px; overflow:auto; }
+ #root .nature-app [data-tutor-open=true] .app-content { padding-bottom:24px; min-height:0; }
+ #root .nature-app [data-tutor-open=true] .prep-home-hero { padding-top:20px; }
+ #root .nature-app .tutor-workspace { top:50dvh; bottom:0; width:100%; border-left:0; border-top:1px solid var(--nature-line); }
+ .tutor-workspace-header { padding:8px 16px; }
+ .tutor-workspace-header p,.tutor-workspace-header-avatar { display:none; }
+ .tutor-workspace-messages { padding:14px 16px; gap:16px; }
+ .tutor-workspace-composer { padding:10px 12px; }
+ #root .nature-app .tutor-practice-split { inset:0 0 50dvh; padding:8px; }
+ #root .nature-app .tutor-practice-split > [role=dialog] { max-height:100%; padding:16px; }
+}
+
+@media(max-width:1099px) {
+ #root .nature-app [data-tutor-open=true] > .app-header { height:100px; overflow:auto; }
+ #root .nature-app [data-tutor-open=true] > .learning-shell { height:calc(50dvh - 100px); min-height:0; overflow:hidden; }
+ #root .nature-app [data-tutor-open=true] .app-content { height:100%; overflow:auto; }
+}
+html[data-theme=dark] #root .nature-app .tutor-workspace { background:var(--nature-surface); }
+html[data-theme=dark] #root .nature-app .tutor-workspace :is(.tutor-workspace-header,.tutor-workspace-composer,.tutor-duck-intro button) { background:var(--nature-soft); }
+
+/* Reading workspace: give the exercise more room and frame chat as a quiet notebook. */
+.nature-app [data-tutor-open=true] { --tutor-width:clamp(400px,38vw,560px); }
+#root .nature-app .tutor-workspace { width:var(--tutor-width,clamp(400px,38vw,560px)); padding:12px; background:var(--nature-soft); gap:0; box-shadow:none; }
+.tutor-workspace-header { padding:10px 12px 16px; background:transparent; border:0; flex-wrap:nowrap; }
+.tutor-workspace-header .tutor-duck-header-avatar { width:34px; height:34px; }
+.tutor-workspace-header h3 { font-size:16px; }
+.tutor-workspace-header p { font-size:11px; }
+.tutor-workspace-header button { border:0; font-size:12px; padding:8px; }
+.tutor-workspace-context { margin:0 4px 10px; padding:8px 12px; border:1px solid var(--nature-line); border-radius:12px; background:var(--nature-surface); font-size:12px; }
+.tutor-workspace-context button { font-size:11px; border:0; color:var(--nature-muted); }
+.tutor-workspace-messages { background:var(--nature-surface); border:1px solid var(--nature-line); border-bottom:0; border-radius:16px 16px 0 0; padding:20px; gap:22px; }
+.tutor-workspace-composer { background:var(--nature-surface); border:1px solid var(--nature-line); border-top:0; border-radius:0 0 16px 16px; padding:12px; }
+.tutor-workspace-composer form { padding:6px; border:1px solid var(--nature-line); border-radius:14px; background:var(--nature-soft); }
+.tutor-workspace-composer input { background:transparent; border:0; box-shadow:none; padding:8px; font-size:14px; }
+.tutor-workspace-composer button { font-size:13px; padding:10px 14px; background:#315e58; color:#fff; }
+.tutor-message-content { font-size:14px; line-height:1.8; }
+.tutor-message-user .tutor-message-content { background:var(--nature-soft); border:0; }
+.tutor-workspace .tutor-duck-author { font-size:10px; letter-spacing:.02em; color:var(--nature-muted); }
+html[data-theme=dark] #root .nature-app .tutor-workspace { background:var(--nature-soft); }
+html[data-theme=dark] #root .nature-app .tutor-workspace .tutor-workspace-header { background:transparent; }
+html[data-theme=dark] #root .nature-app .tutor-workspace .tutor-workspace-composer { background:var(--nature-surface); }
+@media(max-width:1099px) {
+ #root .nature-app .tutor-workspace { width:100%; padding:6px 8px max(6px,env(safe-area-inset-bottom)); }
+ .tutor-workspace-header { padding:0 6px 6px; min-height:42px; }
+ .tutor-workspace-header .tutor-duck-header-avatar { display:none; }
+ .tutor-workspace-context { margin:0 0 6px; padding:2px 10px; }
+ .tutor-workspace-messages { padding:12px; border-radius:12px 12px 0 0; }
+ .tutor-workspace-composer { padding:6px; border-radius:0 0 12px 12px; }
+ .tutor-workspace-composer input,.tutor-workspace-composer button { min-height:40px; }
+}

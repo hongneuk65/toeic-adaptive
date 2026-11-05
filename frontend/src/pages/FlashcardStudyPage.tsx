@@ -1,8 +1,12 @@
+import { VocabularySentencePractice } from '../components/vocabulary/VocabularySentencePractice';
+import { VocabularyPractice } from '../components/vocabulary/VocabularyPractice';
+import { VocabularySpeaking } from '../components/vocabulary/VocabularySpeaking';
 import { Pagination } from '../components/ui/Pagination';
-import { ActivitySuggestions } from '../components/ActivitySuggestions';
 import { notifyLearningProgress } from '../lib/learning-progress';
 import { VocabularyMemory, type VocabularyMemoryEstimate } from '../components/VocabularyMemory';
 import '../styles/prep-knowledge.css';
+import '../styles/vocabulary-workspace.css';
+import '../styles/vocabulary-studio.css';
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, getErrorMessage } from '../lib/api';
@@ -56,12 +60,6 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
   const [sessionReviewed, setSessionReviewed] = useState<number[]>([]);
   const [sessionActive, setSessionActive] = useState(false);
   const [dueTime, setDueTime] = useState(() => Date.now());
-  useEffect(() => {
-    const refresh = () => setDueTime(new Date().getTime());
-    const timer = window.setInterval(refresh, 30000);
-    window.addEventListener('focus', refresh);
-    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh); };
-  }, []);
   const filtered = useMemo(() => {
     const query = search.toLowerCase().trim();
     const known = new Set((data?.reviews ?? []).filter(review => review.known).map(review => review.cardId));
@@ -76,6 +74,8 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
   const [flippedIds, setFlippedIds] = useState<Record<number, boolean>>({});
 
   // Chế độ xem: 'grid' hoặc 'focus'
+  const [practiceMode, setPracticeMode] = useState<'typed' | 'quiz' | 'dictation' | 'sentence' | 'speaking'>('typed');
+  const [practiceLocked, setPracticeLocked] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'focus'>('focus');
   const [focusIndex, setFocusIndex] = useState(0);
   const [gridPage, setGridPage] = useState(1);
@@ -96,7 +96,15 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
   const [notice, setNotice] = useState('');
   const [reviewingId, setReviewingId] = useState<number | null>(null);
   const [retryingId, setRetryingId] = useState<number | null>(null);
-  const navigationLocked = reviewingId !== null || retryingId !== null;
+  const navigationLocked = reviewingId !== null || retryingId !== null || practiceLocked;
+  useEffect(() => {
+    if (navigationLocked) return;
+    const refresh = () => setDueTime(new Date().getTime());
+    const timer = window.setInterval(refresh, 30000);
+    window.addEventListener('focus', refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh); };
+  }, [navigationLocked]);
+
   const reviewBusy = useRef(false);
   const pendingReviews = useRef(new Map<number, { known: boolean; attempt: RecallAttempt }>());
 
@@ -133,11 +141,12 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
       notifyLearningProgress();
       pendingReviews.current.delete(id);
       setRetryingId(null);
-      if (sessionActive) { setSessionReviewed(ids => [...ids, id]); setFocusIndex(0); setFlippedIds({}); }
+      const typedReview = payload.attempt.recallMode === 'typed';
+      if (sessionActive && !typedReview) { setSessionReviewed(ids => [...ids, id]); setFocusIndex(0); setFlippedIds({}); }
       const scheduleLabel = result.schedulingSource === 'hlr-prior-experimental' ? 'Lịch cá nhân hóa thử nghiệm' : result.schedulingSource?.startsWith('hlr-trained:') ? 'Lịch cá nhân hóa từ dữ liệu ôn' : 'Lịch ôn cố định';
       setNotice(`${result.known ? 'Đã nhớ' : 'Cần ôn thêm'}${result.dueAt ? ` · Ôn tiếp: ${new Date(result.dueAt).toLocaleString('vi-VN')}` : ''} · ${scheduleLabel}.`);
-      setDueTime(new Date().getTime());
-      loadData();
+      // Keep typed feedback visible; refreshing due cards would remove this card.
+      if (!typedReview) { setDueTime(new Date().getTime()); loadData(); }
       return true;
     } catch (cause) { setRetryingId(id); setActionError(`${getErrorMessage(cause)} Lượt ôn chưa được xác nhận. Nhấn lưu lại để thử lại cùng lượt.`); return false; }
     finally { reviewBusy.current = false; setReviewingId(null); }
@@ -207,7 +216,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
   };
 
   return (
-    <div className={`page-stack prep-knowledge-page prep-flashcard-page ${viewMode === 'focus' ? 'prep-flashcard-focus mx-auto w-full max-w-3xl' : 'prep-flashcard-library'}`}>
+    <div className={`page-stack prep-knowledge-page prep-flashcard-page vocabulary-workspace vocabulary-studio ${viewMode === 'focus' ? 'prep-flashcard-focus mx-auto w-full max-w-3xl' : 'prep-flashcard-library'}`}>
       {notice && <p role="status" className="status-message">{notice}</p>}
       {actionError && <p role="alert" className="status-message text-rose-800">{actionError}</p>}
       {error && <p role="alert" className="status-message">{error} <button className="text-action" onClick={loadData}>Thử lại</button></p>}
@@ -261,21 +270,32 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
         }
       `}</style>
 
-      <div className="prep-flashcard-heading space-y-3">
-        <button onClick={() => navigate('/flashcards')} className="text-action text-sm">Thư mục từ vựng</button>
-        <PageHeader variant={viewMode === 'focus' ? 'compact' : 'feature'} title={folder?.name || 'Từ vựng'} description={folder?.description}  />
+      <div className="prep-flashcard-heading vocabulary-study-heading">
+        <button onClick={() => navigate('/flashcards')} className="vocabulary-back-link">Thư mục từ vựng</button>
+        <PageHeader variant="compact" title={folder?.name || 'Từ vựng'} actions={folder?.isOwner && <button disabled={navigationLocked} onClick={() => setIsModalOpen(true)} className="secondary-button">Thêm từ</button>} />
+        {folder?.description && <details className="vocabulary-set-description"><summary>Về bộ từ này</summary><p>{folder.description}</p></details>}
       </div>
-      <div className="grid grid-cols-1 gap-3 border-b border-paper-kraft pb-4 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <div role="group" aria-label="Chế độ ôn từ vựng" className="prep-knowledge-tabs flex w-fit rounded-lg bg-paper-cream p-1"><button aria-pressed={viewMode === 'focus'} disabled={navigationLocked} onClick={() => handleSwitchViewMode('focus')} className={`min-h-11 rounded-lg px-3 text-sm font-semibold ${viewMode === 'focus' ? 'bg-paper-white text-ink-dark shadow-sm' : 'text-ink-medium'}`}>Ôn tập trung</button><button aria-pressed={viewMode === 'grid'} disabled={navigationLocked} onClick={() => handleSwitchViewMode('grid')} className={`min-h-11 rounded-lg px-3 text-sm font-semibold ${viewMode === 'grid' ? 'bg-paper-white text-ink-dark shadow-sm' : 'text-ink-medium'}`}>Tất cả thẻ</button></div>
-        <div className="flex w-full items-center gap-3 sm:col-span-2 sm:row-start-2"><input type="search" disabled={navigationLocked} value={search} onChange={event => { setSearch(event.target.value); setFocusIndex(0); setGridPage(1); setFlippedIds({}); }} aria-label="Tìm từ vựng" placeholder="Tìm từ hoặc nghĩa…" className="min-w-0 flex-1 rounded-lg border border-paper-kraft bg-paper-white px-3 py-2.5 text-sm" /><span className="shrink-0 text-xs text-ink-medium">{filtered.length} từ</span></div>
-        {folder?.isOwner && <button onClick={() => setIsModalOpen(true)} className="secondary-button justify-self-start sm:col-start-2 sm:row-start-1 sm:justify-self-end">Thêm từ</button>}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="text-sm text-ink-medium">Lọc thẻ <select disabled={navigationLocked} aria-label="Lọc trạng thái ghi nhớ" value={reviewFilter} onChange={event => { setReviewFilter(event.target.value as 'all' | 'needed' | 'known' | 'due'); setGridPage(1); setFocusIndex(0); setFlippedIds({}); setSessionActive(false); }} className="min-h-11 rounded-lg border border-paper-kraft bg-paper-white px-3 ml-2"><option value="due">Đến hạn ôn</option><option value="needed">Cần ôn</option><option value="known">Đã nhớ</option><option value="all">Tất cả</option></select></label>
-        <button className="secondary-button" disabled={navigationLocked || (!sessionActive && filtered.length === 0)} onClick={() => { setSessionReviewed([]); setSessionActive(value => !value); setGridPage(1); setFocusIndex(0); setFlippedIds({}); }}>{sessionActive ? 'Kết thúc buổi ôn' : 'Bắt đầu buổi ôn'}</button>
-        {sessionActive && <p role="status" className="text-sm text-ink-medium">Đã ôn {sessionReviewed.length} thẻ · còn {filtered.length} thẻ. Mỗi thẻ chỉ xuất hiện một lần trong buổi.</p>}
-      </div>
+      <section className="vocabulary-study-controls" aria-label="Thiết lập ôn từ vựng">
+        <div role="group" aria-label="Cách học từ vựng" className="vocabulary-practice-modes">
+          {([['typed', 'Viết từ'], ['quiz', 'Trắc nghiệm'], ['dictation', 'Nghe–gõ'], ['sentence', 'Đặt câu'], ['speaking', 'Luyện nói']] as const).map(([mode, label]) => <button key={mode} type="button" aria-pressed={viewMode === 'focus' && practiceMode === mode} disabled={navigationLocked} onClick={() => { setPracticeMode(mode); if (viewMode !== 'focus') handleSwitchViewMode('focus'); }}>{label}</button>)}
+        </div>
+        <div className="vocabulary-options-row">
+          <details className="vocabulary-study-options">
+            <summary>Tùy chọn học</summary>
+            <div className="vocabulary-options-content">
+              <div className="vocabulary-control-top">
+                <div role="group" aria-label="Chế độ ôn từ vựng" className="prep-knowledge-tabs vocabulary-view-switch"><button aria-pressed={viewMode === 'focus'} disabled={navigationLocked} onClick={() => handleSwitchViewMode('focus')}>Ôn tập trung</button><button aria-pressed={viewMode === 'grid'} disabled={navigationLocked} onClick={() => handleSwitchViewMode('grid')}>Tất cả thẻ</button></div>
+                <label className="vocabulary-review-select"><span className="sr-only">Lọc thẻ</span><select disabled={navigationLocked} aria-label="Lọc trạng thái ghi nhớ" value={reviewFilter} onChange={event => { setReviewFilter(event.target.value as 'all' | 'needed' | 'known' | 'due'); setGridPage(1); setFocusIndex(0); setFlippedIds({}); setSessionActive(false); }}><option value="due">Đến hạn ôn</option><option value="needed">Cần ôn</option><option value="known">Đã nhớ</option><option value="all">Tất cả</option></select></label>
+              </div>
+              <div className="vocabulary-control-bottom">
+                <label className="vocabulary-word-search"><span className="sr-only">Tìm từ vựng</span><input type="search" disabled={navigationLocked} value={search} onChange={event => { setSearch(event.target.value); setFocusIndex(0); setGridPage(1); setFlippedIds({}); }} placeholder="Tìm từ hoặc nghĩa…" /></label>
+                <button className="vocabulary-session-button" disabled={navigationLocked || (!sessionActive && filtered.length === 0)} onClick={() => { setSessionReviewed([]); setSessionActive(value => !value); setGridPage(1); setFocusIndex(0); setFlippedIds({}); }}>{sessionActive ? 'Kết thúc buổi ôn' : 'Bắt đầu buổi ôn'}</button>
+              </div>
+            </div>
+          </details>
+          {!loading && data && <p role="status" className="vocabulary-result-count">{sessionActive ? `Đã ôn ${sessionReviewed.length} · còn ${filtered.length}` : `${filtered.length} từ`}</p>}
+        </div>
+      </section>
 
       {/* 2. Danh sách thẻ */}
       {loading && !data ? (
@@ -376,8 +396,23 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
             const card = filtered[focusIndex] || filtered[0];
             return (
               <>
-                <VocabularyMemory memory={data?.reviews.find(review => review.cardId === card.id)?.memory} estimatedAt={data?.estimatedAt ?? dueTime} currentTime={dueTime} />
-                <FlashcardRecall key={card.id} card={card} pending={reviewingId !== null} onReview={reviewCard} />
+                {practiceMode === 'typed' ? <>
+                  <FlashcardRecall key={card.id} card={card} pending={reviewingId !== null} onReview={reviewCard} onBusyChange={setPracticeLocked} onCompleted={() => {
+                    setPracticeLocked(false);
+                    if (sessionActive) { setSessionReviewed(ids => [...new Set([...ids, card.id])]); setFocusIndex(0); }
+                    else if (reviewFilter !== 'due') setFocusIndex(index => Math.min(index + 1, filtered.length - 1));
+                    else setFocusIndex(0);
+                    setDueTime(Date.now()); loadData();
+                  }} />
+                  <VocabularyMemory memory={data?.reviews.find(review => review.cardId === card.id)?.memory} estimatedAt={data?.estimatedAt ?? dueTime} currentTime={dueTime} />
+                </> : practiceMode === 'sentence' ? <VocabularySentencePractice key={card.id} card={card} onBusyChange={setPracticeLocked} onCompleted={() => {
+                  if (sessionActive) { setSessionReviewed(ids => [...new Set([...ids, card.id])]); setFocusIndex(0); }
+                  else setFocusIndex(index => Math.min(index + 1, filtered.length - 1));
+                }} /> : practiceMode === 'speaking' ? <VocabularySpeaking key={card.id} card={card} onBusyChange={setPracticeLocked} /> : <VocabularyPractice key={`${practiceMode}:${card.id}`} mode={practiceMode} card={card} cards={data?.cards ?? []} onBusyChange={setPracticeLocked} onRecorded={notifyLearningProgress} onCompleted={() => {
+                  if (sessionActive) { setSessionReviewed(ids => [...new Set([...ids, card.id])]); setFocusIndex(0); }
+                  else setFocusIndex(index => Math.min(index + 1, filtered.length - 1));
+                }} />}
+
 
                 <div className="flex justify-between items-center gap-2 max-w-3xl mx-auto text-sm">
                   <button
@@ -404,7 +439,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
         </div>
       )}
 
-      {!loading && data && <ActivitySuggestions section="vocabulary" compact excludeHref={`/flashcards/${folderId}`} />}
+
 
       {/* 3. Modal thêm từ */}
       {isModalOpen && folder?.isOwner && (

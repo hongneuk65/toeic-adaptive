@@ -172,8 +172,6 @@
 .prep-home-program-card::before { content: ''; position: absolute; inset: 0; border-radius: inherit; border: 1px solid #ffffff30; pointer-events: none; }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .prep-home-program-card:hover { box-shadow: 0 20px 40px #213a7528, 0 0 0 1px #a5c7ff55; }
-  .prep-home-program-card > a::after { content: '↗'; display: inline-block; margin-left: 12px; transition: transform 180ms ease; }
-  .prep-home-program-card > a:hover::after { transform: translate(2px, -2px); }
   .prep-home-resume-list li { transition: background-color 180ms ease, padding 180ms ease; border-radius: 12px; }
   .prep-home-resume-list li:hover { background: #edf4ff; padding-inline: 12px; }
   .prep-home-progress-content aside a:hover { text-decoration: underline; text-underline-offset: 5px; }
@@ -229,3 +227,10 @@ html:has(.prep-home)::-webkit-scrollbar { display: none; }
 .prep-home .prep-home-progress .prep-home-heading h2{font-size:28px}
 .prep-home .prep-home-progress .prep-home-heading p{font-size:14px;margin-top:8px}
 @media(max-width:640px){.prep-home .prep-home-hero{min-height:350px;padding:126px 20px 28px}.prep-home .prep-home-hero-content{grid-template-columns:1fr;gap:0}.prep-home .home-cosmic-eyebrow{font-size:9px;margin-bottom:10px}.prep-home .prep-home-hero h1{font-size:29px;line-height:1.2}.prep-home .home-discover-dock{grid-column:1;grid-row:auto;justify-self:start;margin-top:18px}.prep-home .home-astronaut-holder{display:none}.prep-home .prep-home-progress{padding-top:24px}.prep-home .prep-home-progress .prep-home-heading h2{font-size:25px}}
+
+/* Keep the signed-in home focused on study choices rather than introductory copy. */
+.prep-home .prep-home-program-card { min-height: 230px; padding: 24px; border-radius: 20px; }
+.prep-home .prep-home-program-card h3 { font-size: 28px; }
+.prep-home .prep-home-program-card .prep-home-program-subtitle { font-size: 16px; margin-top: 12px; }
+.prep-home .prep-home-progress-content { padding: 24px; gap: 24px; }
+.prep-home .prep-home-programs { padding-top: 32px; padding-bottom: 32px; }

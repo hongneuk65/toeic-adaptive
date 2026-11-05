@@ -1,0 +1,124 @@
+/* Vocabulary studio: real set identity and one focused learning surface. */
+#root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio.prep-flashcard-focus {padding:24px;background:var(--nature-soft);border:1px solid var(--nature-line);border-radius:20px}
+#root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio.prep-flashcard-focus .primary-button {background:#245f68;color:#fff;border-color:#245f68;min-height:44px}
+html[data-theme=dark] #root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio.prep-flashcard-focus .primary-button {background:#426c57;border-color:#426c57;color:#fff}
+@media(max-width:639px) {#root .nature-app .study-layout[data-section=flashcards] .vocabulary-studio.prep-flashcard-focus {padding:12px;border-radius:16px}}
+#root .nature-app .vocabulary-studio.prep-flashcard-focus .vocabulary-study-heading .page-header {flex-direction:row;align-items:center;gap:12px}
+#root .nature-app .vocabulary-studio.prep-flashcard-focus .vocabulary-study-heading .page-header h1 {font-size:24px;text-align:left}
+#root .nature-app .vocabulary-studio.prep-flashcard-focus .vocabulary-study-heading .page-header-actions {width:auto;flex-shrink:0}
+#root .nature-app .vocabulary-studio.prep-flashcard-focus .vocabulary-study-heading .page-header-actions button {font-size:12px;padding:8px 12px}
+@media(max-width:639px) {#root .nature-app .vocabulary-studio.prep-flashcard-focus .vocabulary-study-heading .page-header h1 {font-size:20px}}
+#root .nature-app .vocabulary-studio {
+  --studio-ink: var(--nature-ink, #193d41);
+  --studio-muted: var(--nature-muted, #526968);
+  --studio-line: var(--nature-line, #d7e1db);
+  --studio-surface: var(--nature-surface, #fffefa);
+  --studio-soft: var(--nature-soft, #edf2ec);
+  --studio-accent: var(--study-blue, #225f69);
+  color: var(--studio-ink);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  gap: 20px;
+}
+#root .nature-app .vocabulary-studio::before { display: none; }
+#root .nature-app .vocabulary-studio .page-header { border: 0; padding: 0; min-height: 0; }
+#root .nature-app .vocabulary-studio .page-header h1 { font-size: clamp(24px, 2.5vw, 32px); letter-spacing: -.035em; line-height: 1.25; color: var(--studio-ink); }
+#root .nature-app .vocabulary-studio .vocabulary-library-toolbar { padding: 12px; border: 1px solid var(--studio-line); border-radius: 16px; background: var(--studio-surface); gap: 12px; }
+#root .nature-app .vocabulary-studio .vocabulary-scope { gap: 3px; }
+#root .nature-app .vocabulary-studio .vocabulary-scope button { border-radius: 9px; }
+#root .nature-app .vocabulary-studio .vocabulary-scope button[aria-pressed=true] { background: var(--studio-soft); color: var(--studio-accent); }
+#root .nature-app .vocabulary-studio .prep-folder-catalog { gap: 16px; align-items: start; }
+#root .nature-app .vocabulary-studio .prep-folder-tile { position: relative; min-width: 0; padding: 20px; gap: 16px; border: 1px solid var(--studio-line); border-radius: 18px; background: var(--studio-surface); box-shadow: none; }
+#root .nature-app .vocabulary-studio .vocabulary-book-heading { display: flex; align-items: center; gap: 14px; }
+#root .nature-app .vocabulary-studio .vocabulary-book-mark { position: relative; display: grid; place-items: center; width: 42px; height: 54px; flex: 0 0 42px; padding-left: 4px; border: 1px solid color-mix(in srgb, var(--studio-accent) 28%, var(--studio-line)); border-left: 5px solid var(--studio-accent); border-radius: 3px 8px 8px 3px; color: var(--studio-accent); background: color-mix(in srgb, var(--studio-accent) 9%, var(--studio-surface)); font-size: 24px; font-weight: 600; font-family: Georgia, serif; }
+#root .nature-app .vocabulary-studio .vocabulary-book-mark::after { content: ''; position: absolute; left: 4px; top: 0; bottom: 0; width: 1px; background: color-mix(in srgb, var(--studio-accent) 18%, transparent); }
+#root .nature-app .vocabulary-studio .prep-folder-eyebrow { font-size: 13px; font-weight: 600; color: var(--studio-ink); }
+#root .nature-app .vocabulary-studio .prep-folder-eyebrow span { display: block; margin-top: 4px; font-size: 12px; font-weight: 400; color: var(--studio-muted); }
+#root .nature-app .vocabulary-studio .vocabulary-folder-content { padding: 0; flex: 1; }
+#root .nature-app .vocabulary-studio .prep-folder-tile h2 { margin: 0 0 8px; font-size: 19px; line-height: 1.45; color: var(--studio-ink); }
+#root .nature-app .vocabulary-studio .folder-open-link { text-decoration: none; }
+#root .nature-app .vocabulary-studio .folder-open-link::after { display: none; }
+#root .nature-app .vocabulary-studio .vocabulary-folder-description { margin: 0; line-height: 1.65; color: var(--studio-muted); }
+#root .nature-app .vocabulary-studio .vocabulary-folder-open-row { display: flex; }
+#root .nature-app .vocabulary-studio .vocabulary-open-set { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; width: 100%; padding: 10px 16px; border: 1px solid var(--studio-line); border-radius: 10px; background: var(--studio-soft); color: var(--studio-accent); font-size: 13px; font-weight: 600; text-decoration: none; }
+#root .nature-app .vocabulary-studio .vocabulary-folder-footer { margin-top: 0; padding: 4px 0 0; border-top: 1px solid var(--studio-line); align-items: start; gap: 8px; }
+#root .nature-app .vocabulary-studio .vocabulary-folder-details { color: var(--studio-muted); }
+#root .nature-app .vocabulary-studio .folder-delete-button { color: var(--studio-muted); padding-inline: 8px; }
+#root .nature-app .vocabulary-studio .vocabulary-study-heading { display: grid; gap: 8px; }
+#root .nature-app .vocabulary-studio .vocabulary-back-link { justify-self: start; min-height: 40px; padding: 6px 0; border: 0; border-radius: 6px; font-size: 13px; color: var(--studio-muted); text-decoration: none; }
+#root .nature-app .vocabulary-studio .vocabulary-set-description summary { min-height: 32px; padding-block: 6px; font-size: 12px; }
+#root .nature-app .vocabulary-studio .vocabulary-set-description > p { background: var(--studio-surface); color: var(--studio-muted); border: 1px solid var(--studio-line); }
+#root .nature-app .vocabulary-studio .vocabulary-study-controls { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--studio-line); border-radius: 16px; background: var(--studio-surface); }
+#root .nature-app .vocabulary-studio .vocabulary-control-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-width: 0; }
+#root .nature-app .vocabulary-studio .vocabulary-view-switch { display: flex; width: fit-content; max-width: 100%; padding: 3px; border-radius: 10px; background: var(--studio-soft); }
+#root .nature-app .vocabulary-studio .vocabulary-view-switch button { min-height: 44px; padding: 8px 12px; border-radius: 8px; font-size: 13px; white-space: nowrap; color: var(--studio-muted); }
+#root .nature-app .vocabulary-studio .vocabulary-view-switch button[aria-pressed=true] { color: var(--studio-accent); background: var(--studio-surface); box-shadow: 0 1px 3px #102b2610; }
+#root .nature-app .vocabulary-studio .vocabulary-review-select { min-width: 0; }
+#root .nature-app .vocabulary-studio .vocabulary-review-select select { min-height: 44px; max-width: 100%; padding: 9px 10px; border: 1px solid var(--studio-line); border-radius: 9px; font-size: 13px; background: var(--studio-surface); color: var(--studio-ink); }
+#root .nature-app .vocabulary-studio .vocabulary-practice-modes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; border: 1px solid var(--studio-line); border-radius: 11px; background: transparent; }
+#root .nature-app .vocabulary-studio .vocabulary-practice-modes button { min-height: 44px; padding: 8px 6px; border: 0; border-radius: 7px; color: var(--studio-muted); font-size: 13px; font-weight: 500; line-height: 1.3; }
+#root .nature-app .vocabulary-studio .vocabulary-practice-modes button[aria-pressed=true] { color: var(--studio-accent); background: var(--studio-soft); font-weight: 650; }
+#root .nature-app .vocabulary-studio .vocabulary-control-bottom { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+#root .nature-app .vocabulary-studio .vocabulary-word-search { min-width: 0; }
+#root .nature-app .vocabulary-studio .vocabulary-word-search input { width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--studio-line); border-radius: 9px; background: var(--studio-surface); color: var(--studio-ink); font-size: 14px; }
+#root .nature-app .vocabulary-studio .vocabulary-result-count { color: var(--studio-muted); font-size: 12px; white-space: nowrap; }
+#root .nature-app .vocabulary-studio .vocabulary-session-button { min-height: 44px; padding: 9px 12px; border: 1px solid var(--studio-line); border-radius: 9px; color: var(--studio-accent); font-size: 12px; font-weight: 600; white-space: nowrap; }
+#root .nature-app .vocabulary-studio .vocabulary-session-progress { font-size: 12px; color: var(--studio-muted); }
+#root .nature-app .vocabulary-studio .vocabulary-recall { border: 1px solid var(--studio-line); border-radius: 20px; background: var(--studio-surface); box-shadow: 0 8px 24px #102b2608; }
+#root .nature-app .vocabulary-studio .vocabulary-memory { background: var(--studio-surface); border: 1px solid var(--studio-line); border-radius: 14px; color: var(--studio-muted); }
+#root .nature-app .vocabulary-studio :is(.vocabulary-open-set,.vocabulary-back-link,.vocabulary-session-button,.vocabulary-practice-modes button,.vocabulary-view-switch button):focus-visible { outline: 3px solid var(--studio-accent); outline-offset: 3px; }
+#root .nature-app .vocabulary-studio button:disabled { opacity: .5; cursor: not-allowed; }
+@media (hover: hover) and (pointer: fine) {
+  #root .nature-app .vocabulary-studio .prep-folder-tile:hover { transform: none; box-shadow: 0 5px 16px #102b2608; border-color: color-mix(in srgb, var(--studio-accent) 50%, var(--studio-line)); }
+  #root .nature-app .vocabulary-studio .vocabulary-open-set:hover { background: color-mix(in srgb, var(--studio-accent) 12%, var(--studio-surface)); }
+}
+@media (max-width: 639px) {
+  #root .nature-app .vocabulary-studio { gap: 16px; }
+  #root .nature-app .vocabulary-studio .prep-folder-tile { padding: 18px; }
+  #root .nature-app .vocabulary-studio .vocabulary-library-toolbar { padding: 10px; }
+  #root .nature-app .vocabulary-studio .vocabulary-study-controls { gap: 10px; padding: 10px; }
+  #root .nature-app .vocabulary-studio .vocabulary-control-top { gap: 8px; flex-wrap: wrap; }
+  #root .nature-app .vocabulary-studio .vocabulary-view-switch button { padding-inline: 9px; font-size: 12px; }
+  #root .nature-app .vocabulary-studio .vocabulary-review-select select { max-width: 124px; padding-inline: 6px; font-size: 12px; }
+  #root .nature-app .vocabulary-studio .vocabulary-practice-modes button { font-size: 12px; }
+  #root .nature-app .vocabulary-studio .vocabulary-control-bottom { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; }
+  #root .nature-app .vocabulary-studio .vocabulary-word-search { grid-column: 1 / -1; }
+  #root .nature-app .vocabulary-studio .vocabulary-word-search input { font-size: 16px; }
+  #root .nature-app .vocabulary-studio .vocabulary-session-button { justify-self: end; }
+}
+@media (prefers-reduced-motion: reduce) { #root .nature-app .vocabulary-studio .prep-folder-tile { transition: none; } }
+
+/* Learning choices stay visible; supporting controls open only when needed. */
+#root .nature-app .vocabulary-studio .vocabulary-study-controls { gap: 6px; padding: 10px 12px; }
+#root .nature-app .vocabulary-studio .vocabulary-options-row { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+#root .nature-app .vocabulary-studio .vocabulary-study-options { flex: 1; min-width: 0; }
+#root .nature-app .vocabulary-studio .vocabulary-study-options > summary { display: flex; align-items: center; width: fit-content; min-height: 44px; padding: 8px 12px; border: 1px solid transparent; border-radius: 8px; cursor: pointer; list-style: none; color: var(--studio-accent); font-size: 13px; font-weight: 600; }
+#root .nature-app .vocabulary-studio .vocabulary-study-options > summary::-webkit-details-marker { display: none; }
+#root .nature-app .vocabulary-studio .vocabulary-study-options[open] > summary { background: var(--studio-soft); border-color: var(--studio-line); }
+#root .nature-app .vocabulary-studio .vocabulary-study-options > summary:focus-visible { outline: 3px solid var(--studio-accent); outline-offset: 2px; }
+#root .nature-app .vocabulary-studio .vocabulary-options-content { display: grid; gap: 12px; padding-block: 12px 4px; }
+#root .nature-app .vocabulary-studio .vocabulary-options-row > .vocabulary-result-count { flex-shrink: 0; margin: 0; padding-block: 14px; font-size: 12px; line-height: 16px; }
+#root .nature-app .vocabulary-studio .vocabulary-practice-modes button[aria-pressed=true] { border: 1px solid var(--studio-accent); background: var(--studio-soft); color: var(--studio-accent); }
+#root .nature-app .vocabulary-studio .vocabulary-practice-modes button { border: 1px solid transparent; }
+@media (max-width: 639px) {
+  #root .nature-app .vocabulary-studio .vocabulary-study-controls { gap: 4px; padding: 8px; }
+  #root .nature-app .vocabulary-studio .vocabulary-options-row { gap: 4px; }
+  #root .nature-app .vocabulary-studio .vocabulary-options-row:has(.vocabulary-study-options[open]) { flex-wrap: wrap; }
+  #root .nature-app .vocabulary-studio .vocabulary-study-options[open] { flex-basis: 100%; }
+  #root .nature-app .vocabulary-studio .vocabulary-options-content input,
+  #root .nature-app .vocabulary-studio .vocabulary-options-content select { font-size: 16px; }
+  #root .nature-app .vocabulary-studio .vocabulary-review-select select { max-width: 100%; }
+}
+
+/* Five clear modes remain reachable without squeezing their labels. */
+#root .nature-app .vocabulary-studio .vocabulary-practice-modes { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+#root .nature-app .vocabulary-studio .vocabulary-sentence-completion { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 16px; border-top: 1px solid var(--studio-line); }
+#root .nature-app .vocabulary-studio .vocabulary-sentence-completion > p { max-width: 34ch; }
+#root .nature-app .vocabulary-studio .vocabulary-sentence textarea { resize: vertical; min-height: 112px; }
+@media (max-width: 639px) {
+  #root .nature-app .vocabulary-studio .vocabulary-practice-modes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #root .nature-app .vocabulary-studio .vocabulary-practice-modes button { font-size: 13px; }
+  #root .nature-app .vocabulary-studio .vocabulary-sentence-completion { align-items: flex-start; flex-wrap: wrap; }
+  #root .nature-app .vocabulary-studio .vocabulary-sentence textarea { font-size: 16px; }
+}

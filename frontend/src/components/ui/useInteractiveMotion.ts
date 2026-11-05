@@ -3,7 +3,7 @@ import '../../styles/interactive-motion.css';
 
 const cards = '.prep-home-program-card, .prep-learning-card, .prep-folder-tile, .prep-exam-mode, .interactive-card:has(a, button)';
 const actions = '.primary-button, .secondary-button, .app-start-action, .prep-home-hero-cta, .prep-home-white-button, .prep-home-blue-button, .prep-home-program-card > a';
-const study = '.prep-learning-study, .prep-exam-room, .prep-flashcard-focus, .prep-quiz-page';
+const study = '.practice-studio, .vocabulary-studio, .prep-learning-study, .prep-exam-room, .prep-flashcard-focus, .prep-quiz-page';
 
 /** Delegated feedback: no React renders or document-wide frame loop. */
 export function useInteractiveMotion() {

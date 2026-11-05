@@ -16,3 +16,9 @@ export class SaveVocabularyDto extends VocabularyLookupDto {
 export class ExplainVocabularyDto extends VocabularyLookupDto {
   @IsOptional() @IsString() @MaxLength(1800) context?: string;
 }
+
+
+export class VocabularyPracticeFeedbackDto {
+  @IsInt() @Min(1) cardId: number;
+  @Transform(trim) @IsString() @IsNotEmpty() @MaxLength(1000) response: string;
+}

@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
+import { RagLlmService } from './rag-llm.service';
 import { RagRetrieverService, RetrievedChunk } from './rag-retriever.service';
 import { RagExplainerService, PersonalizedExplanationResult } from './rag-explainer.service';
 import { RagChatService, ChatMessageResult } from './rag-chat.service';
 import { RagRoadmapService, PersonalizedRoadmapResult } from './rag-roadmap.service';
-import { ExplainErrorDto, ChatTutorDto } from './dto/rag.dto';
+import { ExplainErrorDto, ChatTutorDto, TutorChatScopeDto } from './dto/rag.dto';
 
 @Injectable()
 export class RagService {
@@ -12,7 +13,12 @@ export class RagService {
     private readonly explainer: RagExplainerService,
     private readonly chat: RagChatService,
     private readonly roadmap: RagRoadmapService,
+    @Optional() private readonly llm?: RagLlmService,
   ) {}
+
+  capabilities() {
+    return { available: this.llm?.isConfigured() ?? false, availabilityType: 'configuration' as const, requiresReviewedSources: true as const };
+  }
 
   explainError(userId: number, dto: ExplainErrorDto): Promise<PersonalizedExplanationResult> {
     return this.explainer.explainError({
@@ -36,6 +42,7 @@ export class RagService {
       message: dto.message,
       questionId: dto.questionId,
       skillCode: dto.skillCode,
+      attemptId: dto.attemptId, selectedAnswer: dto.selectedAnswer,
     });
   }
 
@@ -45,16 +52,17 @@ export class RagService {
       message: dto.message,
       questionId: dto.questionId,
       skillCode: dto.skillCode,
+      attemptId: dto.attemptId, selectedAnswer: dto.selectedAnswer,
       signal,
     });
   }
 
-  getChatHistory(userId: number): Promise<ChatMessageResult[]> {
-    return this.chat.getChatHistory(userId);
+  getChatHistory(userId: number, scope: TutorChatScopeDto = {}): Promise<ChatMessageResult[]> {
+    return this.chat.getChatHistory(userId, scope);
   }
 
-  clearChatHistory(userId: number): Promise<{ success: boolean }> {
-    return this.chat.clearChatHistory(userId);
+  clearChatHistory(userId: number, scope: TutorChatScopeDto = {}): Promise<{ success: boolean }> {
+    return this.chat.clearChatHistory(userId, scope);
   }
 
   getPersonalizedRoadmap(userId: number): Promise<PersonalizedRoadmapResult> {

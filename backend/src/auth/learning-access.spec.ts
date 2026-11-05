@@ -2,6 +2,7 @@ import { ForbiddenException, type ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role } from '@prisma/client';
 import { RolesGuard } from './roles.guard';
+import { CurriculumController } from '../curriculum/curriculum.controller';
 import { ExamController } from '../exam/exam.controller';
 import { TheoryController } from '../theory/theory.controller';
 import { MasteryController } from '../mastery/mastery.controller';
@@ -19,7 +20,7 @@ describe('Separate learner and administrator permissions', () => {
     } as unknown as ExecutionContext;
   }
   it.each([ExamController, TheoryController, MasteryController, RagController,
-    ReadingController, ListeningController, FlashcardController, Das3hController])(
+    ReadingController, ListeningController, FlashcardController, Das3hController, CurriculumController])(
     'allows learners and rejects administrators on %p', controller => {
       expect(guard.canActivate(context(controller, Role.USER))).toBe(true);
       expect(() => guard.canActivate(context(controller, Role.ADMIN))).toThrow(ForbiddenException);

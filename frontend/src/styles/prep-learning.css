@@ -43,3 +43,78 @@
   .prep-learning-page .prep-learning-card:hover { transform: none; }
 }
 
+
+/* Reading and Listening share one library scale and one study workspace rhythm. */
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page {
+  --learning-blue: var(--study-blue);
+  --learning-border: var(--study-line);
+  width: 100%; min-width: 0; max-width: none;
+}
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page > .page-header {
+  min-height: 0; padding: 0 0 16px; border: 0; border-bottom: 1px solid var(--study-line);
+}
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .page-header-copy { flex: initial; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .study-mode-card {
+  min-height: 108px; padding: 18px 20px; border-radius: 18px;
+}
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .study-mode-card > span:first-child { font-size: 18px; line-height: 1.4; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .study-mode-card > span + span { margin-top: 6px; line-height: 1.55; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-layout {
+  display: grid; grid-template-columns: minmax(0,1fr); align-items: start; gap: 24px; min-width: 0;
+}
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-layout > * { min-width: 0; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-secondary { padding-top: 24px; border-top: 1px solid var(--study-line); }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .learning-section-heading {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px;
+}
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .learning-section-heading .section-title { font-size: 22px; line-height: 1.4; margin: 0; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .learning-result-count { font-size: 12px; line-height: 1.5; padding: 5px 10px; border-radius: 8px; background: var(--workspace-soft); color: var(--workspace-muted); }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-filters {
+  display: grid; gap: 10px; padding: 14px; border: 1px solid var(--study-line); border-radius: 16px; background: var(--workspace-surface);
+}
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-filters :is(input,select,button) { min-width: 0; width: 100%; min-height: 44px; border-radius: 10px; font-size: 13px; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-filters select.form-input { padding: 10px 30px 10px 12px; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-catalog {
+  display: grid; grid-template-columns: minmax(0,1fr); gap: 16px; padding: 0; border: 0; border-radius: 0; overflow: visible; background: transparent;
+}
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-catalog .prep-learning-card {
+  display: flex; flex-direction: column; align-items: stretch; gap: 8px; min-height: 216px; padding: 20px;
+  border: 1px solid var(--study-line); border-radius: 18px; background: var(--workspace-surface); box-shadow: none; text-align: left;
+}
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-catalog .prep-learning-card::before { display: none; content: none; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-catalog .prep-learning-card > span { grid-column: auto; grid-row: auto; align-self: auto; max-width: none; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-catalog .prep-learning-card > .learning-card-heading { order: 0; min-height: 50px; margin: 0; font-size: 18px; line-height: 1.4; color: var(--study-ink); overflow-wrap: anywhere; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-catalog .prep-learning-card > .learning-card-meta { order: 1; margin: 0; font-size: 12px; line-height: 1.5; color: var(--workspace-muted); }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-catalog .prep-learning-card > .learning-card-context { order: 2; margin: 0; font-size: 12px; line-height: 1.5; color: var(--workspace-muted); }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-catalog .prep-learning-card > .learning-card-action { order: 3; align-self: stretch; margin: auto 0 0; padding: 12px 0 0; border: 0; border-top: 1px solid var(--study-line); border-radius: 0; min-height: 36px; font-size: 12px; line-height: 1.5; color: var(--study-blue); }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-learning-sidebar { display: block; padding: 20px; border: 1px solid var(--study-line); border-radius: 18px; background: var(--workspace-surface); }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-study-layout { display: grid; grid-template-columns: minmax(0,1fr); align-items: start; gap: 24px; min-width: 0; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-study-layout > * { min-width: 0; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-study-preview { max-width: 760px; width: 100%; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page :is(.prep-reading-passage,.prep-question-surface,.prep-listening-player) { width: 100%; max-width: none; padding: 20px; border: 1px solid var(--study-line); border-radius: 20px; background: var(--workspace-surface); box-shadow: none; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-study-toolbar { padding: 12px 16px; border-radius: 16px; }
+@media (min-width: 640px) {
+  .nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .reading-library-filters { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .listening-library-filters { grid-template-columns: minmax(0,1fr) 160px auto; }
+}
+@media (min-width: 760px) {
+  .nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-catalog { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (min-width: 1100px) {
+  .nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-layout { grid-template-columns: minmax(0,1fr) 280px; }
+  .nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-study-layout { grid-template-columns: minmax(0,1.15fr) minmax(0,1fr); }
+  .nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .reading-library-filters { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+@media (max-width: 639px) {
+  .nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .study-mode-card { padding: 16px; }
+  .nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page :is(.prep-reading-passage,.prep-question-surface,.prep-listening-player,.prep-learning-sidebar,.prep-library-catalog .prep-learning-card) { padding: 16px; }
+}
+
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-library-layout[hidden] { display: none; }
+.nature-app .study-layout[data-section=reading] .prep-clause-study > section { border-radius: 20px; }
+
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .page-header h1 { font-size: 30px; line-height: 1.25; letter-spacing: -.035em; }
+.nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .study-mode-card:is([aria-pressed=true],[aria-expanded=true]) { background: var(--workspace-soft); border-color: var(--study-blue); }
+@media (max-width: 639px) {
+  .nature-app .study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .page-header h1 { font-size: 26px; }
+}

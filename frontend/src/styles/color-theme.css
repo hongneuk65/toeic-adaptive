@@ -1,0 +1,167 @@
+/* Color mode changes surfaces and ink; photographs and exam media retain their colors. */
+.theme-toggle { display:inline-flex; flex:0 0 44px; align-items:center; justify-content:center; width:44px; height:44px; border:1px solid #d7e1db; border-radius:50%; background:#fffefa; color:#225f69; cursor:pointer; }
+.theme-toggle:hover { background:#edf2ec; }
+.theme-toggle:focus-visible { outline:3px solid #225f69; outline-offset:3px; }
+.theme-toggle-standalone { position:fixed; top:18px; right:20px; z-index:60; }
+html[data-theme=dark] { color-scheme:dark; background:#181714; }
+html[data-theme=dark] body { background:#181714; }
+html[data-theme=dark] #root .nature-app {
+ --nature-ink:#eeeae1; --nature-muted:#bdb5a6; --nature-line:#514c40; --nature-surface:#292722; --nature-soft:#34312a;
+ --ui-ink:#eeeae1; --ui-muted:#bdb5a6; --ui-line:#514c40; --ui-blue:#c3cba7; --ui-blue-soft:#414532;
+ color:var(--nature-ink);
+}
+html[data-theme=dark] #root .nature-app :is(.study-layout[data-section],.prep-home,.admin-app) {
+ --study-ink:#eeeae1; --study-navy:#eeeae1; --study-line:#514c40; --study-blue:#c3cba7;
+ --workspace-surface:#292722; --workspace-soft:#34312a; --workspace-muted:#bdb5a6;
+ --ui-ink:#eeeae1; --ui-muted:#bdb5a6; --ui-line:#514c40; --ui-blue:#c3cba7; --ui-blue-soft:#414532;
+ --prep-ink:#eeeae1; --prep-navy:#eeeae1; --prep-blue:#c3cba7; --admin-navy:#eeeae1; --admin-blue:#c3cba7; --admin-line:#514c40;
+ color:#eeeae1;
+}
+html[data-theme=dark] #root .nature-app .ambient-background { background:#181714; }
+html[data-theme=dark] #root .nature-app .ambient-background-photo { background-image:linear-gradient(95deg,#18171480,#18171433 45%,#1817141a),url('/images/garden-study-night.webp'); }
+html[data-theme=dark] #root .nature-app .ambient-background-light { background:#d2aa68; opacity:.02; }
+html[data-theme=dark] #root .nature-app :is(.app-header,.app-navigation-capsule,.nav-dropdown-panel,.mobile-learning-nav,.theme-toggle,.ambient-motion-toggle) { background:#211f1aed; color:#eeeae1; border-color:#514c40; }
+html[data-theme=dark] #root .nature-app :is(.app-brand,.app-account-action,.learning-nav-link,.nav-dropdown>summary,.mobile-nav-trigger,.page-header h1) { color:#eeeae1; }
+html[data-theme=dark] #root .nature-app :is(.learning-nav-link[aria-current=page],.nav-dropdown[data-active=true]>summary) { background:#414532; color:#e2e5cf; }
+html[data-theme=dark] #root .nature-app :is(.theme-toggle:hover,.learning-nav-link:hover) { background:#414035; }
+html[data-theme=dark] #root .nature-app :is(.prep-home-hero h1,.home-studio-panel h2,.home-studio-panel h3,.home-studio-panel h4,.home-studio-path h3,.prep-home-heading h2,.prep-home-footer-brand) { color:#eeeae1; }
+html[data-theme=dark] #root .nature-app .prep-home.home-studio .prep-home-hero h1 span { color:#c7cfac; }
+html[data-theme=dark] #root .nature-app :is(.home-studio-panel,.home-studio-path,.prep-home-footer,.curriculum-surface,.prep-learning-card,.learning-surface,.prep-question-surface,.prep-reading-passage,.prep-listening-player,.prep-theory-reading,.prep-quiz-sheet,.prep-folder-tile,.topic-card,.learner-overview,.theory-catalog,.theory-reader,.exam-selection-card,.exam-selection-confirm,.status-message,.admin-sidebar,.admin-topbar,.admin-panel) { background:#292722f5; color:#eeeae1; border-color:#514c40; box-shadow:none; }
+html[data-theme=dark] #root .nature-app .prep-home.home-studio .prep-home-progress-content { background:transparent; }
+html[data-theme=dark] #root .nature-app .home-layout .prep-home.home-studio .prep-home-footer { background:#292722f5; }
+html[data-theme=dark] #root .nature-app :is(.home-studio-path-green,.home-studio-path-blue,.home-studio-focus,.curriculum-context,.curriculum-worked article,.curriculum-feedback,.curriculum-track-option[data-selected=true],.curriculum-options label[data-selected=true],.prep-learning-sidebar,.topic-next-paths>a,.prep-library-filters,.vocabulary-folder-icon,.activity-suggestions,.admin-overview-banner) { background:#34312a; color:#eeeae1; border-color:#514c40; }
+html[data-theme=dark] #root .nature-app :is(h1,h2,h3,h4,h5,h6,.text-ink-dark,.text-accent-navy,.curriculum-knowledge .ai-markdown,.section-title,.learning-card-heading,.prep-folder-tile h2,.prep-home-real-stats dd,.home-studio-path-action,.topic-text-link,.topic-open) { color:#eeeae1; }
+html[data-theme=dark] #root .nature-app :is(p,small,dt,dd,.text-ink-medium,.text-ink-light,.page-header-description,.curriculum-muted,.curriculum-kicker,.curriculum-unit-number,.curriculum-progress span,.curriculum-lesson-meta,.curriculum-card-action>span,.curriculum-quiz-heading>span,.curriculum-quiz-navigation>span,.home-studio-eyebrow,.home-studio-status,.home-studio-updating,.prep-folder-eyebrow,.learning-card-meta,.topic-evidence) { color:#c4bcad; }
+html[data-theme=dark] #root .nature-app :is(.curriculum-band,.curriculum-section-heading span,.curriculum-phases,.curriculum-phases button[aria-current=step],.topic-status,.prep-home-status,.home-studio-path-number) { background:#414532; color:#dce2c7; border-color:#514c40; }
+html[data-theme=dark] #root .nature-app .curriculum-phases button { color:#cbc7b8; }
+html[data-theme=dark] #root .nature-app :is(.form-input,input:not([type=radio]):not([type=checkbox]):not([type=range]),textarea,select) { background:#1e1d19; color:#eeeae1; border-color:#68604f; }
+html[data-theme=dark] #root .nature-app :is(input,textarea)::placeholder { color:#afa695; }
+html[data-theme=dark] #root .nature-app :is(.primary-button,.app-start-action,.prep-home-hero-cta,.prep-auth-monogram) { background:#5b6845; color:#fff; border-color:#85916b; }
+html[data-theme=dark] #root .nature-app :is(.primary-button:hover,.app-start-action:hover,.prep-home-hero-cta:hover) { background:#68764f; }
+html[data-theme=dark] #root .nature-app :is(.secondary-button,.text-action,.study-action-button,.prep-home-blue-button,.prep-home-program-card a) { background:#3d4032; color:#e2e2d1; border-color:#68664e; }
+html[data-theme=dark] #root .nature-app :is(.secondary-button:hover,.text-action:hover,.study-action-button:hover) { background:#4a4d3c; }
+html[data-theme=dark] #root .nature-app :is(.curriculum-options label,.curriculum-track-option,.curriculum-objectives,.curriculum-result-list li,.curriculum-submit,.curriculum-vocabulary dl>div,.prep-home-real-stats,.prep-home-resume-list li,.page-header) { border-color:#514c40; }
+html[data-theme=dark] #root .nature-app :is(.prep-auth-form,.prep-auth-visual) { background:#211f1aed; color:#eeeae1; }
+html[data-theme=dark] #root .nature-app :is(.prep-auth-copy,.prep-auth-eyebrow,.prep-auth-topics span,.prep-auth-form-content h1,.prep-auth-brand) { color:#dfdacd; }
+html[data-theme=dark] #root .nature-app :is([class~="bg-white"],[class~="bg-paper-white"],[class~="bg-paper-cream"],[class~="bg-paper-ivory"]) { background-color:#292722; color:#eeeae1; border-color:#514c40; }
+html[data-theme=dark] #root .nature-app :is(.exam-room-layout,.exam-question-panel,.exam-navigation-panel,.exam-sidebar,.exam-question-card) { background:#211f1a; color:#eeeae1; }
+/* Test stimuli keep their original document and image contrast. */
+html[data-theme=dark] #root .nature-app .exam-document { background:#fff; color:#18233f; }
+html[data-theme=dark] #root .nature-app .exam-document :is(p,h1,h2,h3,h4,small) { color:inherit; }
+html[data-theme=dark] #root .nature-app :is(dialog,[role=dialog]) { background:#292722; color:#eeeae1; border-color:#514c40; }
+html[data-theme=dark] #root .nature-app :focus-visible { outline-color:#c3cba7; }
+@media(max-width:640px) { .theme-toggle-standalone { top:12px; right:12px; } .app-header-actions .theme-toggle { flex-basis:40px; width:40px; height:44px; } }
+
+html[data-theme=dark] #root .nature-app .vocabulary-workspace { --vocabulary-ink:#eeeae1; --vocabulary-muted:#bdb5a6; --vocabulary-line:#514c40; --vocabulary-surface:#292722; }
+html[data-theme=dark] #root .nature-app :is(.vocabulary-study-toolbar,.vocabulary-library-toolbar,.vocabulary-review-controls,.vocabulary-recall,.tutor-duck-header,.tutor-duck-intro,.selection-vocabulary-dialog,.selection-vocabulary-header,.selection-vocabulary-footer,.selection-vocabulary-note) { background:#292722; color:#eeeae1; border-color:#514c40; }
+html[data-theme=dark] #root .nature-app :is([class*="bg-paper-cream/"],[class*="bg-paper-kraft-light/"]) { background:#34312a; }
+html[data-theme=dark] #root .nature-app :is(.text-rose-800,.text-rose-700,.text-red-700,.text-red-800,.curriculum-error) { color:#f9b8b1; }
+html[data-theme=dark] #root .nature-app :is(.text-green-700,.text-green-800,.text-emerald-700) { color:#b2dfbd; }
+html[data-theme=dark] #root .nature-app .exam-workbench { --exam-brand:#a7d8c8; --exam-ink:#eeeae1; --exam-line:#514c40; --exam-muted:#bdb5a6; --exam-soft:#34312a; --exam-surface:#292722; background:#211f1a; }
+html[data-theme=dark] #root .nature-app :is(.exam-toolbar,.exam-questions-column,.exam-questions-column>.exam-column-heading,.exam-answer-option,.exam-question-block,.exam-navigation) { background:#211f1a; color:#eeeae1; border-color:#514c40; }
+html[data-theme=dark] #root .nature-app :is(.exam-material-column,.exam-column-heading) { background:#292722; color:#eeeae1; border-color:#514c40; }
+html[data-theme=dark] #root .nature-app :is(.exam-part-badge,.exam-submit) { background:#5b6845; color:#fff; }
+html[data-theme=dark] #root .nature-app .exam-document { color:#18233f; }
+
+/* Home cards contain their own link surface, so theme both layers. */
+html[data-theme=dark] #root .nature-app .home-studio-path > a { background:#292722f5; color:#eeeae1; border-color:#514c40; }
+html[data-theme=dark] #root .nature-app .home-studio-path:nth-child(2n) > a { background:#34312af5; }
+html[data-theme=dark] #root .nature-app .home-studio-path > a:hover { background:#414035; border-color:#9b9e7c; }
+html[data-theme=dark] #root .nature-app .home-studio-path-number { background:transparent; color:#b8b49c; }
+html[data-theme=dark] #root .nature-app :is(.prep-home-footer nav a,.prep-home-resume-list a,.home-studio-more summary,.home-studio-focus a) { color:#d6dbc0; }
+html[data-theme=dark] #root .nature-app .prep-home-resume-list a { background:#3d4032; }
+@media(max-width:639px) {
+  #root .nature-app .app-header-actions { display:grid; grid-template-columns:40px minmax(0,1fr); align-items:center; gap:0 6px; padding-top:0; max-width:170px; }
+  #root .nature-app .app-header-actions .theme-toggle { grid-column:1; grid-row:1; width:40px; }
+  #root .nature-app .app-header-actions .app-start-action { grid-column:2; grid-row:1; padding-inline:10px; font-size:12px; }
+  #root .nature-app .app-header-actions .app-account-action { grid-column:1 / -1; grid-row:2; justify-self:end; min-height:44px; }
+}
+
+html[data-theme=dark] #root .nature-app .prep-auth .form-label { color:#d4cebf; }
+html[data-theme=dark] #root .nature-app .prep-auth .form-input { background:#1e1d19; color:#eeeae1; border-color:#68604f; }
+html[data-theme=dark] #root .nature-app .prep-auth .prep-auth-brand { color:#dfdacd; }
+html[data-theme=dark] #root .nature-app .prep-auth .prep-auth-footer { color:#c4bcad; border-color:#514c40; }
+html[data-theme=dark] #root .nature-app .prep-auth .prep-auth-footer a { color:#d2dbb4; }
+html[data-theme=dark] #root .nature-app .theme-toggle-standalone { background:#34312a; color:#eeeae1; border-color:#514c40; }
+
+html[data-theme=dark] #root .nature-app :is(.prep-learning-sidebar a,.prep-learning-sidebar a span,.prep-learning-sidebar a strong,.prep-learning-sidebar button,.study-action-button,.prep-home-heading>a) { color:#d6dbc0; }
+
+/* Slate surfaces separate content from the warm night photograph. */
+html[data-theme=dark] #root .nature-app .app-header { background:#1b1915f5; }
+html[data-theme=dark] #root .nature-app .app-navigation-capsule { background:#28261f; }
+html[data-theme=dark] #root .nature-app .ambient-background-photo { background-image:linear-gradient(95deg,#201c164d,#201c1614 55%,#201c1624),url('/images/garden-study-night.webp'); }
+html[data-theme=dark] #root .nature-app :is(.home-studio-panel,.curriculum-surface,.prep-learning-card,.theory-reader,.topic-card,.learner-overview) { box-shadow:0 8px 28px #00000024; }
+html[data-theme=dark] #root .nature-app .home-studio-path { background:transparent; border-radius:18px; overflow:hidden; }
+html[data-theme=dark] #root .nature-app .home-studio-path > a { background:#292722fa; border-color:#514c40; }
+html[data-theme=dark] #root .nature-app .home-studio-path:nth-child(2n) > a { background:#302d25fa; }
+html[data-theme=dark] #root .nature-app .home-studio-path-number { background:none; color:#b8b49c; }
+html[data-theme=dark] #root .nature-app :is(.study-action-button,.secondary-button,.prep-home-heading>a) { border-radius:10px; }
+html[data-theme=dark] #root .nature-app :is(.bg-rose-50,.bg-red-50,.bg-rose-100,.bg-red-100) { background:#432a32; color:#ffc7c7; border-color:#84525e; }
+html[data-theme=dark] #root .nature-app :is(.bg-green-50,.bg-emerald-50,.bg-green-100) { background:#213e37; color:#c1e8d3; border-color:#476d60; }
+html[data-theme=dark] #root .nature-app :is(.bg-rose-50,.bg-red-50,.bg-rose-100,.bg-red-100) p { color:#ffc7c7; }
+html[data-theme=dark] #root .nature-app :is(.bg-green-50,.bg-emerald-50,.bg-green-100) p { color:#c1e8d3; }
+
+html[data-theme=dark] #root .nature-app .prep-home-programs > .prep-home-heading { background:#211f1aed; border:1px solid #514c40; border-radius:12px; padding:12px 16px; }
+
+/* Warm charcoal connects the night forest to the amber study desk. */
+html[data-theme=dark] #root .nature-app .ambient-background-photo {
+ background-image:linear-gradient(95deg,#211b134d,#211b1326 48%,#211b133d),url('/images/garden-study-night.webp');
+}
+html[data-theme=dark] #root .nature-app .home-studio-panel,
+html[data-theme=dark] #root .nature-app .home-layout .prep-home.home-studio .prep-home-footer { background:#292722eb; border-color:#625742; }
+html[data-theme=dark] #root .nature-app .home-studio-path > a { background:#292722f0; }
+html[data-theme=dark] #root .nature-app .home-studio-path:nth-child(2n)>a { background:#302d25f0; }
+html[data-theme=dark] #root .nature-app .prep-home-programs>.prep-home-heading { background:#28231bcc; border-color:#514c40; }
+
+/* Warm dusk: unify the cool window and warm desk behind quiet, opaque surfaces. */
+html[data-theme=dark] #root .nature-app .ambient-background-photo {
+ background-image:linear-gradient(100deg,#20292394,#2029238c),url('/images/garden-study-night.webp');
+}
+html[data-theme=dark] #root .nature-app :is(.home-studio-panel,.curriculum-surface,.prep-learning-card,.home-studio-path>a,.prep-home-footer) { background-color:#252b2bf5; border-color:#48514d; box-shadow:0 6px 22px #10131018; }
+html[data-theme=dark] #root .nature-app .home-studio-path:nth-child(2n)>a { background-color:#2b3330f5; }
+html[data-theme=dark] #root .nature-app .prep-home-programs>.prep-home-heading { background:#252b2bd9; border-color:#48514d88; }
+
+/* Reading and feedback must use a complete surface/ink pair in night mode. */
+html[data-theme=dark] #root .nature-app {
+ --night-reading:#242b29; --night-text:#dddeda; --night-muted:#b6bdb6;
+}
+html[data-theme=dark] #root .nature-app :is(.exam-document,.exam-document p,.exam-document h1,.exam-document h2,.exam-document h3,.exam-document h4,.exam-document small) { background-color:var(--night-reading); color:var(--night-text); border-color:#4a544c; }
+html[data-theme=dark] #root .nature-app :is([class~="bg-slate-50"],[class~="bg-slate-100"],[class~="bg-gray-50"],[class~="bg-gray-100"],[class~="bg-blue-50"],[class~="bg-sky-50"],[class~="bg-white/70"],[class~="bg-white/80"],[class~="bg-white/90"],[class~="bg-paper-cream/30"]) { background-color:#29322e; color:var(--night-text); border-color:#4a574e; }
+html[data-theme=dark] #root .nature-app :is(.text-emerald-950,.text-emerald-900,.text-green-900,.text-green-950) { color:#c0ddc9; }
+html[data-theme=dark] #root .nature-app :is(.text-rose-950,.text-rose-900,.text-red-950,.text-red-900) { color:#eac0bf; }
+html[data-theme=dark] #root .nature-app :is([class~="bg-emerald-100"],[class~="bg-emerald-50"],[class~="bg-green-100"],[class~="bg-green-50"]) { background-color:#293b31; border-color:#617c68; }
+html[data-theme=dark] #root .nature-app :is([class~="bg-rose-100"],[class~="bg-rose-50"],[class~="bg-red-100"],[class~="bg-red-50"]) { background-color:#3c2e2e; border-color:#876564; }
+html[data-theme=dark] #root .nature-app :is(.tutor-workspace-messages,.tutor-workspace-composer,.prep-reading-passage,.prep-question-surface,.prep-listening-player,.curriculum-lesson) { background-color:var(--night-reading); color:var(--night-text); }
+html[data-theme=dark] #root .nature-app .tutor-workspace :is(.tutor-message-content,.ai-markdown,.ai-markdown p,.ai-markdown li,.ai-markdown strong) { color:var(--night-text); }
+html[data-theme=dark] #root .nature-app :is(.text-slate-400,.text-slate-500,.text-slate-600,.text-gray-500,.text-gray-600) { color:var(--night-muted); }
+html[data-theme=dark] #root .nature-app .tutor-workspace-composer input { background:#1d2621; color:var(--night-text); }
+html[data-theme=dark] #root .nature-app .exam-document img { background:#eee; }
+
+/* Shared night palette: retain the light layout and the same hierarchy of surfaces. */
+html[data-theme=dark] #root .nature-app {
+ --nature-ink:#e6e5dd; --nature-muted:#b9bdb4; --nature-line:#485249; --nature-surface:#252c28; --nature-soft:#303a32;
+ --ui-ink:#e6e5dd; --ui-muted:#b9bdb4; --ui-line:#485249; --ui-blue:#b7cebd; --ui-blue-soft:#34463a;
+ --night-reading:#252c28; --night-text:#e6e5dd; --night-muted:#b9bdb4;
+}
+html[data-theme=dark] #root .nature-app :is(.study-layout[data-section],.prep-home,.admin-app) {
+ --study-ink:var(--nature-ink); --study-navy:var(--nature-ink); --study-blue:#b7cebd; --study-line:var(--nature-line);
+ --workspace-surface:var(--nature-surface); --workspace-soft:var(--nature-soft); --workspace-muted:var(--nature-muted);
+ --ui-ink:var(--nature-ink); --ui-muted:var(--nature-muted); --ui-line:var(--nature-line);
+}
+html[data-theme=dark] #root .nature-app .prep-auth .prep-auth-form { background:#252c28f5; border-right:1px solid var(--nature-line); }
+html[data-theme=dark] #root .nature-app .prep-auth .prep-auth-visual { background:#1e292080; }
+html[data-theme=dark] #root .nature-app .prep-auth .prep-auth-brand,
+html[data-theme=dark] #root .nature-app .prep-auth .prep-auth-form-content h1 { color:var(--nature-ink); }
+html[data-theme=dark] #root .nature-app .prep-auth .form-label { color:#d0d7cd; }
+html[data-theme=dark] #root .nature-app .prep-auth .prep-auth-form input.form-input { background:#1c2520; border-color:#526253; color:var(--nature-ink); }
+html[data-theme=dark] #root .nature-app .prep-auth .form-input:focus { border-color:#9ebaa4; outline:3px solid #9ebaa42e; box-shadow:none; }
+html[data-theme=dark] #root .nature-app .prep-auth .primary-button { background:#466c57; border-color:#64856c; color:#fff; box-shadow:none; }
+html[data-theme=dark] #root .nature-app .prep-auth .primary-button:not(:disabled):hover { background:#527b61; }
+html[data-theme=dark] #root .nature-app .prep-auth :is(.prep-auth-copy,.prep-auth-form-content header p,.prep-auth-footer) { color:var(--nature-muted); }
+html[data-theme=dark] #root .nature-app .prep-auth .prep-auth-footer a { color:#c4ddc6; }
+html[data-theme=dark] #root .nature-app .prep-auth .prep-auth-topics span { color:#d5dfce; border-color:#81917c; background:#26352b80; }
+html[data-theme=dark] #root .nature-app :is(.curriculum-surface,.prep-learning-card,.learning-surface,.prep-reading-passage,.prep-question-surface,.prep-listening-player,.topic-card,.learner-overview,.theory-reader,.theory-catalog,.prep-folder-tile) { background:var(--nature-surface); color:var(--nature-ink); border-color:var(--nature-line); }
+html[data-theme=dark] #root .nature-app :is(.curriculum-context,.curriculum-worked article,.curriculum-feedback,.prep-learning-sidebar,.prep-library-filters,.activity-suggestions) { background:var(--nature-soft); color:var(--nature-ink); border-color:var(--nature-line); }
+html[data-theme=dark] #root .nature-app :is(.curriculum-band,.topic-status,.activity-suggestion-priority) { background:#394b3d; color:#d3e4cd; }
+html[data-theme=dark] #root .nature-app :is(.ai-markdown code,.ai-markdown pre,.ai-markdown blockquote) { background:#1c2520; color:#d6e1d2; border-color:#526253; }
+html[data-theme=dark] #root .nature-app input:-webkit-autofill { -webkit-text-fill-color:#e6e5dd; box-shadow:0 0 0 1000px #1c2520 inset; caret-color:#e6e5dd; }

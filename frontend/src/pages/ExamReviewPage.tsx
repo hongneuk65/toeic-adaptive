@@ -1,3 +1,4 @@
+import { useTutorContext, useQuestionTutorContext } from '../components/rag/useTutorContext';
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
@@ -25,6 +26,10 @@ export function ExamReviewPage() {
 
 function ExamReview({review}:{review:ReviewResponse}) {
   const navigate=useNavigate();
+  const tutor=useTutorContext();
+  const [activeTutorQuestion,setActiveTutorQuestion]=useState<ReviewAnswer|null>(null);
+  const activeIndex=activeTutorQuestion?review.answers.findIndex(a=>a.questionId===activeTutorQuestion.questionId):-1;
+  const askTutor=(answer:ReviewAnswer)=>{setActiveTutorQuestion(answer);tutor.open({questionId:answer.questionId,attemptId:review.id,selectedAnswer:answer.selectedAnswer||'CHƯA_CHỌN',label:`Câu ${displayExamNumber(review.examType,review.answers.indexOf(answer),review.answers.map(a=>a.question))} · Chữa bài`});};
   const questions=useMemo(()=>review.answers.map(answer=>answer.question),[review]);
   const groups=useMemo(()=>buildExamGroups(questions),[questions]);
   const [groupIndex,setGroupIndex]=useState(0);
@@ -36,6 +41,7 @@ function ExamReview({review}:{review:ReviewResponse}) {
   const paletteRef=useRef<HTMLDivElement>(null);
   const paletteButton=useRef<HTMLButtonElement>(null);
   const group=groups[groupIndex];
+  useQuestionTutorContext(activeTutorQuestion && group?.indices.some(index=>questions[index].id===activeTutorQuestion.questionId)?{questionId:activeTutorQuestion.questionId,attemptId:review.id,selectedAnswer:activeTutorQuestion.selectedAnswer||'CHƯA_CHỌN',label:`Câu ${displayExamNumber(review.examType,activeIndex,review.answers.map(a=>a.question))} · Chữa bài`}:null);
   const question=group ? questions[group.indices[0]] : undefined;
   const correct=review.answers.filter(answer=>answer.isCorrect).length;
   const number=(index:number)=>displayExamNumber(review.examType,index,questions);
@@ -77,7 +83,7 @@ function ExamReview({review}:{review:ReviewResponse}) {
               return <div key={option} className={`exam-option review-option ${isCorrect?'correct':picked?'incorrect':''}`}><span className="exam-option-letter">{option}</span><div className="min-w-0"><p>{text}</p>{(isCorrect||picked)&&<span className="review-option-label">{isCorrect?'Đáp án đúng':''}{isCorrect&&picked?' · ':''}{picked?'Bạn đã chọn':''}</span>}</div></div>;
             })}</div>
             <section className="review-explanation" aria-label={`Giải thích câu ${number(index)}`}><h4>Giải thích</h4>{q.explanation?.trim()?<AiMarkdown content={formatReviewExplanation(q.explanation)}/>:<p>Chưa có lời giải cho câu này. Bạn có thể yêu cầu AI hỗ trợ.</p>}</section>
-            <button className="secondary-button" onClick={()=>setAiQuestion(answer)}>Giải thích thêm bằng AI</button>
+            <div className="flex flex-wrap gap-2"><button className="secondary-button" onClick={()=>setAiQuestion(answer)}>Giải thích thêm bằng AI</button><button className="secondary-button" onClick={()=>askTutor(answer)}>Hỏi AI về câu này</button></div>
           </article>;
         })}</div>
       </section>
@@ -90,6 +96,6 @@ function ExamReview({review}:{review:ReviewResponse}) {
       </div>
       <button className="exam-nav-button" disabled={groupIndex===groups.length-1} onClick={()=>setGroupIndex(value=>value+1)}>Nhóm tiếp</button>
     </footer>
-    {aiQuestion&&<RagExplanationModal isOpen attemptId={review.id} questionId={aiQuestion.questionId} selectedAnswer={aiQuestion.selectedAnswer||'CHƯA_CHỌN'} onClose={()=>setAiQuestion(null)}/>}
+    {aiQuestion&&<RagExplanationModal isOpen attemptId={review.id} questionId={aiQuestion.questionId} selectedAnswer={aiQuestion.selectedAnswer||'CHƯA_CHỌN'} onClose={()=>setAiQuestion(null)} onAskTutor={()=>askTutor(aiQuestion)}/>}
   </div>;
 }

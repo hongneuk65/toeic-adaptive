@@ -1,8 +1,8 @@
-import { ActivitySuggestions } from '../components/ActivitySuggestions';
+import { useTutorContext, useQuestionTutorContext } from '../components/rag/useTutorContext';
 import { notifyLearningProgress } from '../lib/learning-progress';
 import '../styles/prep-knowledge.css';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { api, getErrorMessage } from '../lib/api';
 import { useAsyncResource } from '../hooks/useAsyncResource';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -32,13 +32,21 @@ export const TheoryQuizPage: React.FC = () => {
 
 const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const origin = location.state as { theoryReturnTo?: string; theorySearch?: string; theoryPage?: number } | null;
+    const returnTo = origin?.theoryReturnTo?.startsWith('/theory?') ? origin.theoryReturnTo : `/theory?lesson=${lessonId}`;
+    const questionElements = useRef(new Map<number, HTMLFieldSetElement>());
+    const resultElement = useRef<HTMLElement>(null);
 
     const load = useCallback((signal: AbortSignal) =>
         api<Question[]>(`/theory/${lessonId}/quiz`, { signal }), [lessonId]);
     const { data: questions = [], loading, error, reload } = useAsyncResource(load);
+    const tutor = useTutorContext();
+    const [activeQuestionId, setActiveQuestionId] = useState<number | null>(null);
     const [answers, setAnswers] = useState<Record<number, string>>({});
     const [result, setResult] = useState<QuizResult | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [answersLocked, setAnswersLocked] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const [attemptId] = useState(() => crypto.randomUUID());
     const submittedAnswers = useRef<{ questionId: number; selectedAnswer: string }[] | null>(null);
@@ -46,9 +54,24 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
     const pendingSubmit = useRef<AbortController | null>(null);
     useEffect(() => () => pendingSubmit.current?.abort(), []);
 
+    useEffect(() => { if (result) resultElement.current?.focus(); }, [result]);
+
+    const activeIndex = questions.findIndex(question => question.id === activeQuestionId);
+    const activeQuestion = activeIndex >= 0 ? questions[activeIndex] : null;
+    useQuestionTutorContext(activeQuestion ? {
+        questionId: activeQuestion.id,
+        selectedAnswer: answers[activeQuestion.id],
+        label: `Câu ${activeIndex + 1} · Ôn kiến thức`,
+    } : null);
+    const askTutor = (questionId: number, index: number) => {
+        setActiveQuestionId(questionId);
+        tutor.open({ questionId, selectedAnswer: answers[questionId], label: `Câu ${index + 1} · Ôn kiến thức` });
+    };
+
     const handleSelect = (qId: number, opt: string) => {
         if (result || busy.current || submittedAnswers.current) return;
         setSubmitError('');
+        setActiveQuestionId(qId);
         setAnswers((prev) => ({ ...prev, [qId]: opt }));
     };
 
@@ -61,10 +84,13 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
 
         if (list.length < questions.length) {
             setSubmitError('Chọn đáp án cho các câu còn lại rồi nộp bài.');
+            const missing = questions.find(question => !answers[question.id]);
+            if (missing) questionElements.current.get(missing.id)?.querySelector<HTMLInputElement>('input[type="radio"]')?.focus();
             return;
         }
 
         submittedAnswers.current ??= list;
+        setAnswersLocked(true);
         busy.current = true;
         const controller = new AbortController();
         pendingSubmit.current = controller;
@@ -88,10 +114,10 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
 
     return (
         <div className="page-stack prep-knowledge-page prep-quiz-page mx-auto w-full max-w-3xl">
-            {submitError && <p role="alert" className="status-message text-rose-800">{submitError}</p>}
+            {submitError && <p id="theory-submit-error" role="alert" className="status-message text-rose-800">{submitError}</p>}
             {error && <p role="alert" className="status-message">{error} <button className="text-action" onClick={reload}>Thử lại</button></p>}
-            <PageHeader variant="compact" title="Quiz củng cố" description={result ? 'Xem lại đáp án và giải thích trước khi học tiếp.' : 'Chọn một đáp án cho mỗi câu rồi nộp bài.'} actions={<button onClick={() => navigate(`/theory?lesson=${lessonId}`)} className="secondary-button">Đọc lại kiến thức</button>} />
-            {result ? <section role="status" className="prep-quiz-recap flex flex-wrap items-center justify-between gap-4">
+            <PageHeader variant="compact" title="Quiz củng cố" description={result ? 'Xem lại đáp án và giải thích trước khi học tiếp.' : 'Chọn một đáp án cho mỗi câu rồi nộp bài.'} actions={<button onClick={() => navigate(returnTo, { state: { theorySearch: origin?.theorySearch, theoryPage: origin?.theoryPage } })} className="secondary-button">Đọc lại kiến thức</button>} />
+            {result ? <section ref={resultElement} tabIndex={-1} aria-label="Kết quả quiz" role="status" className="prep-quiz-recap flex flex-wrap items-center justify-between gap-4">
                 <div><h2 className="section-title">Đúng {result.correctCount} / {result.totalQuestions} câu</h2><p className="mt-1 text-sm text-ink-medium">Kết quả: {result.scorePercentage}% · đáp án đúng được đánh dấu bên dưới.</p></div>
                 <button className="primary-button" onClick={() => navigate('/recommendations')}>Chọn bài luyện tiếp</button>
             </section> : !loading && !error && questions.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 border-b border-paper-kraft pb-4"><h2 className="section-title">Câu hỏi</h2><p role="status" className="text-sm text-ink-medium">Đã trả lời {Object.keys(answers).length} / {questions.length} câu</p></div>}
@@ -105,7 +131,7 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
                     {questions.map((q, idx) => {
                         const detail = result?.details.find((d) => d.questionId === q.id);
                         return (
-                            <fieldset key={q.id} disabled={submitting || !!result} className="min-w-0 border-0 border-b border-paper-kraft/60 pb-6 space-y-4">
+                            <div key={q.id}><fieldset ref={element => { if (element) questionElements.current.set(q.id, element); else questionElements.current.delete(q.id); }} aria-describedby={submitError ? "theory-submit-error" : undefined} disabled={answersLocked || !!result} className="min-w-0 border-0 border-b border-paper-kraft/60 pb-6 space-y-4">
                                 <legend className="font-body font-semibold text-ink-dark text-base leading-relaxed pr-2">
                                     <span className="text-blue-700 mr-2">Câu {idx + 1}:</span>
                                     {q.content}
@@ -150,21 +176,23 @@ const TheoryQuiz: React.FC<{ lessonId?: string }> = ({ lessonId }) => {
                                     </div>
                                 )}
                             </fieldset>
+                            <button type="button" className="secondary-button mt-3" disabled={submitting} onClick={() => askTutor(q.id, idx)}>Hỏi AI về câu này</button>
+                            </div>
                         );
                     })}
 
+                    {answersLocked && !submitting && !result && <p className="text-sm text-ink-medium">Đáp án đã được giữ nguyên. Gửi lại để nhận kết quả.</p>}
                     {!result && (
                         <button
                             onClick={handleSubmit}
                             disabled={submitting}
                             className="primary-button w-full sm:w-auto"
                         >
-                            {submitting ? 'Đang nộp bài…' : 'Nộp bài quiz'}
+                            {submitting ? 'Đang nộp bài…' : answersLocked ? 'Gửi lại bài đã chọn' : 'Nộp bài quiz'}
                         </button>
                     )}
                 </div>
             )}
-            {result && <ActivitySuggestions section="theory" compact excludeHref={`/theory?lesson=${lessonId}`} />}
         </div>
     );
 };

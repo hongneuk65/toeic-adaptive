@@ -1,50 +1,39 @@
 import { learningActionLabel, useLearningStatus } from '../components/onboarding/useLearningStatus';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAsyncResource } from '../hooks/useAsyncResource';
 import type { ReadingCatalog } from '../types/reading';
 import type { ListeningCatalog } from '../types/listening';
 import type { UserMasteryProfile } from '../types/mastery';
+import type { CurriculumOverview } from '../types/curriculum';
 
 import { HomePrograms } from '../components/home/HomePrograms';
-import { HomeJourney, HomeTechnology } from '../components/home/HomeJourney';
 import { HomeProgress } from '../components/home/HomeProgress';
-import { DuckMascot } from '../components/mascot/DuckMascot';
-import { HomeAtmosphere } from '../components/home/HomeAtmosphere';
 import '../prep-home.css';
+import '../styles/home-studio.css';
 export const DashboardPage = () => {
   const { status: learningStatus, error: learningStatusError, refresh: refreshLearningStatus } = useLearningStatus();
-  const homeRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const root = homeRef.current;
-    if (!root || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('marketing-revealed');
-        observer.unobserve(entry.target);
-      });
-    }, { threshold: .12 });
-    root.querySelectorAll('.prep-home-heading,.prep-home-product-preview,.prep-home-final-cta').forEach(element => observer.observe(element));
-    return () => observer.disconnect();
-  }, []);
   const resource = useAsyncResource(useCallback(async (signal: AbortSignal) => {
     const results = await Promise.allSettled([
       api<ReadingCatalog>('/reading', { signal }),
       api<ListeningCatalog>('/listening', { signal }),
       api<UserMasteryProfile>('/mastery/me', { signal }),
+      api<CurriculumOverview>('/curriculum', { signal }),
     ]);
     return {
       reading: results[0].status === 'fulfilled' ? results[0].value : undefined,
       listening: results[1].status === 'fulfilled' ? results[1].value : undefined,
       mastery: results[2].status === 'fulfilled' ? results[2].value : undefined,
+      curriculum: results[3].status === 'fulfilled' && Array.isArray(results[3].value.tracks) ? results[3].value : undefined,
       partial: results.some(result => result.status === 'rejected'),
     };
   }, []));
-  const { reading, listening, mastery } = resource.data || {};
+  const { reading, listening, mastery, curriculum } = resource.data || {};
   const ongoing = reading?.attempts.filter(attempt => !attempt.submittedAt) || [];
+  const courseNext = curriculum?.enrollment ? curriculum.today[0] : undefined;
   const resumes = [
+    ...(courseNext ? [{key: `curriculum-${courseNext.id}`, path: `/curriculum?unit=${encodeURIComponent(courseNext.id)}`, title: courseNext.title, detail: courseNext.reason === 'review' ? 'Lộ trình · đến hạn ôn' : 'Lộ trình · bài tiếp theo'}] : []),
     ...ongoing.slice(0, 2).map(attempt => ({
       key: `reading-${attempt.id}`, path: `/reading?attempt=${attempt.id}`,
       title: reading?.articles.find(article => article.version?.id === attempt.versionId)?.title || 'Bài đọc đang học',
@@ -58,25 +47,27 @@ export const DashboardPage = () => {
   const practiced = mastery?.skills.filter(skill => skill.practiceCount > 0) || [];
   const nextSkill = [...practiced].sort((a, b) => a.masteryScore - b.masteryScore)[0];
   const completed = reading?.attempts.filter(attempt => attempt.submittedAt) || [];
-  return <div ref={homeRef} className="prep-home">
+  return <div className="prep-home home-studio">
     <section className="prep-home-hero" aria-labelledby="prep-home-title">
-      <HomeAtmosphere />
-      <div className="home-space-props" aria-hidden="true">
-        <svg className="home-satellite" viewBox="0 0 180 120" fill="none"><path d="m69 58-25-18m66 34 25 18" stroke="#B7D5F6" strokeWidth="5" /><path d="m9 30 36-15 23 43-36 15Zm104 38 36-15 23 43-36 15Z" fill="#284E8C" stroke="#82B9E8" strokeWidth="2" /><path d="m21 25 23 43m-1-51 23 43M125 63l23 43m-1-51 23 43M20 51l36-15m68 52 36-15" stroke="#82B9E8" /><rect x="70" y="39" width="41" height="43" rx="8" fill="#DAE9FA" /><path d="m91 39 6-18m-2 1 11 4" stroke="#DAE9FA" strokeWidth="3" /><circle cx="91" cy="60" r="8" fill="#71BCEB" /></svg>
-        <svg className="home-distant-planet" viewBox="0 0 160 160" fill="none"><circle cx="80" cy="80" r="55" fill="#5B639D" /><path d="M35 49c24 18 54 22 89 19M27 75c33 20 68 24 106 17M42 111c23 8 45 10 70 6" stroke="#A4B5DF" strokeWidth="10" opacity=".4" /><path d="M105 32c19 39 6 76-34 101a55 55 0 0 0 34-101Z" fill="#111E46" opacity=".45" /></svg>
+      <div className="prep-home-hero-content">
+        <div className="home-studio-welcome">
+          <p className="home-studio-eyebrow">KHÔNG GIAN HỌC CỦA BẠN</p>
+          <h1 id="prep-home-title">Học TOEIC,<br /><span>theo nhịp của bạn.</span></h1>
+          <div className="home-discover-dock"><Link to={curriculum?.enrollment ? '/curriculum' : '/recommendations'} className="prep-home-hero-cta">{learningActionLabel(learningStatus)}</Link></div>
+          {learningStatusError && <p role="status" className="home-studio-status">Chưa tải được trạng thái học. <button onClick={refreshLearningStatus}>Thử lại</button></p>}
+        </div>
+        <HomeProgress hasLearningActivity={learningStatus?.hasLearningActivity} refreshing={resource.loading} loading={resource.loading && !resource.data} error={Boolean(resource.error || resource.data?.partial)} onRetry={resource.reload} resumes={resumes} nextSkill={nextSkill ? `${nextSkill.skillName} (Part ${nextSkill.part})` : undefined} stats={[...(reading ? [{ label: 'Bài đọc đã nộp', value: completed.length }] : []), ...(listening ? [{ label: 'Phiên nghe đã lưu', value: listening.sessions.length }] : []), ...(mastery ? [{ label: 'Kỹ năng đã luyện', value: practiced.length }] : [])]} />
       </div>
-      <div className="prep-home-hero-content"><p className="home-cosmic-eyebrow"><span aria-hidden="true" />TOEIC ADAPTIVE · KHÁM PHÁ TRI THỨC</p><h1 id="prep-home-title">Học TOEIC<br />theo cách<br /><span>của bạn.</span></h1>
-        <div className="home-discover-dock"><div className="home-astronaut-holder"><DuckMascot astronaut label="Chú vịt phi hành gia bám vào nút khám phá" /></div><Link to="/recommendations" className="prep-home-hero-cta">{learningActionLabel(learningStatus)}</Link></div>
-      </div>
-      <a className="home-scroll-cue" href="#learning-progress">{learningStatus?.hasLearningActivity ? 'Tiếp nối hành trình' : 'Khám phá nội dung học'} <span aria-hidden="true">↓</span></a>
     </section>
-    {learningStatusError && <div role="status" className="onboarding-status">Chưa tải được trạng thái học của bạn. Bạn vẫn có thể chọn bài học.<button onClick={refreshLearningStatus}>Thử lại</button></div>}
-    <HomeProgress hasLearningActivity={learningStatus?.hasLearningActivity} refreshing={resource.loading} loading={resource.loading && !resource.data} error={Boolean(resource.error || resource.data?.partial)} onRetry={resource.reload} resumes={resumes} nextSkill={nextSkill ? `${nextSkill.skillName} (Part ${nextSkill.part})` : undefined} stats={[...(reading ? [{ label: 'Bài Reading đã nộp', value: completed.length }] : []), ...(listening ? [{ label: 'Phiên Listening đã lưu', value: listening.sessions.length }] : []), ...(mastery ? [{ label: 'Kỹ năng đã luyện', value: practiced.length }] : [])]} />
     <HomePrograms />
-    <HomeTechnology />
-    <HomeJourney />
-    <section className="prep-home-final-cta"><h2>Buổi học tiếp theo<br />bắt đầu từ đây.</h2><p>Chọn một nội dung và dành thời gian cho mục tiêu TOEIC của bạn.</p><Link to="/reading" className="prep-home-white-button">Bắt đầu luyện tập</Link></section>
-    <footer className="prep-home-footer"><div><Link to="/dashboard" className="prep-home-footer-brand">TOEIC Adaptive</Link><p>Không gian luyện TOEIC theo nhịp của bạn.</p></div><nav aria-label="Nội dung học"><h2>Luyện tập</h2><Link to="/reading">Luyện đọc</Link><Link to="/listening">Luyện nghe</Link><Link to="/exam">Thi thử</Link></nav><nav aria-label="Ôn tập"><h2>Ôn tập</h2><Link to="/theory">Kiến thức</Link><Link to="/flashcards">Từ vựng</Link><Link to="/recommendations">Gợi ý học tiếp</Link></nav></footer>
+    <footer className="prep-home-footer study-footer" aria-label="Chân trang">
+      <div className="study-footer-main">
+        <div className="study-footer-identity"><Link to="/dashboard" className="prep-home-footer-brand"><span className="study-footer-mark" aria-hidden="true">TA</span>TOEIC Adaptive</Link><p>Học theo mục tiêu. Ôn theo tiến độ của bạn.</p></div>
+        <nav aria-label="Luyện tập"><h2>Luyện tập</h2><ul><li><Link to="/reading">Luyện đọc</Link></li><li><Link to="/listening">Luyện nghe</Link></li><li><Link to="/exam">Thi thử</Link></li></ul></nav>
+        <nav aria-label="Học và ôn tập"><h2>Học và ôn tập</h2><ul><li><Link to="/curriculum">Lộ trình học</Link></li><li><Link to="/theory">Kiến thức</Link></li><li><Link to="/flashcards">Từ vựng</Link></li><li><Link to="/recommendations">Gợi ý học tiếp</Link></li></ul></nav>
+      </div>
+      <div className="study-footer-bottom"><small>© {new Date().getFullYear()} TOEIC Adaptive</small><span>Không liên kết với hoặc được ETS chứng nhận.</span></div>
+    </footer>
   </div>;
 };
 

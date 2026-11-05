@@ -58,7 +58,7 @@ test('saves aspiration separately, adapts through groups and shows cautious resu
   await page.getByRole('button',{name:'Gửi và tiếp tục'}).click();
   await expect(page.getByRole('heading',{name:'Nội dung nên học tiếp'})).toBeVisible();
   await expect(page.getByText('Chưa đủ dữ liệu',{exact:true})).toBeVisible();
-  await expect(page.getByRole('link',{name:'Củng cố kiến thức →'})).toHaveAttribute('href','/theory');
+  await expect(page.getByRole('link',{name:'Củng cố kiến thức'})).toHaveAttribute('href','/theory');
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth',await page.locator('body').evaluate(el=>el.clientWidth));
   await page.screenshot({path:info.outputPath('placement-results.png'),fullPage:true});
 });

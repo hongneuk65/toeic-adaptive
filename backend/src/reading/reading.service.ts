@@ -1,4 +1,5 @@
 import { learnerExplanation } from '../common/learner-explanation';
+import { rateLimitCount, withRateLimitTimeout } from '../common/rate-limit-timeout';
 import {
   BadRequestException,
   ForbiddenException,
@@ -38,13 +39,15 @@ export class ReadingService {
     private readonly ai: ReadingAiService,
   ) {}
   async limit(userId: number, action: string, max: number) {
+    return withRateLimitTimeout(async signal => {
     const client = await this.queue.getBackend().client;
+    signal.throwIfAborted();
     client.defineCommand('readingLimit', {
       numberOfKeys: 1,
       lua: "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],86400) end; return n",
     });
     if (
-      Number(
+      rateLimitCount(
         await client.runCommand('readingLimit', [
           `reading:${userId}:${action}:${Math.floor(Date.now() / 86400000)}`,
         ]),
@@ -54,6 +57,7 @@ export class ReadingService {
         'Đã đạt giới hạn Reading hôm nay. Bạn vẫn có thể học bài đã lưu.',
         429,
       );
+    });
   }
   async article(userId: number, id: number) {
     const article = await this.prisma.readingArticle.findUnique({

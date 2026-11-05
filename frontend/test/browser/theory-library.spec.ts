@@ -45,10 +45,10 @@ test('deep link opens reader and returns to filtered library with quiz route int
   await page.goto('/theory?topic=grammar&lesson=1');
   await expect(page.getByRole('heading', { name: 'Danh từ và động từ', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Vị trí danh từ' })).toBeVisible();
-  await page.getByRole('button', { name: '← Thư viện bài học' }).click();
+  await page.getByRole('button', { name: 'Thư viện bài học' }).click();
   await expect(page).toHaveURL(/topic=grammar$/);
   await page.getByRole('button', { name: /Danh từ và động từ/ }).click();
-  await page.getByRole('button', { name: 'Làm quiz củng cố →' }).click();
+  await page.getByRole('button', { name: 'Làm quiz củng cố' }).click();
   await expect(page).toHaveURL(/\/theory\/1\/quiz$/);
 });
 
@@ -88,4 +88,39 @@ test('switches between topic and Part browsing while retaining active filters', 
   await page.getByRole('button', { name: 'Theo chủ đề', exact: true }).click();
   await expect(page).toHaveURL(/topic=grammar&part=6$/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+
+test('quiz returns to the same filtered library and search', async ({ page }) => {
+  await page.goto('/theory?topic=grammar&part=5');
+  await page.getByLabel('Tìm bài học').fill('danh tu');
+  await page.getByRole('button', { name: /Danh từ và động từ/ }).click();
+  await page.getByRole('button', { name: 'Làm quiz củng cố' }).click();
+  await page.getByRole('button', { name: 'Đọc lại kiến thức' }).click();
+  await expect(page).toHaveURL(/topic=grammar&part=5&lesson=1$/);
+  await page.getByRole('button', { name: 'Thư viện bài học' }).click();
+  await expect(page.getByLabel('Tìm bài học')).toHaveValue('danh tu');
+  await expect(page.locator('.theory-lesson')).toHaveCount(1);
+});
+
+test('quiz focuses unanswered questions and retries an immutable submission', async ({ page }) => {
+  const payloads: unknown[] = [];
+  const questions = [1, 2].map(id => ({ id, part: 5, content: `Question ${id}`, optionA: 'First', optionB: 'Second', optionC: 'Third', optionD: 'Fourth' }));
+  await page.route('**/api/theory/1/quiz', route => route.fulfill({ json: questions }));
+  await page.route('**/api/theory/1/quiz/submit', route => {
+    payloads.push(route.request().postDataJSON());
+    return payloads.length === 1 ? route.fulfill({ status: 503, json: { message: 'Chưa kết nối được' } }) : route.fulfill({ json: { totalQuestions: 2, correctCount: 2, scorePercentage: 100, details: questions.map(q => ({ questionId: q.id, selectedAnswer: 'A', correctAnswer: 'A', isCorrect: true })) } });
+  });
+  await page.goto('/theory/1/quiz');
+  await page.locator('input[name="question-1"]').first().check();
+  await page.getByRole('button', { name: 'Nộp bài quiz', exact: true }).click();
+  await expect(page.locator('input[name="question-2"]').first()).toBeFocused();
+  await page.locator('input[name="question-2"]').first().check();
+  await page.getByRole('button', { name: 'Nộp bài quiz', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Chưa kết nối được');
+  await expect(page.getByRole('radio').first()).toBeDisabled();
+  await page.getByRole('button', { name: 'Gửi lại bài đã chọn', exact: true }).click();
+  await expect(page.getByRole('status', { name: 'Kết quả quiz' })).toBeFocused();
+  expect(payloads).toHaveLength(2);
+  expect(payloads[1]).toEqual(payloads[0]);
 });

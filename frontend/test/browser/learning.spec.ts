@@ -96,6 +96,7 @@ test('flashcard due filter and keyboard recall hide the answer until committed',
   await page.goto('/flashcards/1');
   await expect(page.getByRole('heading', { name: 'hóa đơn', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'invoice', exact: true })).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath('flashcard-focus.png'), fullPage: false });
   await page.getByLabel('Câu trả lời của bạn').fill('invoice');
   await page.getByLabel('Câu trả lời của bạn').press('Enter');
   await expect(page.getByRole('paragraph').filter({ hasText: /^invoice$/ })).toBeVisible();
@@ -199,7 +200,7 @@ test('learning sections have top navigation and distinct task layouts', async ({
     if (path === 'theory') {
       await page.getByRole('button', { name: /P5 Word forms/ }).click();
       await expect(page.getByRole('heading', { name: 'Word forms', exact: true })).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Làm quiz củng cố →' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Làm quiz củng cố' })).toBeVisible();
     }
     await page.screenshot({ path: testInfo.outputPath(`${path}-section.png`), fullPage: true });
   }
@@ -235,4 +236,29 @@ test('typed retrieval preserves the first answer and attempt ID when saving is r
   expect(requests[0]).toEqual(requests[1]);
   expect(requests[0]).toMatchObject({ response: 'wrong', recallMode: 'typed', known: false });
   expect(requests[0].attemptId).toMatch(/^[0-9a-f-]{36}$/);
+});
+
+
+test('vocabulary photo workspace keeps folder details and keyboard actions usable', async ({ page }, testInfo) => {
+  await fixture(page);
+  const photo = page.waitForResponse(response => response.url().includes('/images/vocabulary-study-background.webp'));
+  await page.goto('/flashcards');
+  await expect(page.getByRole('heading', { name: 'Thư mục từ vựng', exact: true })).toBeVisible();
+  expect((await photo).ok()).toBe(true);
+  const folder = page.locator('.prep-folder-tile').first();
+  await expect(folder.getByRole('link', { name: 'Office vocabulary', exact: true })).toHaveAttribute('href', '/flashcards/1');
+  await expect(folder.getByText('Mã: TOPIC1', { exact: true })).toBeHidden();
+  await folder.getByText('Thông tin bộ từ', { exact: true }).press('Enter');
+  await expect(folder.getByText('Mã: TOPIC1', { exact: true })).toBeVisible();
+  await folder.getByText('Thông tin bộ từ', { exact: true }).press('Enter');
+  await expect(folder.getByText('Mã: TOPIC1', { exact: true })).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('vocabulary-library.png'), fullPage: false });
+  if (testInfo.project.name === 'desktop') {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const header = await page.locator('.vocabulary-workspace > .page-header').boundingBox();
+    expect(header!.height).toBeLessThanOrEqual(160);
+    await page.screenshot({ path: testInfo.outputPath('vocabulary-library-tablet.png'), fullPage: false });
+  }
 });

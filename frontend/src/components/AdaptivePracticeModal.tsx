@@ -1,3 +1,4 @@
+import { useTutorContext, useQuestionTutorContext } from './rag/useTutorContext';
 import { notifyLearningProgress } from '../lib/learning-progress';
 import '../styles/exam-room.css';
 import { ExamStimulus } from './exam/ExamStimulus';
@@ -36,7 +37,13 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
   const [submitError, setSubmitError] = useState('');
   const pendingAnswer = useRef<AbortController | null>(null);
   const dialog = useRef<HTMLDivElement>(null);
-  useDialogFocus(dialog, true, onClose);
+  const tutor = useTutorContext();
+  useQuestionTutorContext(adaptiveData && !loadingAdaptive ? {
+    questionId: adaptiveData.selectedQuestion.id,
+    selectedAnswer: selectedOpt ?? undefined,
+    label: `Luyện kỹ năng · Câu #${adaptiveData.selectedQuestion.id}`,
+  } : null);
+  useDialogFocus(dialog, !tutor.isOpen && !showRagModal, onClose);
 
   useEffect(() => () => pendingAnswer.current?.abort(), []);
 
@@ -88,7 +95,7 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
   };
 
   return (
-    <div className="modal-backdrop fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className={`${tutor.isOpen ? 'tutor-practice-split' : ''} modal-backdrop fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4`}>
       <div ref={dialog} role="dialog" aria-modal="true" aria-label="Luyện kỹ năng" tabIndex={-1} className="bg-paper-white max-w-2xl w-full border border-paper-kraft rounded-lg shadow-paper-heavy p-6 md:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto">
 
         <div className="flex justify-between items-start gap-4 border-b border-paper-kraft pb-3">
@@ -123,6 +130,11 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
           </div>
         ) : (
           <div className="space-y-6">
+            <button type="button" className="secondary-button" onClick={() => tutor.open({
+              questionId: adaptiveData.selectedQuestion.id,
+              selectedAnswer: selectedOpt ?? undefined,
+              label: `Luyện kỹ năng · Câu #${adaptiveData.selectedQuestion.id}`,
+            })}>Hỏi AI về câu này</button>
             {adaptiveData.selectedQuestion.part >= 3 ? <ExamStimulus question={adaptiveData.selectedQuestion} blankNumbers={{}} /> : adaptiveData.selectedQuestion.imageUrl && <img src={adaptiveData.selectedQuestion.imageUrl} alt="Hình ảnh câu hỏi" className="max-h-60 max-w-full mx-auto object-contain" />}
             {adaptiveData.selectedQuestion.part <= 2 && <p className="text-sm text-ink-medium">Luyện nghe: nghe và chọn {adaptiveData.selectedQuestion.part === 2 ? 'một trong ba' : 'một trong bốn'} đáp án. Nội dung lời thoại được ẩn khi trả lời.</p>}
 
@@ -258,6 +270,11 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
             onClose={() => setShowRagModal(false)}
             questionId={adaptiveData.selectedQuestion.id}
             selectedAnswer={selectedOpt}
+            onAskTutor={() => tutor.open({
+              questionId: adaptiveData.selectedQuestion.id,
+              selectedAnswer: selectedOpt,
+              label: `Luyện kỹ năng · Câu #${adaptiveData.selectedQuestion.id}`,
+            })}
           />
         )}
       </div>

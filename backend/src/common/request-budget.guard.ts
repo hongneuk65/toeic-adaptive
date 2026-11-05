@@ -1,8 +1,9 @@
-import { CanActivate, ExecutionContext, HttpException, Injectable, Module, ServiceUnavailableException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, HttpException, Injectable, Module } from '@nestjs/common';
 import { BullModule, InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { randomUUID, createHash } from 'node:crypto';
 import type { Request, Response } from 'express';
+import { rateLimitCount, withRateLimitTimeout } from './rate-limit-timeout';
 
 const acquire = `
 if tonumber(ARGV[3])>0 then
@@ -35,19 +36,17 @@ export class RequestBudgetGuard implements CanActivate {
     const scope = auth ? 'auth' : 'rag';
     const key = `budget:${scope}:${identity}`;
     const lease = randomUUID();
-    let client: Awaited<ReturnType<Queue['getBackend']>['client']>;
-    try {
-      client = await this.queue.getBackend().client;
+    const client = await withRateLimitTimeout(async signal => {
+      const client = await this.queue.getBackend().client;
+      signal.throwIfAborted();
       client.defineCommand('acquireRequestBudget', { numberOfKeys: 2, lua: acquire });
-      const result = Number(await client.runCommand('acquireRequestBudget', [key, `${key}:active`, String(seconds), String(maximum), auth ? '0' : '2', String(Date.now()), lease]));
+      const result = rateLimitCount(await client.runCommand('acquireRequestBudget', [key, `${key}:active`, String(seconds), String(maximum), auth ? '0' : '2', String(Date.now()), lease]));
       if (result) {
         response.setHeader('Retry-After', result === 2 ? '15' : String(seconds));
         throw new HttpException(result === 2 ? 'Đang có hai yêu cầu AI. Chờ câu trả lời hoàn tất rồi thử lại.' : auth ? 'Bạn thử đăng nhập quá nhiều lần. Vui lòng thử lại sau một phút.' : 'Đã đạt giới hạn 100 yêu cầu AI trong ngày. Bạn vẫn có thể học nội dung đã lưu.', 429);
       }
-    } catch (error) {
-      if (error instanceof HttpException) throw error;
-      throw new ServiceUnavailableException('Chưa kiểm tra được giới hạn yêu cầu. Vui lòng thử lại sau.');
-    }
+      return client;
+    });
     if (!auth) {
       let released = false;
       const release = () => {

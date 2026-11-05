@@ -35,11 +35,13 @@ test('learning plan explains review, opens the selected skill and survives profi
   await page.goto('/recommendations');
   const card = page.locator('.learning-plan-card');
   await expect(card).toHaveCount(1);
-  await expect(card).toContainText('Đến lượt ôn lại');
+  await expect(card).toContainText('Đến hạn ôn');
   await expect(card).toContainText(review.reasons[0]);
   await expect(card.locator('time')).toHaveText('04/10/2026');
-  await expect(card.getByRole('link', { name: 'Học kiến thức →' })).toHaveAttribute('href', '/theory?lesson=17');
+  await expect(card.getByRole('link', { name: 'Học kiến thức' })).toHaveAttribute('href', '/theory?lesson=17');
   await page.screenshot({ path: testInfo.outputPath('learning-plan.png'), fullPage: true });
+  await expect(card.getByRole('button', { name: 'Luyện nền tảng Từ loại' })).toBeHidden();
+  await card.getByText('Vì sao gợi ý?', { exact: true }).click();
   await card.getByRole('button', { name: 'Luyện nền tảng Từ loại' }).click();
   const dialog = page.getByRole('dialog', { name: 'Luyện kỹ năng', exact: true });
   await expect(dialog.getByRole('heading', { name: 'Từ loại (Part 5)' })).toBeVisible();

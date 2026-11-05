@@ -38,6 +38,23 @@ test('Reading has numbered pages and filters restart at the first result page', 
   await expect(pages.getByRole('button', { name: 'Trang 1', exact: true })).toHaveAttribute('aria-current', 'page');
 });
 
+test('filtering vocabulary moves existing cards without replacing their identity', async ({page}) => {
+  await libraryFixture(page);
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.goto('/flashcards');
+  const folder=page.getByRole('link',{name:'Folder 02',exact:true});
+  await expect(folder).toBeVisible();
+  await folder.evaluate(element=>element.setAttribute('data-identity-check','kept'));
+  await page.getByRole('searchbox',{name:'Tìm thư mục từ vựng'}).fill('02');
+  await expect(page.locator('.prep-folder-tile')).toHaveCount(1);
+  await expect(folder).toHaveAttribute('data-identity-check','kept');
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await expect(page.locator('#learning-main')).toHaveAttribute('data-learning-motion','reduced');
+  await page.getByRole('searchbox',{name:'Tìm thư mục từ vựng'}).fill('');
+  await expect(page.locator('.prep-folder-tile')).toHaveCount(8);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
 test('Listening uses numbered server pages and resets filters without rendering every item', async ({ page }) => {
   await libraryFixture(page); await page.goto('/listening');
   const cards = page.locator('.prep-library-catalog > button');
@@ -87,6 +104,7 @@ test('word grid has numbered pages without changing the focused recall card', as
   await expect(page.getByRole('heading', { name: 'nghĩa 01', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Thẻ tiếp', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'nghĩa 02', exact: true })).toBeVisible();
+  await page.getByText('Tùy chọn học', {exact:true}).click();
   await page.getByRole('button', { name: 'Tất cả thẻ', exact: true }).click();
   const cards = page.getByRole('group', { name: /^Thẻ word/ });
   await expect(cards).toHaveCount(12);

@@ -12,6 +12,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { HLR_PRIOR, hlrSchedule, loadHlrModel, normalizeRecall, recallProbability } from './hlr';
 import { ReviewFlashcardDto } from './dto/review-flashcard.dto';
 import { memoryState } from './memory-state';
+import { PracticeVocabularyDto, VocabularyPracticeResult } from './dto/practice-vocabulary.dto';
 
 @Injectable()
 export class FlashcardService {
@@ -117,6 +118,42 @@ export class FlashcardService {
       intervalDays: row.intervalDays, dueAt: row.dueAt, schedulingSource: row.schedulingSource,
       memory: memoryState(row, row.card, this.hlrModel, now) }));
   }
+  /** Recognition and dictation are separate tasks: never train the typed-recall memory curve with them. */
+  async practice(userId: number, cardId: number, input: PracticeVocabularyDto): Promise<VocabularyPracticeResult> {
+    const pendingExam = await this.prisma.examAttempt.findFirst({ where: { userId, submittedAt: null }, select: { id: true } });
+    if (pendingExam) throw new ForbiddenException('Nộp bài thi đang làm trước khi luyện từ vựng.');
+    const card = await this.prisma.flashcard.findUnique({ where: { id: cardId } });
+    if (!card?.folderId) throw new NotFoundException('Không tìm thấy thẻ.');
+    await this.getFolderDetail(card.folderId, userId);
+    if (!normalizeRecall(card.word)) throw new BadRequestException('Thẻ chưa có từ hợp lệ để luyện.');
+    const normalized = normalizeRecall(input.response);
+    const payloadHash = createHash('sha256').update(JSON.stringify([cardId, input.mode, normalized, input.elapsedMs ?? null])).digest('hex');
+    const id = `vocabulary-practice-${userId}-${input.attemptId}`;
+    return this.prisma.$transaction(async tx => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${userId}::bigint)`;
+      const previous = await tx.learningAttempt.findUnique({ where: { id } });
+      if (previous) {
+        if (previous.userId !== userId || previous.scopeId !== cardId || previous.kind !== (input.mode === 'quiz' ? 'VOCAB_QUIZ' : 'VOCAB_DICTATION') || previous.payloadHash !== payloadHash) {
+          throw new ConflictException('Mã lượt luyện đã được dùng cho câu trả lời khác.');
+        }
+        return previous.result as unknown as VocabularyPracticeResult;
+      }
+      const result: VocabularyPracticeResult = {
+        attemptId: input.attemptId, mode: input.mode, cardId,
+        correct: normalized.length > 0 && normalized === normalizeRecall(card.word),
+        correctAnswer: card.word, meaning: card.meaning,
+        ...(card.phonetic ? { phonetic: card.phonetic } : {}),
+        ...(card.example ? { example: card.example } : {}),
+        response: input.response, recordedAt: new Date().toISOString(), schedulingUpdated: false,
+      };
+      await tx.learningAttempt.create({ data: {
+        id, userId, kind: input.mode === 'quiz' ? 'VOCAB_QUIZ' : 'VOCAB_DICTATION', scopeId: cardId, payloadHash,
+        result: JSON.parse(JSON.stringify(result)),
+      } });
+      return result;
+    });
+  }
+
   async review(userId: number, cardId: number, known: boolean, input: Partial<ReviewFlashcardDto> = {}) {
     const mode = input.recallMode ?? 'self_report';
     if (mode === 'typed' && (input.response === undefined || !input.attemptId)) throw new BadRequestException('Lượt tự nhớ cần câu trả lời và mã lượt ôn.');

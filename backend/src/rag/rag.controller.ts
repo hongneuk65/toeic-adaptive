@@ -15,7 +15,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import type { Response } from 'express';
 import { RagService } from './rag.service';
-import { ExplainErrorDto, ChatTutorDto } from './dto/rag.dto';
+import { ExplainErrorDto, ChatTutorDto, TutorChatScopeDto } from './dto/rag.dto';
 import { getUserId } from '../common/user-id';
 import { RequestBudgetGuard } from '../common/request-budget.guard';
 
@@ -24,6 +24,8 @@ import { RequestBudgetGuard } from '../common/request-budget.guard';
 @UseGuards(AuthGuard('jwt'), RolesGuard, RequestBudgetGuard)
 export class RagController {
   constructor(private readonly ragService: RagService) {}
+
+  @Get('capabilities') capabilities() { return this.ragService.capabilities(); }
 
   /**
    * 1. Sinh giải thích lỗi sai cá nhân hóa kết hợp RAG + DAS3H
@@ -104,18 +106,18 @@ export class RagController {
    * 3. Lấy lịch sử hỏi đáp với AI Tutor
    */
   @Get('chat-history')
-  async getChatHistory(@Req() req: any) {
+  async getChatHistory(@Req() req: any, @Query() scope: TutorChatScopeDto) {
     const userId = getUserId(req, 'Không tìm thấy thông tin định danh người dùng trong Token.');
-    return this.ragService.getChatHistory(userId);
+    return this.ragService.getChatHistory(userId, scope);
   }
 
   /**
    * 4. Xóa lịch sử hỏi đáp
    */
   @Delete('chat-history')
-  async clearChatHistory(@Req() req: any) {
+  async clearChatHistory(@Req() req: any, @Query() scope: TutorChatScopeDto) {
     const userId = getUserId(req, 'Không tìm thấy thông tin định danh người dùng trong Token.');
-    return this.ragService.clearChatHistory(userId);
+    return this.ragService.clearChatHistory(userId, scope);
   }
 
   /**

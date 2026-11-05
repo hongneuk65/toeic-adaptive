@@ -1,3 +1,4 @@
+import { CurriculumModule } from './curriculum/curriculum.module';
 import { HistoryModule } from './history/history.module';
 import { PlacementModule } from './placement/placement.module';
 import { VocabularyModule } from './vocabulary/vocabulary.module';
@@ -27,6 +28,7 @@ import { ReadingModule } from './reading/reading.module';
     TheoryModule,
     ExamModule,
     PlacementModule,
+    CurriculumModule,
     MasteryModule,
     Das3hModule,
     RagModule,

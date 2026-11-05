@@ -51,6 +51,8 @@ test('personal creation keeps request contract and offers retry after generation
   await fixture(page, 'failed');
   await page.goto('/reading');
   await page.getByText('Tạo bài từ văn bản của bạn', { exact: true }).click();
+  await expect(page.getByText(/trích dẫn bằng chứng nguyên văn/)).toBeHidden();
+  await page.getByText('Thông tin tạo bài', { exact: true }).click();
   await expect(page.getByText(/trích dẫn bằng chứng nguyên văn/)).toBeVisible();
   await page.getByRole('textbox', { name: 'Tên bài Reading cá nhân', exact: true }).fill('Office hours');
   const text = 'The office opens at nine. '.repeat(10);

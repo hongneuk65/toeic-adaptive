@@ -17,7 +17,7 @@ export class AuthService {
             where: { id: userId },
             select: { role: true, onboardingChoice: true, _count: { select: {
                 examAttempts: true, placementAttempts: true, studentSkillHistories: true,
-                readingAttempts: true, listeningSessions: true, flashcardReviews: true,
+                readingAttempts: true, listeningSessions: true, flashcardReviews: true, curriculumAttempts: true,
             } } },
         });
         const hasLearningActivity = Object.values(user._count).some(count => count > 0);

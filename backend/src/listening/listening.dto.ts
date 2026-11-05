@@ -1,4 +1,4 @@
-import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ListeningCatalogQueryDto {
@@ -36,6 +36,7 @@ export class ProgressDto {
   @IsOptional() @IsBoolean() favorite?: boolean;
 }
 export class AnswerDto {
+  @IsOptional() @IsUUID() requestId?: string;
   @IsInt() @Min(1) unitId: number;
   @IsIn(['CLOZE', 'DICTATION', 'SPEAK']) mode: string;
   @IsIn(['EASY', 'MEDIUM', 'HARD']) difficulty: string;

@@ -9,6 +9,7 @@ import { useAsyncResource } from "../hooks/useAsyncResource";
 import { useAuth } from "../auth/useAuth";
 import { PageHeader } from "../components/ui/PageHeader";
 import "../styles/prep-learning.css";
+import "../styles/practice-studio.css";
 import { AiMarkdown } from "../components/rag/AiMarkdown";
 import { ReadingAdmin } from "../components/reading/ReadingAdmin";
 import { ReadingClausePractice } from "../components/reading/ReadingClausePractice";
@@ -51,17 +52,57 @@ function elapsed(attempt: ReadingAttempt, began: number) {
   );
 }
 
+type ReadingDraft = { versionId: number; answers: ReadingAttempt['answers']; currentIndex: number };
+function sameDraft(a: ReadingDraft, b: ReadingDraft) {
+  const canonical = (draft: ReadingDraft) => JSON.stringify([draft.versionId, draft.currentIndex, Object.entries(draft.answers).sort(([a], [b]) => Number(a) - Number(b)).map(([index, answer]) => [Number(index), answer.selected, answer.evidence.map(span => [span.start, span.end, span.text])])]);
+  return canonical(a) === canonical(b);
+}
+function readReadingDraft(key: string, initial: ReadingAttempt): ReadingDraft | null {
+  try {
+    const raw: unknown = JSON.parse(sessionStorage.getItem(key) || 'null');
+    if (!raw || typeof raw !== 'object') return null;
+    const draft = raw as Partial<ReadingDraft>;
+    if (draft.versionId !== initial.version.id || !Number.isInteger(draft.currentIndex) || draft.currentIndex! < 0 || draft.currentIndex! >= initial.version.questions.length
+      || !draft.answers || typeof draft.answers !== 'object' || Array.isArray(draft.answers)) return null;
+    const answers: ReadingAttempt['answers'] = {};
+    for (const [key, answer] of Object.entries(draft.answers)) {
+      const question = /^\d+$/.test(key) ? initial.version.questions[Number(key)] : undefined;
+      if (!question || !answer || typeof answer !== 'object' || !Number.isInteger(answer.selected) || answer.selected < 0 || answer.selected >= question.options.length || !Array.isArray(answer.evidence) || answer.evidence.length > 10) return null;
+      const evidence: ReadingEvidence[] = [];
+      for (const span of answer.evidence) {
+        if (!span || !Number.isInteger(span.start) || !Number.isInteger(span.end) || span.start < 0 || span.end <= span.start || span.end > initial.version.text.length
+          || typeof span.text !== 'string' || !span.text.trim() || span.text.length > 800 || initial.version.text.slice(span.start, span.end) !== span.text) return null;
+        evidence.push({ start: span.start, end: span.end, text: span.text });
+      }
+      answers[key] = { selected: answer.selected, evidence };
+    }
+    return { versionId: initial.version.id, currentIndex: draft.currentIndex!, answers };
+  } catch { return null; }
+}
+function writeReadingDraft(key: string, draft: ReadingDraft | null) {
+  try { if (draft) sessionStorage.setItem(key, JSON.stringify(draft)); else sessionStorage.removeItem(key); } catch { /* Editing remains available if browser storage is blocked. */ }
+}
+
 function ReadingWorkspace({
+  userId,
   initial,
   onLibrary,
   onChanged,
   onRestart,
 }: {
+  userId: number;
   initial: ReadingAttempt;
   onLibrary(): void;
   onChanged(): void;
   onRestart(): void;
 }) {
+  const draftKey = `toeic:reading-draft:${userId}:${initial.id}:${initial.version.id}`;
+  const serverDraft: ReadingDraft = { versionId: initial.version.id, answers: initial.answers, currentIndex: initial.currentIndex };
+  const [recovery, setRecovery] = useState(() => {
+    const backup = initial.submittedAt ? null : readReadingDraft(draftKey, initial);
+    return backup && !sameDraft(backup, serverDraft) ? backup : null;
+  });
+  const currentDraft = useRef(serverDraft);
   const [attempt, setAttempt] = useState(initial);
   const [answers, setAnswers] = useState(initial.answers);
   const [index, setIndex] = useState(initial.currentIndex);
@@ -73,6 +114,7 @@ function ReadingWorkspace({
   const [tutor, setTutor] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [autosaveError, setAutosaveError] = useState("");
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState("Tiến độ được tự lưu");
   const [tick, setTick] = useState(0);
@@ -85,6 +127,14 @@ function ReadingWorkspace({
   const version = attempt.version;
   const question = version.questions[index];
   const submitted = !!attempt.submittedAt;
+  const changeAnswers = (next: ReadingAttempt['answers']) => {
+    currentDraft.current = { ...currentDraft.current, answers: next };
+    writeReadingDraft(draftKey, currentDraft.current); setAnswers(next);
+  };
+  const changeIndex = (next: number) => {
+    currentDraft.current = { ...currentDraft.current, currentIndex: next };
+    writeReadingDraft(draftKey, currentDraft.current); setIndex(next);
+  };
   const learningLevel = question.learningLevel ?? (submitted ? question.learning?.level : undefined);
   useEffect(() => {
     started.current = performance.now();
@@ -107,21 +157,25 @@ function ReadingWorkspace({
     [answers, index, initial],
   );
   const save = useCallback(() => {
+    if (recovery) return Promise.resolve();
     const data = snapshot();
     chain.current = chain.current
       .catch(() => undefined)
-      .then(() =>
-        api<ReadingAttempt>(`/reading/attempts/${attempt.id}`, {
+      .then(async () => {
+        const saved = await api<ReadingAttempt>(`/reading/attempts/${attempt.id}`, {
           method: "PATCH",
           keepalive: true,
           data,
-        }),
-      );
+        });
+        const stored = readReadingDraft(draftKey, initial);
+        if (stored && sameDraft(stored, { versionId: initial.version.id, answers: data.answers, currentIndex: data.currentIndex })) writeReadingDraft(draftKey, null);
+        return saved;
+      });
     return chain.current;
-  }, [attempt.id, snapshot]);
+  }, [attempt.id, snapshot, draftKey, initial, recovery]);
   useEffect(() => {
-    exitSave.current = submitted ? null : save;
-  }, [save, submitted]);
+    exitSave.current = submitted || recovery ? null : save;
+  }, [save, submitted, recovery]);
   useEffect(() => {
     const persist = () => {
       void exitSave.current?.().catch(() => undefined);
@@ -133,22 +187,22 @@ function ReadingWorkspace({
     };
   }, []);
   useEffect(() => {
-    if (submitted || busy) return;
+    if (submitted || busy || recovery) return;
     const timer = window.setTimeout(() => {
       setSaving("Đang lưu…");
       void save()
         .then(() => {
-          if (live.current) setSaving("Đã lưu tiến độ");
+          if (live.current) { setSaving("Đã lưu tiến độ"); setAutosaveError(""); }
         })
         .catch((cause) => {
           if (live.current) {
             setSaving("Chưa lưu được");
-            setError(getErrorMessage(cause));
+            setAutosaveError(getErrorMessage(cause));
           }
         });
     }, 600);
     return () => clearTimeout(timer);
-  }, [save, submitted, busy, tick]);
+  }, [save, submitted, busy, tick, recovery]);
   const act = async (work: () => Promise<void>) => {
     if (action.current) return;
     action.current = true;
@@ -193,7 +247,7 @@ function ReadingWorkspace({
   };
   const attach = () => {
     if (!selection || !answers[index]) return;
-    setAnswers({
+    changeAnswers({
       ...answers,
       [index]: { ...answers[index], evidence: [selection] },
     });
@@ -240,6 +294,16 @@ function ReadingWorkspace({
     nodes.push(version.text.slice(at));
     return nodes;
   }, [version.text, evidence]);
+  if (recovery) return <section className="learning-surface space-y-4" aria-labelledby="reading-recovery-title">
+    <h1 id="reading-recovery-title" className="text-xl font-semibold">Có bản nháp chưa lưu trong tab này</h1>
+    <p className="text-sm text-ink-medium">Bản nháp khác với tiến độ trên tài khoản. Chọn bản muốn tiếp tục; hệ thống chưa ghi đè dữ liệu trên tài khoản.</p>
+    <div className="flex flex-wrap gap-3">
+      <button className="primary-button" onClick={() => {
+        currentDraft.current = recovery; setAnswers(recovery.answers); setIndex(recovery.currentIndex); setRecovery(null); setNotice("Đã khôi phục bản nháp. Tiến độ sẽ được lưu lại vào tài khoản.");
+      }}>Khôi phục bản nháp</button>
+      <button className="secondary-button" onClick={() => { writeReadingDraft(draftKey, null); currentDraft.current = serverDraft; setRecovery(null); }}>Dùng tiến độ trên tài khoản</button>
+    </div>
+  </section>;
   return (
     <div className="page-stack prep-study-workspace">
       <div className="prep-study-toolbar flex flex-wrap items-center justify-between gap-3">
@@ -269,12 +333,13 @@ function ReadingWorkspace({
           {error}
         </p>
       )}
+      {autosaveError && <p role="alert" className="prep-learning-error rounded bg-rose-50 p-3 text-sm text-rose-800">Chưa lưu được tiến độ: {autosaveError} <button className="study-action-button" disabled={busy} onClick={() => void act(async () => { await save(); setAutosaveError(""); setSaving("Đã lưu tiến độ"); })}>Thử lưu lại</button></p>}
       {notice && (
         <p role="status" className="text-sm">
           {notice}
         </p>
       )}
-      <div>
+      <div className="practice-study-heading">
         <h1 className="text-2xl font-semibold">{version.title}</h1>
         <p className="mt-2 text-sm text-ink-medium">
           {version.topic} · {kinds[version.kind]} · {levels[version.difficulty]}{" "}
@@ -308,7 +373,7 @@ function ReadingWorkspace({
           </button>
         </div>
       )}
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,1fr)]">
+      <div className="prep-study-layout">
         <section className="prep-reading-passage min-w-0 bg-paper-white p-5 sm:p-7">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-semibold">Bài đọc</h2>
@@ -374,7 +439,7 @@ function ReadingWorkspace({
                     name={`reading-${index}`}
                     checked={answers[index]?.selected === i}
                     onChange={() =>
-                      setAnswers({
+                      changeAnswers({
                         ...answers,
                         [index]: {
                           selected: i,
@@ -414,9 +479,10 @@ function ReadingWorkspace({
                   </button>
                   {!!answers[index]?.evidence.length && (
                     <button
+                      disabled={busy}
                       className="study-action-button"
                       onClick={() =>
-                        setAnswers({
+                        changeAnswers({
                           ...answers,
                           [index]: { ...answers[index], evidence: [] },
                         })
@@ -455,7 +521,7 @@ function ReadingWorkspace({
                 disabled={index === 0 || busy}
                 className="text-sm disabled:opacity-40"
                 onClick={() => {
-                  setIndex(index - 1);
+                  changeIndex(index - 1);
                   setTutor("");
                 }}
               >
@@ -467,7 +533,7 @@ function ReadingWorkspace({
                 }
                 className="text-sm disabled:opacity-40"
                 onClick={() => {
-                  setIndex(index + 1);
+                  changeIndex(index + 1);
                   setTutor("");
                 }}
               >
@@ -482,6 +548,7 @@ function ReadingWorkspace({
                   onClick={() =>
                     void act(async () => {
                       await save();
+                      setAutosaveError("");
                       setNotice("Đã lưu tiến độ vào tài khoản.");
                       onChanged();
                     })
@@ -502,6 +569,8 @@ function ReadingWorkspace({
                       notifyLearningProgress();
                       setAttempt(next);
                       setAnswers(next.answers);
+                      writeReadingDraft(draftKey, null);
+                      setAutosaveError("");
                       setSaving("Đã nộp và lưu kết quả");
                       onChanged();
                     })
@@ -666,7 +735,6 @@ function ReadingWorkspace({
           </details>
         </div>
       </div>
-      {submitted && <ActivitySuggestions section="reading" compact excludeHref={`/reading?article=${version.articleId}`} />}
     </div>
   );
 }
@@ -692,7 +760,7 @@ export function ReadingPage() {
       [articleId, attemptId],
     ),
   );
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   let admin = false;
   try {
     admin =
@@ -775,9 +843,9 @@ export function ReadingPage() {
   const showReadingLibrary = () => { const next = new URLSearchParams(params); next.delete("practice"); setAddingText(false); setParams(next); };
   const showPersonalReading = () => { const next = new URLSearchParams(params); next.delete("practice"); setAddingText(true); setParams(next); };
   const showSentencePractice = () => { const next = new URLSearchParams(params); next.set("practice", "clauses"); setAddingText(false); setParams(next); };
-  if (params.get("practice") === "clauses" && !articleId && !attemptId) return <ReadingClausePractice onLibrary={showReadingLibrary} modeNavigation={<><ActivitySuggestions section="reading" compact /><ReadingModes mode="clauses" onReading={showReadingLibrary} onClauses={showSentencePractice} onPersonal={showPersonalReading} personalTrigger={personalTrigger} /></>} />;
+  if (params.get("practice") === "clauses" && !articleId && !attemptId) return <ReadingClausePractice onLibrary={showReadingLibrary} modeNavigation={<><ReadingModes mode="clauses" onReading={showReadingLibrary} onClauses={showSentencePractice} onPersonal={showPersonalReading} personalTrigger={personalTrigger} /></>} />;
   return (
-    <div className={`page-stack prep-learning-page ${articleId || attemptId ? "prep-learning-study" : "prep-learning-library"}`}>
+    <div className={`page-stack prep-learning-page practice-studio reading-studio ${articleId || attemptId ? "prep-learning-study" : "prep-learning-library"}`}>
       {(error || catalog.error || content.error) && (
         <p
           role="alert"
@@ -802,14 +870,15 @@ export function ReadingPage() {
         </section>
       ) : attempt ? (
         <ReadingWorkspace
-          key={attempt.id}
+          key={`${user?.id}:${attempt.id}`}
+          userId={user?.id ?? 0}
           initial={attempt}
           onLibrary={() => setParams({})}
           onChanged={catalog.reload}
           onRestart={() => void start(attempt.version.articleId)}
         />
       ) : article ? (
-        <section className="page-section space-y-4">
+        <section className="page-section prep-study-preview learning-surface space-y-4">
           <button className="text-sm study-action-button" onClick={() => setParams({})}>
             Thư viện Reading
           </button>
@@ -866,9 +935,8 @@ export function ReadingPage() {
       ) : (
         <>
           <PageHeader
-            eyebrow="READING LIBRARY / ĐỌC & HIỂU"
+            variant="compact"
             title="Luyện đọc"
-            description="Chọn bài đọc, trả lời câu hỏi và đối chiếu bằng chứng để hiểu sâu hơn."
           />
           <ActivitySuggestions section="reading" compact />
           <ReadingModes mode={addingText ? "personal" : "reading"} onReading={showReadingLibrary} onClauses={showSentencePractice} onPersonal={showPersonalReading} personalTrigger={personalTrigger} />
@@ -887,14 +955,8 @@ export function ReadingPage() {
                 });
               }}
             >
-              <p className="text-sm">
-                Dán văn bản tiếng Anh từ 40 từ, tối đa{" "}
-                {catalog.data?.limits.maxText || 10000} ký tự. AI tạo tối đa{" "}
-                {catalog.data?.limits.maxQuestions || 5} câu dựa trên bài, giữ nguyên
-                văn bản gốc và trích dẫn bằng chứng nguyên văn. AI kiểm tra lại
-                câu hỏi trước khi lưu; nội dung vẫn do AI tạo, chưa duyệt chuyên
-                môn và chỉ dùng luyện tập. Bài cá nhân riêng tư.
-              </p>
+              <p className="text-sm">Từ 40 từ, tối đa {catalog.data?.limits.maxText || 10000} ký tự. Bài do AI tạo, chỉ dùng luyện tập.</p>
+              <details className="section-disclosure"><summary>Thông tin tạo bài</summary><p className="text-sm">AI tạo tối đa {catalog.data?.limits.maxQuestions || 5} câu, giữ nguyên văn bản và trích dẫn bằng chứng nguyên văn. Nội dung chưa duyệt chuyên môn. Bài cá nhân riêng tư; tránh nhập thông tin cá nhân.</p></details>
               <input
                 ref={personalTitle}
                 aria-label="Tên bài Reading cá nhân"
@@ -919,15 +981,11 @@ export function ReadingPage() {
               >
                 {busy ? "Đang lưu…" : "Tạo bài luyện riêng"}
               </button>
-              <p className="text-xs text-ink-medium">
-                Không nhập thông tin cá nhân không cần thiết. Email/số điện
-                thoại được che trong ngữ cảnh AI. Bài thư viện vẫn học được khi
-                AI không hoạt động.
-              </p>
+
             </form>
           </section>
           <div className="prep-library-layout reading-library-layout grid items-start gap-6">
-          <section aria-label="Thư viện bài đọc" className="min-w-0 space-y-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wider text-accent-navy">Thư viện Reading</p><h2 className="section-title mt-1">Bài luyện dành cho bạn</h2></div><span className="rounded-full bg-paper-cream px-3 py-1 text-sm text-ink-medium">{filtered.length} bài phù hợp</span></div><div className="prep-library-filters grid gap-3 sm:grid-cols-2 2xl:grid-cols-5">
+          <section aria-label="Thư viện bài đọc" className="min-w-0 space-y-5"><div className="learning-section-heading"><div><h2 className="section-title">Thư viện bài đọc</h2></div><span className="learning-result-count">{filtered.length} bài phù hợp</span></div><div className="prep-library-filters reading-library-filters">
             <select
               aria-label="Lọc chủ đề Reading"
               className="form-input !border"
@@ -1002,13 +1060,14 @@ export function ReadingPage() {
                   disabled={busy}
                   key={a.id}
                   className="prep-learning-card group grid w-full gap-2 text-left"
+                  data-progress={last ? last.submittedAt ? "done" : "active" : "new"}
                   onClick={() =>
                     last && !last.submittedAt
                       ? setParams({ attempt: String(last.id) })
                       : setParams({ article: String(a.id) })
                   }
                 >
-                  <span className="block text-xs font-medium text-accent-navy">
+                  <span className="learning-card-meta block text-xs font-medium text-accent-navy">
                     {a.ownerId === null ? "Thư viện" : "Cá nhân · AI"} ·{" "}
                     {a.version
                       ? kinds[a.version.kind]
@@ -1016,14 +1075,14 @@ export function ReadingPage() {
                         ? "Chưa tạo được"
                         : "Đang tạo"}
                   </span>
-                  <span className="block break-words text-lg font-semibold text-ink-dark">
+                  <span className="learning-card-heading block break-words text-lg font-semibold text-ink-dark">
                     {a.version?.title || a.title}
                   </span>
-                  <span className="block text-sm text-ink-medium">
+                  <span className="learning-card-context block text-sm text-ink-medium">
                     {a.version?.topic}{" "}
                     {a.version && `· ${levels[a.version.difficulty]}`}
                   </span>
-                  <span className="mt-3 block border-t border-paper-kraft/60 pt-3 text-sm font-semibold text-accent-navy">
+                  <span className="learning-card-action block border-t border-paper-kraft/60 text-sm font-semibold text-accent-navy">
                     {last
                       ? last.submittedAt
                         ? `${last.correct}/${last.total} câu đúng · Lần ${last.tryNumber}`
@@ -1041,7 +1100,7 @@ export function ReadingPage() {
             <div className="status-message space-y-3"><p>Chưa có bài phù hợp với bộ lọc này.</p><button className="secondary-button" onClick={() => { setTopic(""); setDifficulty(""); setKind(""); setProgress(""); setSource(""); setLibraryPage(1); }}>Xóa bộ lọc</button></div>
           )}
           </section>
-          <aside aria-label="Bài đọc cá nhân và lịch sử" className="prep-learning-sidebar min-w-0 space-y-4"><div><h2 className="font-semibold">Góc học của bạn</h2><p className="mt-1 text-sm text-ink-medium">Xem lại tiến độ hoặc luyện với văn bản riêng.</p></div>
+          <aside aria-label="Bài đọc cá nhân và lịch sử" className="prep-learning-sidebar min-w-0 space-y-4"><div><h2 className="font-semibold">Góc học của bạn</h2></div>
           <details className="section-disclosure">
             <summary>Lịch sử lần đầu và làm lại</summary>
             <div className="space-y-2">

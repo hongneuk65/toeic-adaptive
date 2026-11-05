@@ -17,6 +17,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { FlashcardService } from './flashcard.service';
 import { getUserId } from '../common/user-id';
 import { ReviewFlashcardDto } from './dto/review-flashcard.dto';
+import { PracticeVocabularyDto } from './dto/practice-vocabulary.dto';
 import { CreateFlashcardDto, CreateFolderDto } from './dto/create-flashcard.dto';
 
 @Controller('flashcards')
@@ -27,6 +28,11 @@ export class FlashcardController {
   @Get('folders/:id/reviews')
   @UseGuards(AuthGuard('jwt'))
   reviews(@Req() req: any, @Param('id', ParseIntPipe) id: number) { return this.flashcardService.reviews(getUserId(req), id); }
+  @Post('cards/:id/practice')
+  practice(@Req() req: any, @Param('id', ParseIntPipe) id: number, @Body() dto: PracticeVocabularyDto) {
+    return this.flashcardService.practice(getUserId(req), id, dto);
+  }
+
   @Patch('cards/:id/review')
   @UseGuards(AuthGuard('jwt'))
   review(@Req() req: any, @Param('id', ParseIntPipe) id: number, @Body() dto: ReviewFlashcardDto) { return this.flashcardService.review(getUserId(req), id, dto.known, dto); }

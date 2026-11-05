@@ -14,6 +14,11 @@ export class RagLlmService {
   private readonly logger = new Logger(RagLlmService.name);
   private readonly unavailableUntil = new Map<string, number>();
 
+  /** Configuration capability only; this does not probe provider health/quota. */
+  isConfigured(): boolean {
+    return !!(process.env.GEMINI_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim());
+  }
+
   /**
    * Sinh nội dung qua LLM (ưu tiên Gemini / OpenAI; tự động fallback sang Heuristic sư phạm nếu offline)
    */

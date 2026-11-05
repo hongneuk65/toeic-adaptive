@@ -1,0 +1,64 @@
+/* A single motion rhythm for learning: immediate response, quiet continuity. */
+#root .nature-app .study-layout[data-section] .practice-studio :is(.prep-library-catalog,.page-header) {animation:none}
+#root .nature-app :is(.practice-studio,.vocabulary-studio) {
+  --learning-ease:cubic-bezier(.16,1,.3,1);
+  --learning-snap:cubic-bezier(.2,.8,.2,1);
+}
+#root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio) :is(button,a):not(:disabled):not([aria-disabled=true]) {
+  transition:transform 160ms var(--learning-snap),opacity 140ms ease;
+}
+#root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio) :is(button,a):not(:disabled):not([aria-disabled=true]):active {
+  transform:scale(.98);
+  transition-duration:80ms;
+}
+@media(prefers-reduced-motion:no-preference) {
+  #root .nature-app .study-layout[data-section] .practice-studio .prep-library-catalog .prep-learning-card,
+  #root .nature-app .study-layout[data-section] .vocabulary-studio .prep-folder-catalog .prep-folder-tile {
+    animation:learning-card-arrive 220ms var(--learning-ease) backwards;
+  }
+  #root .nature-app .study-layout[data-section] :is(.prep-library-catalog,.prep-folder-catalog)>:nth-child(2) {animation-delay:25ms}
+  #root .nature-app .study-layout[data-section] :is(.prep-library-catalog,.prep-folder-catalog)>:nth-child(3) {animation-delay:50ms}
+  #root .nature-app .study-layout[data-section] :is(.prep-library-catalog,.prep-folder-catalog)>:nth-child(4) {animation-delay:75ms}
+  #root .nature-app .study-layout[data-section] :is(.prep-library-catalog,.prep-folder-catalog)>:nth-child(n+5) {animation-delay:100ms}
+  #root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio) :is(.study-mode-card,.vocabulary-practice-modes button,.vocabulary-view-switch button,.vocabulary-scope button)[aria-pressed=true] {
+    animation:learning-selection 180ms var(--learning-ease);
+  }
+  #root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio) :is(.status-message,[role=alert],.vocabulary-recall [role=status]) {
+    animation:learning-feedback 200ms var(--learning-ease);
+  }
+  #root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio) .modal-backdrop>[role=dialog] {
+    animation:learning-panel-arrive 220ms var(--learning-ease);
+  }
+  #root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio) details[open]>:not(summary) {
+    animation:learning-feedback 180ms var(--learning-ease);
+  }
+}
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
+  #root .nature-app .study-layout[data-section] .practice-studio .prep-library-catalog .prep-learning-card:not(:disabled):hover,
+  #root .nature-app .study-layout[data-section] .vocabulary-studio .prep-folder-catalog .prep-folder-tile:hover {
+    transform:translateY(-3px);
+    transition:transform 200ms var(--learning-ease),opacity 140ms ease;
+  }
+  #root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio) :is(.primary-button,.secondary-button,.vocabulary-open-set,.study-mode-card):not(:disabled):hover {transform:translateY(-1px)}
+}
+@media(prefers-reduced-motion:no-preference) {
+  #root .nature-app .study-layout[data-section] .practice-studio .prep-library-catalog .prep-learning-card:not(:disabled):active,
+  #root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio) :is(.primary-button,.secondary-button,.vocabulary-open-set,.study-mode-card):not(:disabled):active {
+    transform:scale(.98);transition-duration:80ms;
+  }
+}
+@keyframes learning-card-arrive {from{opacity:.25;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes learning-panel-arrive {from{opacity:.25;transform:translateY(8px) scale(.995)}to{opacity:1;transform:none}}
+@keyframes learning-feedback {from{opacity:.45;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes learning-selection {from{opacity:.65}to{opacity:1}}
+@media(prefers-reduced-motion:reduce) {
+  #root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio),
+  #root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio) *,
+  #root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio) *::before,
+  #root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio) *::after {
+    animation:none!important;
+    transition-property:opacity,color,background-color,border-color!important;
+    transition-duration:120ms!important;
+  }
+  #root .nature-app .study-layout[data-section] :is(.practice-studio,.vocabulary-studio) :is(button,a,.prep-folder-tile) {transform:none!important;rotate:none!important}
+}

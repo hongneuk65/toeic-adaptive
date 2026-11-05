@@ -1,7 +1,7 @@
 import { ActivitySuggestions } from '../components/ActivitySuggestions';
 import '../styles/theory-library.css';
 import { useCallback, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AiMarkdown } from '../components/rag/AiMarkdown';
 import { api } from '../lib/api';
 import { useAsyncResource } from '../hooks/useAsyncResource';
@@ -22,12 +22,14 @@ const PAGE_SIZE = 12;
 
 export function TheoryReadingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const restored = location.state as { theorySearch?: string; theoryPage?: number } | null;
   const [params, setParams] = useSearchParams();
   const topicId = params.get('topic') || '';
   const part = Number(params.get('part')) || 0;
   const lessonId = Number(params.get('lesson')) || 0;
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState(restored?.theorySearch ?? '');
+  const [page, setPage] = useState(restored?.theoryPage ?? 1);
   const browseBy = params.get('view') === 'part' ? 'part' : 'topic';
   const loadCatalog = useCallback((signal: AbortSignal) => api<LessonSummary[]>('/theory/catalog', { signal }), []);
   const catalog = useAsyncResource(loadCatalog);
@@ -49,28 +51,28 @@ export function TheoryReadingPage() {
     // latest URL so rapid filter changes do not restore an earlier selection.
     const next = new URLSearchParams(window.location.search);
     if (value) next.set(key, value); else next.delete(key);
-    next.delete('lesson'); setParams(next); setPage(1);
+    next.delete('lesson'); setParams(next); if (key !== 'lesson') setPage(1);
   }
   function openLesson(id: number) {
     const next = new URLSearchParams(window.location.search); next.set('lesson', String(id)); setParams(next);
   }
   const selectedSummary = lessons.find(item => item.id === lessonId);
   return <div className="page-stack theory-library">
-    <PageHeader variant="compact" title="Kiến thức TOEIC" description="Tìm bài theo chủ đề hoặc Part, rồi luyện quiz để củng cố." />
+    <PageHeader variant="compact" title="Kiến thức TOEIC" />
     {!lessonId && <ActivitySuggestions section="theory" compact />}
     {lessonId ? <section className="theory-reader" aria-label="Nội dung bài học">
-      <button className="theory-back secondary-button" onClick={() => changeFilter('lesson', '')}>← Thư viện bài học</button>
+      <button className="theory-back secondary-button" onClick={() => changeFilter('lesson', '')}>Thư viện bài học</button>
       {detail.loading ? <p role="status" className="theory-state">Đang tải bài học…</p> : detail.error ? <div role="alert" className="theory-state">{detail.error} <button onClick={detail.reload}>Thử lại</button></div> : detail.data ? <article>
         <div className="theory-reader-meta"><span>Part {detail.data.part}</span>{selectedSummary && <span>{selectedSummary.topic.title}</span>}</div>
         <h2>{detail.data.title}</h2>
         <div className="theory-reader-body"><AiMarkdown content={detail.data.content} /></div>
-        <footer><div><strong>Kiểm tra điều vừa học</strong><p>Thử trả lời trước khi xem lời giải.</p></div><button className="primary-button" onClick={() => navigate(`/theory/${lessonId}/quiz`)}>Làm quiz củng cố →</button></footer>
+        <footer><div><strong>Kiểm tra điều vừa học</strong></div><button className="primary-button" onClick={() => navigate(`/theory/${lessonId}/quiz`, { state: { theoryReturnTo: `${location.pathname}${location.search}`, theorySearch: search, theoryPage: page } })}>Làm quiz củng cố</button></footer>
       </article> : <p className="theory-state">Không tìm thấy bài học.</p>}
     </section> : <>
       {catalog.loading ? <p role="status" className="theory-state">Đang tải thư viện bài học…</p> : catalog.error ? <div role="alert" className="theory-state">{catalog.error} <button onClick={catalog.reload}>Thử lại</button></div> : <>
         <section className="theory-catalog" aria-labelledby="theory-catalog-title">
           <div className="theory-section-heading">
-            <div><h2 id="theory-catalog-title">Thư viện kiến thức</h2><p>Tìm nhanh bài phù hợp, mỗi trang tối đa {PAGE_SIZE} bài.</p></div>
+            <div><h2 id="theory-catalog-title">Thư viện kiến thức</h2></div>
             <div className="theory-browse-switch" role="group" aria-label="Cách sắp xếp bài học">
               <button aria-pressed={browseBy === 'topic'} onClick={() => changeFilter('view', '')}>Theo chủ đề</button>
               <button aria-pressed={browseBy === 'part'} onClick={() => changeFilter('view', 'part')}>Theo Part</button>
@@ -83,12 +85,11 @@ export function TheoryReadingPage() {
           </div>
           <div className="theory-results-heading"><p role="status">{filtered.length} bài học{topic ? ` · ${topic.title}` : ''}{part ? ` · Part ${part}` : ''}</p>{(topicId || part || search) && <button className="study-action-button" onClick={() => { setSearch(''); const next = new URLSearchParams(window.location.search); next.delete('topic'); next.delete('part'); next.delete('lesson'); setParams(next); setPage(1); }}>Bỏ bộ lọc</button>}</div>
           {!filtered.length ? <div className="theory-state"><h3>Chưa có bài phù hợp</h3><p>Thử từ khóa khác hoặc dùng nút Bỏ bộ lọc ở trên.</p></div> : <>
-            <div className="theory-lessons">{visible.map(lesson => <button className="theory-lesson" key={lesson.id} onClick={() => openLesson(lesson.id)}><span className="theory-part">P{lesson.part}</span><span className="theory-lesson-copy"><strong>{lesson.title}</strong><span>{lesson.topic.title}</span></span><span className="theory-open">Đọc bài <span aria-hidden="true">↗</span></span></button>)}</div>
+            <div className="theory-lessons">{visible.map(lesson => <button className="theory-lesson" key={lesson.id} onClick={() => openLesson(lesson.id)}><span className="theory-part">P{lesson.part}</span><span className="theory-lesson-copy"><strong>{lesson.title}</strong><span>{lesson.topic.title}</span></span><span className="theory-open">Đọc bài </span></button>)}</div>
             <Pagination page={currentPage} totalPages={pages} onPageChange={setPage} label="Trang bài học" />
           </>}
         </section>
       </>}
     </>}
-    {lessonId > 0 && detail.data && <ActivitySuggestions section="theory" compact excludeHref={`/theory?lesson=${lessonId}`} />}
   </div>;
 }

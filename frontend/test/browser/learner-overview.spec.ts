@@ -17,7 +17,7 @@ test('unpracticed skills receive no invented estimate or weakness label', async 
   await page.goto('/recommendations');
   const overview = page.getByRole('region', { name: 'Bạn đang ở đâu?' });
   await expect(overview).toBeVisible();
-  await expect(overview.getByText('Chưa đủ dữ liệu để đánh giá kỹ năng. Chưa luyện không có nghĩa là yếu.', { exact: true })).toBeVisible();
+  await expect(overview.getByText('Chưa đủ dữ liệu đánh giá.', { exact: true })).toBeVisible();
   await expect(overview.locator('meter')).toHaveCount(0);
   await expect(overview.getByRole('heading', { name: 'Có thể củng cố tiếp' })).toHaveCount(0);
   await expect(overview.locator('.learner-overview-stats')).toContainText('0 / 2');

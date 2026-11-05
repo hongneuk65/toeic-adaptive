@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException, HttpException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, HttpException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { createHash, randomUUID } from 'node:crypto';
@@ -11,17 +11,22 @@ import { resolve } from 'node:path';
 import { Prisma } from '@prisma/client';
 import { questionSelect } from '../common/question-select';
 import type { ListeningCatalogQueryDto } from './listening.dto';
+import { rateLimitCount, withRateLimitTimeout } from '../common/rate-limit-timeout';
 
 @Injectable()
 export class ListeningService {
   constructor(private readonly prisma: PrismaService, @InjectQueue('listening-transcript') private readonly queue: Queue, private readonly asr: LocalAsrProvider) {}
   settings() { return this.prisma.listeningSettings.upsert({ where: { id: 1 }, create: { id: 1 }, update: {} }); }
   async limit(userId: number, action: string, maximum?: number) {
-    const settings = await this.settings(); const redis = await this.queue.getBackend().client;
+    const settings = await this.settings();
+    return withRateLimitTimeout(async signal => {
+    const redis = await this.queue.getBackend().client;
+    signal.throwIfAborted();
     const key = `listening-limit:${userId}:${action}:${Math.floor(Date.now() / 3600000)}`;
     redis.defineCommand('listeningRateLimit', { numberOfKeys: 1, lua: "local n = redis.call('INCR', KEYS[1]); if n == 1 then redis.call('EXPIRE', KEYS[1], 3600) end; return n" });
-    const count = Number(await redis.runCommand('listeningRateLimit', [key]));
+    const count = rateLimitCount(await redis.runCommand('listeningRateLimit', [key]));
     if (count > (maximum ?? settings.requestsPerHour)) throw new HttpException('Bạn đã đạt giới hạn yêu cầu trong giờ này. Hãy tiếp tục bài đã lưu.', 429);
+    });
   }
   async source(userId: number, id: number, admin = false) {
     const source = await this.prisma.listeningSource.findUnique({ where: { id } });
@@ -236,8 +241,18 @@ export class ListeningService {
     return this.session(userId, id);
   }
   async answer(userId: number, id: number, dto: AnswerDto) {
+    const session = await this.ownedSession(userId, id);
+    const requestHash = dto.requestId ? createHash('sha256').update(JSON.stringify([id, dto.unitId, dto.mode, dto.difficulty, dto.answer])).digest('hex') : null;
+    const replay = async () => {
+      if (!dto.requestId) return null;
+      const saved = await this.prisma.listeningAnswer.findUnique({ where: { requestUserId_requestId: { requestUserId: userId, requestId: dto.requestId } } });
+      if (saved && saved.requestHash !== requestHash) throw new ConflictException('Mã gửi bài đã được dùng cho câu trả lời khác.');
+      return saved;
+    };
+    const saved = await replay();
+    if (saved) return saved.feedback;
     await this.limit(userId, 'answer', 240);
-    const session = await this.ownedSession(userId, id); const units = await this.units(session); const unit = units[session.currentIndex];
+    const units = await this.units(session); const unit = units[session.currentIndex];
     if (!unit || dto.unitId !== unit.id || dto.mode !== session.mode || dto.difficulty !== session.difficulty) throw new BadRequestException('Câu hoặc chế độ đã thay đổi. Hãy tải lại bài.');
     const exercise = cloze(unit.text, dto.difficulty);
     let result;
@@ -245,7 +260,18 @@ export class ListeningService {
     catch (error) { throw new BadRequestException(error instanceof Error ? error.message : 'Đáp án không hợp lệ.'); }
     const automatic = ['local-whisper', 'local-audio', 'youtube-auto'].includes(session.transcript?.provider || '');
     const feedback = { ...result, expected: unit.text, blankAnswers: dto.mode === 'CLOZE' ? exercise.answers : [], note: dto.mode === 'SPEAK' ? 'Tự đối chiếu bản ghi; không chấm phát âm.' : automatic ? 'So khớp với lời thoại tự động, có thể có lỗi nhận dạng. Điểm này chỉ dùng để luyện tập.' : 'So khớp văn bản, không suy đoán nguyên nhân nghe sai.' };
-    await this.prisma.listeningAnswer.create({ data: { sessionId: id, unitId: unit.id, mode: dto.mode, difficulty: dto.difficulty, submitted: dto.answer, score: result.score, feedback } });
+    try {
+      await this.prisma.listeningAnswer.create({ data: { sessionId: id, unitId: unit.id, mode: dto.mode, difficulty: dto.difficulty, submitted: dto.answer, score: result.score, feedback,
+        ...(dto.requestId ? { requestUserId: userId, requestId: dto.requestId, requestHash } : {}),
+      } });
+    } catch (error) {
+      // The unique key arbitrates simultaneous retries across processes/devices.
+      if (dto.requestId && error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+        const winner = await replay();
+        if (winner) return winner.feedback;
+      }
+      throw error;
+    }
     return feedback;
   }
   async hint(userId: number, id: number) {

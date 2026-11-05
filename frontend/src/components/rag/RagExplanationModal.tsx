@@ -255,10 +255,10 @@ export const RagExplanationModal: React.FC<RagExplanationModalProps> = ({
         <div className="p-3 border-t border-paper-kraft bg-paper-cream flex items-center justify-between gap-3">
           {onAskTutor && <button
             onClick={() => {
+              onClose();
               if (onAskTutor && questionId) {
                 onAskTutor(questionId, data?.learnerMastery?.skillCode);
               }
-              onClose();
             }}
             className="px-3.5 py-1.5 border border-slate-700 bg-white hover:bg-paper-cream text-slate-900 font-body text-xs font-bold rounded shadow-sm"
           >

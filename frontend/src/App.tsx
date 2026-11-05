@@ -1,9 +1,15 @@
+import './styles/color-theme.css';
+import { ThemeToggle } from './components/ui/ThemeToggle';
+import './styles/site-nature-theme.css';
+import './styles/learning-motion.css';
+import { useLearningMotion } from './hooks/useLearningMotion';
+import { AmbientBackground } from './components/ambient/AmbientBackground';
 import './styles/study-shell.css';
 import './styles/learning-workspace.css';
 import './styles/section-experiences.css';
 import { RouteErrorBoundary } from './components/ui/RouteErrorBoundary';
 const HistoryPage = lazy(() => import('./pages/HistoryPage').then(module => ({ default: module.HistoryPage })));
-import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { useAuth } from './auth/useAuth';
@@ -11,6 +17,7 @@ import { ProtectedRoute } from './auth/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
+const CurriculumPage = lazy(() => import('./pages/CurriculumPage').then(module => ({ default: module.CurriculumPage })));
 const RecommendationsPage = lazy(() => import('./pages/RecommendationsPage').then(module => ({ default: module.RecommendationsPage })));
 const FlashcardFoldersPage = lazy(() => import('./pages/FlashcardFoldersPage').then(module => ({ default: module.FlashcardFoldersPage })));
 const FlashcardStudyPage = lazy(() => import('./pages/FlashcardStudyPage').then(module => ({ default: module.FlashcardStudyPage })));
@@ -21,6 +28,8 @@ const PlacementPage = lazy(() => import('./pages/PlacementPage').then(module => 
 const ExamRoomPage = lazy(() => import('./pages/ExamRoomPage').then(module => ({ default: module.ExamRoomPage })));
 const ExamReviewPage = lazy(() => import('./pages/ExamReviewPage').then(module => ({ default: module.ExamReviewPage })));
 import { AiTutorFloatingButton } from './components/rag/AiTutorFloatingButton';
+import { TutorContextProvider } from './components/rag/TutorContextProvider';
+import { useTutorContext } from './components/rag/useTutorContext';
 import { AiTutorDrawer } from './components/rag/AiTutorDrawer';
 const ListeningPage = lazy(() => import('./pages/ListeningPage').then(module => ({ default: module.ListeningPage })));
 const ReadingPage = lazy(() => import('./pages/ReadingPage').then(module => ({ default: module.ReadingPage })));
@@ -35,7 +44,7 @@ const AdminPage = lazy(() => import('./pages/admin/AdminPage').then(module => ({
 
 const navigation = [
   { title: 'Luyện tập', items: [{ label: 'Reading', path: '/reading' }, { label: 'Listening', path: '/listening' }] },
-  { title: 'Ôn tập', items: [{ label: 'Kiến thức', path: '/theory' }, { label: 'Từ vựng', path: '/flashcards' }, { label: 'Lịch sử làm bài', path: '/history' }] },
+  { title: 'Ôn tập', items: [{ label: 'Lộ trình học', path: '/curriculum' }, { label: 'Kiến thức', path: '/theory' }, { label: 'Từ vựng', path: '/flashcards' }, { label: 'Lịch sử làm bài', path: '/history' }] },
 ];
 const directLinks = [{ label: 'Trang chủ', path: '/dashboard' }, { label: 'Gợi ý học', path: '/recommendations' }, { label: 'Thi thử', path: '/exam' }];
 
@@ -95,6 +104,7 @@ const AppNavbar = ({ focusMode }: { focusMode: boolean }) => {
         {!focusMode && <LearningNavigation />}
       </div>
       <div className="app-header-actions">
+        <ThemeToggle />
         {!focusMode && <Link to="/recommendations" className="app-start-action">{learningActionLabel(status)}</Link>}
         <button onClick={logout} className="app-account-action">Đăng xuất</button>
       </div>
@@ -107,6 +117,7 @@ const LearningPages = memo(function LearningPages() {
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/recommendations" element={<RecommendationsPage />} />
+          <Route path="/curriculum" element={<CurriculumPage />} />
           <Route path="/listening" element={<ListeningPage />} />
           <Route path="/reading" element={<ReadingPage />} />
           <Route path="/flashcards" element={<FlashcardFoldersPage />} />
@@ -123,8 +134,10 @@ const LearningPages = memo(function LearningPages() {
 });
 
 const AppLayout: React.FC = () => {
-  const [tutorOpen, setTutorOpen] = useState(false);
+  const tutor = useTutorContext();
+  const { clear: clearTutor, close: closeTutor } = tutor;
   const location = useLocation();
+  useEffect(() => () => { clearTutor(); closeTutor(); }, [location.pathname, clearTutor, closeTutor]);
   const mainRef = useRef<HTMLElement>(null);
   const firstRoute = useRef(true);
 
@@ -140,7 +153,7 @@ const AppLayout: React.FC = () => {
   }, [location.pathname]);
 
   return (
-    <div data-section={location.pathname.split('/')[1]} className={`min-h-screen flex flex-col w-full ${location.pathname === '/dashboard' ? 'home-layout' : ''} ${isExamWorkspace ? 'exam-room-layout' : location.pathname !== '/dashboard' ? 'study-layout' : ''}`}>
+    <div data-tutor-open={tutor.isOpen && !isExamRoom && !isPlacement} data-section={location.pathname.split('/')[1]} className={`min-h-screen flex flex-col w-full ${location.pathname === '/dashboard' ? 'home-layout' : ''} ${isExamWorkspace ? 'exam-room-layout' : location.pathname !== '/dashboard' ? 'study-layout' : ''}`}>
       <AppNavbar focusMode={isExamRoom} />
       <OnboardingPrompt />
       <div className="learning-shell">
@@ -149,15 +162,16 @@ const AppLayout: React.FC = () => {
       </main></div>
       {!isExamRoom && !isPlacement && <SelectionVocabulary key={location.pathname} source={location.pathname} />}
 
-      {!isExamRoom && !isPlacement && !location.pathname.endsWith('/review') && !location.pathname.startsWith('/reading') && (
+      {!isExamRoom && !isPlacement && (
         <>
-          <AiTutorFloatingButton
-            isOpen={tutorOpen}
-            onClick={() => setTutorOpen(true)}
-          />
+          {!location.pathname.endsWith('/review') && !location.pathname.startsWith('/reading') && <AiTutorFloatingButton
+            isOpen={tutor.isOpen}
+            onClick={() => tutor.open()}
+          />}
           <AiTutorDrawer
-            isOpen={tutorOpen}
-            onClose={() => setTutorOpen(false)}
+            key={`${tutor.question?.questionId ?? 'general'}:${tutor.question?.attemptId ?? 'none'}`}
+            isOpen={tutor.isOpen}
+            onClose={tutor.close}
           />
         </>
       )}
@@ -165,16 +179,25 @@ const AppLayout: React.FC = () => {
   );
 };
 
+function StandaloneThemeToggle() {
+  const { pathname } = useLocation();
+  return /^\/(login|register|admin)(?:\/|$)/.test(pathname) ? <ThemeToggle className="theme-toggle-standalone" /> : null;
+}
+
 function AuthenticatedLearningLayout() {
   const { user } = useAuth();
-  return <LearningStatusProvider key={user?.id}><AppLayout /></LearningStatusProvider>;
+  const { pathname } = useLocation();
+  useLearningMotion(pathname);
+  return <TutorContextProvider key={user?.id}><LearningStatusProvider><AppLayout /></LearningStatusProvider></TutorContextProvider>;
 }
 
 export default function App() {
   useInteractiveMotion();
   return (
-    <AuthProvider>
+    <div className="nature-app"><AuthProvider>
       <BrowserRouter>
+        <AmbientBackground />
+        <StandaloneThemeToggle />
         <Routes>
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />
@@ -186,6 +209,6 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+    </AuthProvider></div>
   );
 }

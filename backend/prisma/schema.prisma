@@ -33,6 +33,9 @@ model User {
   placementAttempts PlacementAttempt[]
   trainedDas3hStates TrainedDas3hState[]
   trainedDas3hObservations TrainedDas3hObservation[]
+  curriculumEnrollment CurriculumEnrollment?
+  curriculumProgress CurriculumProgress[]
+  curriculumAttempts CurriculumAttempt[]
 
   examAttempts          ExamAttempt[]
   folders               FlashcardFolder[]
@@ -521,6 +524,9 @@ model ListeningSession {
 
 model ListeningAnswer {
   id Int @id @default(autoincrement())
+  requestUserId Int?
+  requestId String?
+  requestHash String?
   sessionId Int
   session ListeningSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   unitId Int
@@ -532,6 +538,7 @@ model ListeningAnswer {
   feedback Json
   createdAt DateTime @default(now())
   @@index([sessionId, unitId])
+  @@unique([requestUserId, requestId])
 }
 
 model ListeningReport {
@@ -595,4 +602,46 @@ model TrainedDas3hObservation {
   occurredAt DateTime
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId, catalogHash, occurredAt])
+}
+
+
+model CurriculumEnrollment {
+  userId Int @id
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId String
+  catalogVersion String @default("curriculum-v1")
+  minutesPerDay Int
+  startedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CurriculumProgress {
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId String
+  completedAt DateTime?
+  bestScore Int @default(0)
+  reviewStage Int @default(0)
+  nextReviewAt DateTime?
+  lastAttemptAt DateTime
+  revision Int @default(0)
+  updatedAt DateTime @updatedAt
+  @@unique([userId, unitId])
+  @@index([userId, nextReviewAt])
+}
+
+model CurriculumAttempt {
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestId String
+  unitId String
+  catalogVersion String
+  payloadHash String
+  answers Json
+  result Json
+  createdAt DateTime @default(now())
+  @@unique([userId, requestId])
+  @@index([userId, unitId, createdAt])
 }

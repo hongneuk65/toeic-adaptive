@@ -38,7 +38,7 @@
 .topic-library { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 22px; }
 .topic-library-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:19px 0; border-bottom:1px solid var(--topic-border); min-width:0; }
 .topic-library-item h3 { font-size:15px; font-weight:650; letter-spacing:-.02em; margin-bottom:6px; }
-.topic-open { display:grid; place-items:center; width:44px; height:44px; flex-shrink:0; border:1px solid var(--topic-border); border-radius:50%; font-size:21px; }
+.topic-open { display:grid; place-items:center; width:auto; min-height:44px; padding:0 12px; flex-shrink:0; border:1px solid var(--topic-border); border-radius:8px; font-size:14px; }
 .topic-open:hover { background:#dce5f6; }
 .topic-show-more { display:block; margin:20px auto 0; border-radius:999px; }
 .topic-footnote { color:var(--topic-muted); font-size:11px; line-height:1.7; margin-top:20px; }

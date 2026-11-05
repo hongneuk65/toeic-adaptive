@@ -1,4 +1,5 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, Min, IsIn } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, Min, IsIn, ValidateIf } from 'class-validator';
 import { EXPLANATION_MODES, type ExplanationMode } from '../explanation.policy';
 
 export class ExplainErrorDto {
@@ -27,16 +28,29 @@ export class ExplainErrorDto {
   userNote?: string;
 }
 
-export class ChatTutorDto {
+export class TutorChatScopeDto {
+  @ValidateIf(value => value.questionId !== undefined || value.attemptId !== undefined)
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  questionId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  attemptId?: number;
+}
+
+export class ChatTutorDto extends TutorChatScopeDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(4000)
   message: string;
 
   @IsOptional()
-  @IsInt()
-  @Min(1)
-  questionId?: number;
+  @IsIn(['A', 'B', 'C', 'D', 'CHƯA_CHỌN'])
+  selectedAnswer?: string;
 
   @IsOptional()
   @IsString()
