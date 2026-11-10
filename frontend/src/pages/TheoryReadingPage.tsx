@@ -1,3 +1,4 @@
+import { useScreenTutorContext } from '../components/rag/useTutorContext';
 import { ActivitySuggestions } from '../components/ActivitySuggestions';
 import '../styles/theory-library.css';
 import { useCallback, useState } from 'react';
@@ -35,6 +36,7 @@ export function TheoryReadingPage() {
   const catalog = useAsyncResource(loadCatalog);
   const loadDetail = useCallback((signal: AbortSignal) => lessonId ? api<LessonDetail>(`/theory/${lessonId}`, { signal }) : Promise.resolve(null), [lessonId]);
   const detail = useAsyncResource(loadDetail);
+  useScreenTutorContext(lessonId && detail.data ? { kind: 'theory', resourceId: String(lessonId), mode: 'reading', label: detail.data.title } : null);
   const lessons = catalog.data ?? [];
   const topics = [...new Map(lessons.map(lesson => [lesson.topic.id, lesson.topic])).values()].sort((a, b) => a.title.localeCompare(b.title, 'vi'));
   const topicOrder = new Map(topics.map((item, index) => [item.id, index]));

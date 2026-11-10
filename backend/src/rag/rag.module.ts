@@ -13,12 +13,15 @@ import { TutorContextService } from './tutor-context.service';
 import { TutorKnowledgeService } from './tutor-knowledge.service';
 import { LearnerEvidenceService } from './learner-evidence.service';
 import { KnowledgeEmbeddingService } from './knowledge-embedding.service';
+import { MasteryModule } from '../mastery/mastery.module';
+import { LearnerContextService } from './learner-context.service';
+import { ScreenContextService } from './screen-context.service';
 
 @Module({
-  imports: [PrismaModule, RequestBudgetModule, Das3hModule],
+  imports: [PrismaModule, RequestBudgetModule, Das3hModule, MasteryModule],
   controllers: [RagController],
   providers: [
-    TutorContextService, TutorKnowledgeService, LearnerEvidenceService, KnowledgeEmbeddingService,
+    TutorContextService, TutorKnowledgeService, LearnerEvidenceService, KnowledgeEmbeddingService, LearnerContextService, ScreenContextService,
     RagService,
     RagRetrieverService,
     RagLlmService,

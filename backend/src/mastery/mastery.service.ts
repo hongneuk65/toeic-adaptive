@@ -105,7 +105,7 @@ export class MasteryService {
         skills: skillsProfile,
         partBreakdown,
         overallMastery,
-        topicGroups: groupLearningTopics(skillsProfile, lessons),
+        topicGroups: groupLearningTopics(skillsProfile, lessons, availableIds),
         learningPlan,
       };
     } catch (error: any) {

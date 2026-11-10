@@ -1,3 +1,4 @@
+import { useVocabularyTutorDraft } from '../rag/useTutorContext';
 import { MediaButton } from '../ui/MediaButton';
 import { useEffect, useRef, useState } from 'react';
 import { api, getErrorMessage } from '../../lib/api';
@@ -17,6 +18,7 @@ function SpeakingExercise({ card, userId, onBusyChange }: { card: SpeakingCard; 
   const [response, setResponse] = useState(() => {
     try { return sessionStorage.getItem(draftKey)?.slice(0, 1000) ?? ''; } catch { return ''; }
   });
+  useVocabularyTutorDraft(card.id, response);
   const [feedback, setFeedback] = useState<SpeakingFeedback | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');

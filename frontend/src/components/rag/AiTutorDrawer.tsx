@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useTutorContext } from './useTutorContext';
 import { api, apiStream, getErrorMessage } from '../../lib/api';
 import { readJsonSse } from '../../lib/sse';
@@ -15,6 +16,13 @@ interface AiTutorDrawerProps {
   initialSkillCode?: string | null;
 }
 
+const PAGE_LABELS: Record<string, string> = {
+  dashboard: 'Trang chủ', recommendations: 'Gợi ý học', flashcards: 'Học từ vựng',
+  theory: 'Kiến thức', reading: 'Luyện đọc', listening: 'Luyện nghe',
+  curriculum: 'Lộ trình học', exam: 'Thi thử', history: 'Lịch sử luyện tập',
+  placement: 'Đánh giá đầu vào',
+};
+
 export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
   isOpen,
   onClose,
@@ -22,9 +30,16 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
   initialSkillCode: suppliedSkillCode,
 }) => {
   const tutor = useTutorContext();
+  const location = useLocation();
+  const pageLabel = /^\/exam\/\d+\/review\/?$/.test(location.pathname) ? 'Xem lại bài thi'
+    : /^\/theory\/\d+\/quiz\/?$/.test(location.pathname) ? 'Bài kiểm tra kiến thức'
+    : PAGE_LABELS[location.pathname.split('/')[1]];
   const initialQuestionId = tutor.question?.questionId ?? suppliedQuestionId;
   const initialSkillCode = tutor.question?.skillCode ?? suppliedSkillCode;
-  const historyPath = `/rag/chat-history${initialQuestionId ? `?questionId=${initialQuestionId}${tutor.question?.attemptId ? `&attemptId=${tutor.question.attemptId}` : ''}` : ''}`;
+  const screen = !initialQuestionId ? tutor.screen : null;
+  const screenScope = screen ? { screenKind: screen.kind, screenId: screen.resourceId, screenIndex: screen.index ?? 0, screenMode: screen.mode } : {};
+  const historyQuery = new URLSearchParams(initialQuestionId ? { questionId: String(initialQuestionId), ...(tutor.question?.attemptId ? { attemptId: String(tutor.question.attemptId) } : {}) } : Object.fromEntries(Object.entries(screenScope).filter(([,value]) => value !== undefined).map(([key,value]) => [key,String(value)]))).toString();
+  const historyPath = `/rag/chat-history${historyQuery ? `?${historyQuery}` : ''}`;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const dialog = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -35,17 +50,17 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
   }, [isOpen, onClose]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const followMessagesRef = useRef(true);
   const messageIdRef = useRef(0);
   const sendControllerRef = useRef<AbortController | null>(null);
 
-  const quickPrompts = initialQuestionId ? ['Giải thích từng bước câu này giúp mình', 'Vì sao đáp án mình chọn chưa phù hợp?', 'Phân tích từng phương án của câu này', 'Cho mình ví dụ tương tự để luyện lại'] : [
-    'Phân biệt although và despite',
-    'Bẫy lặp từ trong Part 2 là gì?',
-    'Khi nào rút gọn mệnh đề về V-ing?',
-    'Mẹo làm câu hỏi Not/True Part 7',
+  const quickPrompts = screen ? ['Giải thích nội dung đang học giúp mình', 'Gợi ý từng bước cho bài này, chưa cần đáp án', 'Mình nên làm gì tiếp ở bài này?', 'Hôm nay mình nên học gì?'] : initialQuestionId ? ['Giải thích từng bước câu này giúp mình', 'Vì sao đáp án mình chọn chưa phù hợp?', 'Phân tích từng phương án của câu này', 'Cho mình ví dụ tương tự để luyện lại'] : [
+    'Hôm nay mình nên học gì?',
+    'Hiện tại mình đang như thế nào?',
+    'Mình có tiến bộ trong 30 ngày qua không?',
+    'Gợi ý cách học ở trang này cho mình',
   ];
 
   useEffect(() => {
@@ -75,7 +90,7 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
         sendControllerRef.current = null;
       };
     }
-  }, [isOpen, historyPath]);
+  }, [isOpen, historyPath, location.pathname]);
 
   useEffect(() => {
     if (!isOpen || !followMessagesRef.current) return;
@@ -136,6 +151,9 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
 
     try {
       const response = await apiStream('/rag/chat-stream', {
+        ...screenScope,
+        screenResponse: screen?.response?.slice(0,3000),
+        pagePath: location.pathname,
         message: text,
         questionId: initialQuestionId || undefined,
         skillCode: initialSkillCode || undefined,
@@ -215,10 +233,13 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
         </div>
       </div>
 
-      {initialQuestionId && (
+      {(pageLabel || initialQuestionId || screen) && (
         <div className="tutor-workspace-context">
-          <span>{tutor.question?.label ?? `Câu hỏi #${initialQuestionId}`}</span>
-          <button onClick={tutor.clear} className="rounded border border-paper-kraft px-2 py-1 text-xs">Hỏi chung · bỏ câu này</button>
+          <span aria-live="polite">
+            {pageLabel && <small className="block">Đang mở: {pageLabel}</small>}
+            {(initialQuestionId || screen) && (tutor.question?.label ?? screen?.label ?? `Câu hỏi #${initialQuestionId}`)}
+          </span>
+          {(initialQuestionId || screen) && <button onClick={tutor.clear} className="rounded border border-paper-kraft px-2 py-1 text-xs">Hỏi chung · bỏ câu này</button>}
         </div>
       )}
 

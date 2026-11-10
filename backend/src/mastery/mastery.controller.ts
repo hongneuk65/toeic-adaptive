@@ -1,7 +1,8 @@
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { ProgressService } from './progress.service';
 import { AuthGuard } from '@nestjs/passport';
 import { MasteryService } from './mastery.service';
 import { getUserId } from '../common/user-id';
@@ -11,7 +12,12 @@ import { ActivitiesService } from './activities.service';
 @Roles(Role.USER)
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class MasteryController {
-  constructor(private readonly masteryService: MasteryService, private readonly activities: ActivitiesService) {}
+  constructor(private readonly masteryService: MasteryService, private readonly activities: ActivitiesService, private readonly progress: ProgressService) {}
+
+  @Get('progress')
+  getProgress(@Req() req: any, @Query('days') days?: string, @Query('part') part?: string, @Query('difficulty') difficulty?: string) {
+    return this.progress.forUser(getUserId(req), days, part, difficulty);
+  }
 
   @Get('activities')
   async getActivities(@Req() req: any) {

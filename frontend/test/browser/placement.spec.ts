@@ -17,7 +17,7 @@ async function mock(page: Page, options: { active?: PlacementSession; available?
   await page.route('**/api/**',async route=>{
     const path=new URL(route.request().url()).pathname;
     if(path.endsWith('/auth/me'))return route.fulfill({json:{id:1,email:'fixture@example.invalid',role:'USER'}});
-    if(path.endsWith('/placement/overview'))return route.fulfill({json:{preferences,active:started && current.status==='ACTIVE'?current:null,latest:current.status==='COMPLETED'?current:null,catalog:{available:options.available??true,reason:options.unavailableReason,byPart:Array.from({length:7},(_,i)=>({part:i+1,groups:30}))}}});
+    if(path.endsWith('/placement/overview'))return route.fulfill({json:{preferences,active:started && current.status==='ACTIVE'?current:null,latest:current.status!=='ACTIVE' && current.result?current:null,catalog:{available:options.available??true,reason:options.unavailableReason,byPart:Array.from({length:7},(_,i)=>({part:i+1,groups:30}))}}});
     if(path.endsWith('/placement/preferences')){preferences=route.request().postDataJSON();return route.fulfill({json:preferences});}
     if(path.endsWith('/placement/start')){started=true;return route.fulfill({json:current});}
     if(path.endsWith('/placement/41/answer')){
@@ -91,12 +91,10 @@ test('overview error offers a retry',async({page})=>{
 });
 
 test('expired attempts preserve answered work and offer another attempt',async({page})=>{
-  await mock(page,{active:{...session(),status:'EXPIRED',currentGroup:null}});
-  // Overview normally returns only active sessions. Start's returned expiry is
-  // also handled because a deadline can pass while the request is in flight.
+  await mock(page,{active:{...completed(),status:'EXPIRED'}});
   await page.goto('/placement');
-  await page.getByRole('button',{name:'Bắt đầu đánh giá',exact:true}).click();
-  await expect(page.getByText(/Lượt đánh giá đã hết thời gian/)).toBeVisible();
+  await expect(page.getByText(/Lượt đánh giá đã kết thúc trước khi hoàn thành/)).toBeVisible();
+  await expect(page.getByText('1 / 2 câu đúng', { exact: true })).toBeVisible();
   await expect(page.getByRole('button',{name:'Bắt đầu lượt đánh giá mới'})).toBeVisible();
 });
 
@@ -130,7 +128,7 @@ test('deadline expiry reconciles server state without posting invented wrong ans
   await page.goto('/placement');
   await expect(page.getByRole('heading',{name:'Part 5 · Câu 1'})).toBeVisible();
   await page.clock.runFor(11000);
-  await expect(page.getByText(/Lượt đánh giá đã hết thời gian/)).toBeVisible();
+  await expect(page.getByText(/Lượt đánh giá đã kết thúc trước khi hoàn thành/)).toBeVisible();
   expect(api.submitted).toHaveLength(0);
 });
 

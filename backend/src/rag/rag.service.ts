@@ -17,7 +17,7 @@ export class RagService {
   ) {}
 
   capabilities() {
-    return { available: this.llm?.isConfigured() ?? false, availabilityType: 'configuration' as const, requiresReviewedSources: true as const };
+    return { available: this.llm?.isConfigured() ?? false, availabilityType: 'configuration' as const, requiresReviewedSources: true as const, personalLearningContext: true };
   }
 
   explainError(userId: number, dto: ExplainErrorDto): Promise<PersonalizedExplanationResult> {
@@ -40,6 +40,8 @@ export class RagService {
     return this.chat.handleUserMessage({
       userId,
       message: dto.message,
+      pagePath: dto.pagePath,
+      screenKind: dto.screenKind, screenId: dto.screenId, screenIndex: dto.screenIndex, screenMode: dto.screenMode, screenResponse: dto.screenResponse,
       questionId: dto.questionId,
       skillCode: dto.skillCode,
       attemptId: dto.attemptId, selectedAnswer: dto.selectedAnswer,
@@ -50,6 +52,8 @@ export class RagService {
     return this.chat.streamUserMessage({
       userId,
       message: dto.message,
+      pagePath: dto.pagePath,
+      screenKind: dto.screenKind, screenId: dto.screenId, screenIndex: dto.screenIndex, screenMode: dto.screenMode, screenResponse: dto.screenResponse,
       questionId: dto.questionId,
       skillCode: dto.skillCode,
       attemptId: dto.attemptId, selectedAnswer: dto.selectedAnswer,

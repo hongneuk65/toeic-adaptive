@@ -113,7 +113,10 @@ export class PlacementService {
         where: { userId, status: 'ACTIVE' },
       });
       const latest = await db.placementAttempt.findFirst({
-        where: { userId, status: 'COMPLETED' },
+        where: { userId, OR: [
+          { status: 'COMPLETED' },
+          { status: 'EXPIRED', revision: { gt: 0 } },
+        ] },
         orderBy: { startedAt: 'desc' },
       });
       return {
@@ -484,6 +487,12 @@ export class PlacementService {
     }
   }
   private async view(attempt: PlacementAttempt, db: Prisma.TransactionClient) {
+    const savedResponses = responses(attempt);
+    const result = attempt.result ?? (
+      attempt.status === 'EXPIRED' && savedResponses.length > 0
+        ? placementResult(groups(attempt), savedResponses)
+        : null
+    );
     const current =
       attempt.status === 'ACTIVE' ? groups(attempt).at(-1) : undefined;
     const plan =
@@ -494,7 +503,7 @@ export class PlacementService {
       id: attempt.id,
       status: attempt.status,
       revision: attempt.revision,
-      answeredCount: responses(attempt).length,
+      answeredCount: savedResponses.length,
       minQuestions: MIN_QUESTIONS,
       maxQuestions: MAX_QUESTIONS,
       deadlineAt: attempt.deadlineAt,
@@ -525,7 +534,7 @@ export class PlacementService {
             })),
           }
         : null,
-      result: attempt.result ?? null,
+      result,
       ...(attempt.status === 'COMPLETED'
         ? { reference: await this.reference(attempt, db) }
         : {}),

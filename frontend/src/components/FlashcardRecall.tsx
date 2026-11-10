@@ -1,3 +1,4 @@
+import { useVocabularyTutorDraft } from './rag/useTutorContext';
 import { useEffect, useRef, useState } from 'react';
 
 export interface RecallAttempt {
@@ -18,6 +19,7 @@ interface Props {
 /** Keep the first committed response immutable across a failed network request. */
 export function FlashcardRecall({ card, pending, onReview, onBusyChange, onCompleted }: Props) {
   const [answer, setAnswer] = useState('');
+  useVocabularyTutorDraft(card.id, answer);
   const [attempt, setAttempt] = useState<RecallAttempt | null>(null);
   const [saved, setSaved] = useState(false);
   const startedAt = useRef<number | null>(null);

@@ -28,11 +28,11 @@ export class ActivitiesService {
   private readonly hlr = loadHlrModel();
   constructor(private readonly prisma: PrismaService, private readonly mastery: MasteryService) {}
 
-  async forUser(userId: number) {
+  async forUser(userId: number, suppliedProfile?: Awaited<ReturnType<MasteryService['getUserMasteryProfile']>>) {
     const now = new Date();
     const accessSource = { deletedAt: null, OR: [{ ownerId: userId }, { published: true }] };
     const [profile, lessons, reviews, listening, attempts, articles, vocabularyCatalog, listeningCatalog] = await Promise.all([
-      this.mastery.getUserMasteryProfile(userId),
+      suppliedProfile ? Promise.resolve(suppliedProfile) : this.mastery.getUserMasteryProfile(userId),
       this.prisma.theoryLesson.findMany({ select: { id: true, title: true, part: true, skillId: true, skill: { select: { code: true } } }, orderBy: { id: 'asc' }, take: 2000 }),
       this.prisma.flashcardReview.findMany({ where: { userId, card: { folder: { OR: [{ userId }, { private: false }] } } },
         include: { card: { select: { word: true, meaning: true, folderId: true, folder: { select: { name: true } } } } },

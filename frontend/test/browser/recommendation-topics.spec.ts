@@ -28,7 +28,7 @@ test('topic recommendations are compact, filterable and connect practice with th
   await page.screenshot({ path: testInfo.outputPath('recommendation-topics.png'), fullPage: true });
 });
 
-test('group practice keeps its session after profile refresh and rotates to another skill', async ({ page }) => {
+test('group practice stays open after refresh and revisits the focus skill before rotating', async ({ page }) => {
   let profileLoads = 0; let profileRefreshesAfterAnswer = 0;
   const requestedSkills: number[] = [];
   const answeredSkills: number[] = [];
@@ -41,7 +41,7 @@ test('group practice keeps its session after profile refresh and rotates to anot
     if (path === '/mastery/me') {
       profileLoads++; if (answeredSkills.length) profileRefreshesAfterAnswer++;
       // The fresh profile recommends a different first skill. The open session must remain stable.
-      return json({ userId: 1, skills: [1, 2].map(id => ({ skillId: id, skillCode: `S${id}`, skillName: `Kỹ năng ${id}`, part: 5, masteryScore: .4, practiceCount: profileLoads, lastPracticed: null })), partBreakdown: [], overallMastery: .4, topicGroups: [{ ...topics[0], title: 'Ngữ pháp nền tảng', parts: [5], skillIds: [1, 2], recommendedSkillId: answeredSkills.length ? 2 : 1 }] });
+      return json({ userId: 1, skills: [1, 2].map(id => ({ skillId: id, skillCode: `S${id}`, skillName: `Kỹ năng ${id}`, part: 5, masteryScore: .4, practiceCount: profileLoads, lastPracticed: null })), partBreakdown: [], overallMastery: .4, learningPlan: { items: [] }, topicGroups: [{ ...topics[0], title: 'Ngữ pháp nền tảng', parts: [5], skillIds: [1, 2], focusSkillIds: [1], practiceSkillIds: answeredSkills.length ? [2, 1, 1] : [1, 1, 2], recommendedSkillId: answeredSkills.length ? 2 : 1 }] });
     }
     if (path === '/das3h/adaptive-question') {
       const skill = Number(url.searchParams.get('skillId'));
@@ -55,6 +55,7 @@ test('group practice keeps its session after profile refresh and rotates to anot
     return route.fulfill({ status: 404, json: {} });
   });
   await page.goto('/recommendations');
+  await expect(page.locator('.topic-focus')).toContainText('Kỹ năng 1');
   await page.getByRole('button', { name: 'Luyện Ngữ pháp nền tảng', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Luyện kỹ năng', exact: true });
   await expect(dialog.getByRole('heading', { name: 'Kỹ năng 1 (Part 5)', exact: true })).toBeVisible();
@@ -66,10 +67,14 @@ test('group practice keeps its session after profile refresh and rotates to anot
   await expect(dialog.getByRole('heading', { name: 'Kỹ năng 1 (Part 5)', exact: true })).toBeVisible();
   await expect(dialog.getByText('Ngữ pháp nền tảng', { exact: true })).toBeVisible();
   await dialog.getByRole('button', { name: 'Câu tiếp theo', exact: true }).click();
+  await expect(dialog.getByRole('heading', { name: 'Kỹ năng 1 (Part 5)', exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: 'A. at', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Kiểm tra đáp án', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Câu tiếp theo', exact: true }).click();
   await expect(dialog.getByRole('heading', { name: 'Kỹ năng 2 (Part 5)', exact: true })).toBeVisible();
   await expect(dialog.getByText('Ngữ pháp nền tảng', { exact: true })).toBeVisible();
   await expect(dialog.getByText('Question for skill 2', { exact: true })).toBeVisible();
   expect(requestedSkills.filter((skill, index) => index === 0 || skill !== requestedSkills[index - 1])).toEqual([1, 2]);
-  expect(answeredSkills).toEqual([1]);
+  expect(answeredSkills).toEqual([1, 1]);
 });
 

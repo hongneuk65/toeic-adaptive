@@ -1,3 +1,4 @@
+import { useVocabularyTutorDraft } from '../rag/useTutorContext';
 import { MediaButton } from '../ui/MediaButton';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, getErrorMessage } from '../../lib/api';
@@ -34,6 +35,7 @@ export function VocabularyPractice(props: VocabularyPracticeProps) {
 function PracticeQuestion({ mode, card, cards, onBusyChange, onCompleted, onRecorded }: VocabularyPracticeProps) {
   const [attemptId] = useState(() => crypto.randomUUID());
   const [response, setResponse] = useState('');
+  useVocabularyTutorDraft(card.id, response);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [acknowledged, setAcknowledged] = useState(false);

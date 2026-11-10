@@ -88,7 +88,7 @@ test('site nature background has no floating control and honors reduced motion a
  await page.goto('/flashcards');
  const backdrop=page.locator('.ambient-background');
  await expect(backdrop).toHaveAttribute('aria-hidden','true');
- await expect(backdrop).toHaveAttribute('data-paused','false');
+ await expect(backdrop).toHaveAttribute('data-paused', 'false');
  await expect(page.locator('.ambient-motion-toggle')).toHaveCount(0);
  await page.emulateMedia({reducedMotion:'reduce'});
  await expect(backdrop).toHaveAttribute('data-paused','true');

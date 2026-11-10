@@ -48,24 +48,37 @@ export function topicForLesson(lesson: { title: string; part: number; skill?: { 
 
 interface ProfileSkill { skillId: number; skillCode: string; part: number; masteryScore: number; practiceCount: number; }
 interface TopicLesson { id: number; title: string; part: number; skillId: number; skill?: { code: string } | null; }
-export function groupLearningTopics(skills: ProfileSkill[], lessons: TopicLesson[]) {
+const MIN_FOCUS_ATTEMPTS = 3;
+const FOCUS_THRESHOLD = .65;
+
+export function groupLearningTopics(skills: ProfileSkill[], lessons: TopicLesson[], availableIds?: ReadonlySet<number>) {
   const groups = LEARNING_TOPICS.map(topic => {
     const members = skills.filter(skill => topicForSkill(skill.skillCode)?.id === topic.id);
     const observed = members.filter(skill => skill.practiceCount > 0);
     // Equal-weight skill estimates avoid repeated practice drowning out other skills.
     const estimatedSuccess = observed.length ? observed.reduce((sum, skill) => sum + skill.masteryScore, 0) / observed.length : null;
     const enoughEvidence = observed.length / Math.max(1, members.length) >= .5 && observed.reduce((n, skill) => n + skill.practiceCount, 0) >= 10;
-    const priority: 'focus' | 'diagnostic' | 'maintain' = estimatedSuccess !== null && estimatedSuccess < .65 ? 'focus' : !enoughEvidence ? 'diagnostic' : 'maintain';
-    const chosen = priority === 'diagnostic'
-      ? [...members].sort((a, b) => a.practiceCount - b.practiceCount || a.skillId - b.skillId)[0]
-      : [...observed].sort((a, b) => a.masteryScore - b.masteryScore || a.skillId - b.skillId)[0];
+    const byEstimate = (a: ProfileSkill, b: ProfileSkill) => a.masteryScore - b.masteryScore || a.skillId - b.skillId;
+    const focus = observed.filter(skill => skill.practiceCount >= MIN_FOCUS_ATTEMPTS && skill.masteryScore < FOCUS_THRESHOLD).sort(byEstimate);
+    const priority: 'focus' | 'diagnostic' | 'maintain' = focus.length ? 'focus' : !enoughEvidence ? 'diagnostic' : 'maintain';
+    const available = members.filter(skill => !availableIds || availableIds.has(skill.skillId));
+    const availableFocus = focus.filter(skill => !availableIds || availableIds.has(skill.skillId));
+    const ordered = available.sort((a, b) => priority === 'diagnostic'
+      ? a.practiceCount - b.practiceCount || a.skillId - b.skillId
+      : byEstimate(a, b));
+    const focusIds = new Set(availableFocus.map(skill => skill.skillId));
+    const practiceSkillIds = [...availableFocus, ...availableFocus, ...ordered.filter(skill => !focusIds.has(skill.skillId))].map(skill => skill.skillId);
+    const chosen = focus[0] ?? ordered[0];
     const matchingLessons = lessons.filter(lesson => topicForLesson(lesson).id === topic.id);
     const lesson = matchingLessons.find(item => item.skillId === chosen?.skillId) ?? matchingLessons[0];
     return { ...topic, parts: [...new Set(members.map(skill => skill.part))].sort(), skillIds: members.map(skill => skill.skillId),
       observedSkillCount: observed.length, totalSkillCount: members.length, estimatedSuccess,
       evidenceStatus: !observed.length ? 'unassessed' : enoughEvidence ? 'practiced' : 'limited', priority,
-      recommendedSkillId: chosen?.skillId ?? null, lesson: lesson ? { id: lesson.id, title: lesson.title, part: lesson.part } : null };
+      focusSkillIds: focus.map(skill => skill.skillId), practiceSkillIds,
+      weakestFocusScore: focus[0]?.masteryScore,
+      recommendedSkillId: practiceSkillIds[0] ?? null, lesson: lesson ? { id: lesson.id, title: lesson.title, part: lesson.part } : null };
   }).filter(group => group.totalSkillCount > 0);
   const rank = { focus: 0, diagnostic: 1, maintain: 2 };
-  return groups.sort((a, b) => rank[a.priority] - rank[b.priority] || (a.estimatedSuccess ?? 1) - (b.estimatedSuccess ?? 1));
+  return groups.sort((a, b) => rank[a.priority] - rank[b.priority]
+    || (a.weakestFocusScore ?? a.estimatedSuccess ?? 1) - (b.weakestFocusScore ?? b.estimatedSuccess ?? 1));
 }

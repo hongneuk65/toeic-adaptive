@@ -140,7 +140,7 @@ describe('RAG preparation and streaming', () => {
   it('abstains without paid generation when no approved source matches', async () => {
     retriever.retrieveContext.mockResolvedValue([]);
     const iterator = chat.streamUserMessage({ userId: 2, message: 'unrelated' });
-    expect((await iterator.next()).value).toContain('Chưa có tài liệu');
+    expect((await iterator.next()).value).toContain('chưa tìm được tài liệu phù hợp');
     await iterator.next();
     expect(llm.streamText).not.toHaveBeenCalled();
   });

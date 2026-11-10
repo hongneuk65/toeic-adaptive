@@ -17,6 +17,27 @@ describe('learning topic curriculum', () => {
     expect(group.recommendedSkillId).toBe(2);
     expect(group.priority).toBe('focus');
   });
+  it.each([[1], [1, 2], [3]])('prioritizes individual weaknesses even if the group average is strong: %j', (...weak: number[]) => {
+    const codes = ['P5_CONTEXT_VOCAB', 'P5_COLLOCATIONS', 'P6_VOCAB_IN_CONTEXT', 'P7A_VOCAB_SYNONYM'];
+    const group = groupLearningTopics(codes.map((code, index) => {
+      const id = index + 1;
+      return skill(id, code, weak.includes(id) ? .6 : .95, 10);
+    }), [])[0];
+    expect(group.estimatedSuccess).toBeGreaterThan(.65);
+    expect(group.priority).toBe('focus');
+    expect(group.focusSkillIds).toEqual(weak);
+    expect(group.practiceSkillIds.slice(0, weak.length * 2)).toEqual([...weak, ...weak]);
+    expect(group.practiceSkillIds).toHaveLength(codes.length + weak.length);
+  });
+  it('skips skills without questions and does not treat a single attempt as a weakness', () => {
+    const group = groupLearningTopics([
+      skill(1, 'P5_CONTEXT_VOCAB', .1, 1),
+      skill(2, 'P5_COLLOCATIONS', .4, 10),
+      skill(3, 'P6_VOCAB_IN_CONTEXT', .7, 10),
+    ], [], new Set([1, 3]))[0];
+    expect(group.focusSkillIds).toEqual([2]);
+    expect(group.practiceSkillIds).toEqual([1, 3]);
+  });
   it('classifies Santa lecture titles despite broad legacy Part6 skill assignment', () => {
     const topic = (title: string) => topicForLesson({ title, part: 6, skill: { code: 'P6_GRAMMAR_IN_CONTEXT' } }).id;
     expect(topic('Vị trí từ loại - Tính từ')).toBe('word-forms');

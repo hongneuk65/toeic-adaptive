@@ -70,8 +70,15 @@ async function main(){
   const expired=await service.answer(1,retake.id,{revision:0,answers:retake.currentGroup.questions.map(q=>({questionId:q.id,selectedAnswer:'A'}))});
   assert.equal(expired.status,'EXPIRED');assert.equal(expired.answeredCount,0);checks++;
   const timeout=await service.start(1,{goal:'BALANCED'});
-  await db.placementAttempt.update({where:{id:timeout.id},data:{deadlineAt:new Date(0)}});
-  const timed=await service.get(1,timeout.id);assert.equal(timed.status,'EXPIRED');assert.equal(timed.answeredCount,0);checks++;
+  await ageCurrent(timeout.id);
+  const partial=await service.answer(1,timeout.id,{revision:0,answers:timeout.currentGroup.questions.map(q=>({questionId:q.id,selectedAnswer:'A'}))});
+  assert.equal(partial.status,'ACTIVE');
+  await db.placementAttempt.update({where:{id:timeout.id},data:{deadlineAt:new Date(0),startedAt:new Date()}});
+  const timed=await service.get(1,timeout.id);
+  assert.equal(timed.status,'EXPIRED');assert.equal(timed.answeredCount,timeout.currentGroup.questions.length);
+  assert.equal(timed.result.answered,timed.answeredCount);assert.equal(timed.currentGroup,null);
+  const reopened=(await service.overview(1)).latest;
+  assert.equal(reopened.id,timeout.id);assert.deepEqual(reopened.result,timed.result);checks++;
   console.log(JSON.stringify({checks,syntheticQuestions:questions.length,status:'passed'}));
 }
 main().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{

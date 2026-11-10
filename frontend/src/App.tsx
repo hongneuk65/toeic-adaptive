@@ -2,6 +2,7 @@ import './styles/color-theme.css';
 import { ThemeToggle } from './components/ui/ThemeToggle';
 import './styles/site-nature-theme.css';
 import './styles/study-polish.css';
+import './styles/clear-surfaces.css';
 import './styles/learning-motion.css';
 import { useLearningMotion } from './hooks/useLearningMotion';
 import { AmbientBackground } from './components/ambient/AmbientBackground';
@@ -165,15 +166,15 @@ const AppLayout: React.FC = () => {
 
       {!isExamRoom && !isPlacement && (
         <>
-          {!location.pathname.endsWith('/review') && !location.pathname.startsWith('/reading') && <AiTutorFloatingButton
+          {!location.pathname.endsWith('/review') && <AiTutorFloatingButton
             isOpen={tutor.isOpen}
             onClick={() => tutor.open()}
           />}
-          <AiTutorDrawer
+          {tutor.isOpen && <AiTutorDrawer
             key={`${tutor.question?.questionId ?? 'general'}:${tutor.question?.attemptId ?? 'none'}`}
             isOpen={tutor.isOpen}
             onClose={tutor.close}
-          />
+          />}
         </>
       )}
     </div>

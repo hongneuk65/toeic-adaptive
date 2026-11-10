@@ -1,3 +1,4 @@
+import { useScreenTutorContext } from '../components/rag/useTutorContext';
 import { MediaButton } from '../components/ui/MediaButton';
 import { Pagination } from '../components/ui/Pagination';
 import { notifyLearningProgress } from '../lib/learning-progress';
@@ -52,6 +53,7 @@ function Exercise({ userId, session, play, change, act, busy, heard }: { userId:
   const locked = busy || !!pending;
   const updateDraft = (next: ListeningDraft) => { setDraft(next); writeDraft(draftKey, next); setFeedback(null); };
   const unit = session.unit;
+  useScreenTutorContext(unit ? { kind: 'listening', resourceId: String(session.id), index: session.currentIndex, mode: session.mode, response: JSON.stringify({ answer, blanks, spokenText: shadowingText }), label: session.source.title } : null);
   if (!unit) return <p className="rounded border border-paper-kraft bg-paper-cream p-5 text-sm">Chưa có câu luyện trong đoạn này. Hệ thống sẽ cập nhật bài khi lời thoại sẵn sàng; bạn có thể nghe trong lúc chờ hoặc chọn đoạn khác.</p>;
   const submittedAnswer = session.mode === 'CLOZE' ? clozeAnswer(unit.tokens || [], blanks) : answer;
   const patch = async (data: object) => change(await api<ListeningSession>(`/listening/sessions/${session.id}`, { method: 'PATCH', data }));

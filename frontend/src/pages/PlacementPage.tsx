@@ -77,7 +77,7 @@ function PlacementWorkspace({ initial }: { initial: PlacementOverview }) {
       throw cause;
     }
   });
-  const visibleResult = session?.result ? session : !session ? initial.latest : null;
+  const visibleResult = session?.result ? session : initial.latest;
   return <div className="placement-page">
     <header className="placement-header"><div><p className="placement-kicker">BẮT ĐẦU TỪ ĐÚNG CHỖ</p><h1>Đánh giá đầu vào</h1><p>Câu hỏi điều chỉnh theo kết quả để tìm những nội dung bạn nên học trước.</p></div><Link to="/exam">Về bài luyện</Link></header>
     <p className="placement-method">Đánh giá sơ bộ theo quy tắc thích ứng, chưa phải bài CAT dùng IRT đã hiệu chỉnh. Kết quả không quy đổi thành điểm TOEIC hoặc CEFR.</p>
@@ -85,7 +85,7 @@ function PlacementWorkspace({ initial }: { initial: PlacementOverview }) {
     {notice && <p role="status" className="placement-notice">{notice}</p>}
     {reconciling && <p role="status">Đang kiểm tra xem máy chủ đã nhận đáp án chưa…</p>}
     {session?.status === 'ACTIVE' ? <PlacementRunner key={`${session.id}:${session.revision}`} session={session} busy={busy} onAnswer={answer} onExpire={refreshSession} /> : <>
-      {session?.status === 'EXPIRED' && <p role="status" className="placement-alert">Lượt đánh giá đã hết thời gian. Các phần đã trả lời được giữ lại; câu chưa trả lời không bị tự tính sai.</p>}
+      {(session?.status === 'EXPIRED' || visibleResult?.status === 'EXPIRED') && <p role="status" className="placement-alert">Lượt đánh giá đã kết thúc trước khi hoàn thành. Kết quả chỉ tính những câu bạn đã gửi.</p>}
       {visibleResult && <PlacementResults session={visibleResult} busy={busy} onRefresh={() => void run(async () => { await refreshSession(visibleResult.id); })} />}
       <section className="placement-setup" aria-labelledby="placement-goal-title"><h2 id="placement-goal-title">Bạn muốn học theo hướng nào?</h2><p>Mục tiêu học được lưu riêng và không thay đổi kết quả đánh giá năng lực của bạn.</p>
         <fieldset className="placement-goals" disabled={busy}><legend className="sr-only">Hướng học mong muốn</legend>{goals.map(goal => <label key={goal.value} data-selected={preferences.goal === goal.value || undefined}><input type="radio" name="learning-goal" value={goal.value} checked={preferences.goal === goal.value} onChange={() => { setPreferences({ ...preferences, goal: goal.value }); setSaved(false); }} /><span><strong>{goal.title}</strong><small>{goal.detail}</small></span></label>)}</fieldset>
@@ -94,7 +94,7 @@ function PlacementWorkspace({ initial }: { initial: PlacementOverview }) {
         <div className="placement-test-info"><h3>Bài đánh giá diễn ra thế nào?</h3><ul><li>Khoảng 30–42 câu, tối đa 40 phút; giữ nguyên các nhóm hội thoại và bài đọc.</li><li>Độ khó được điều chỉnh theo kết quả, đồng thời kiểm tra nhiều nhóm kỹ năng.</li><li>Các lượt ưu tiên câu khác nhau; mức trùng còn phụ thuộc ngân hàng câu hỏi.</li><li>Không có gợi ý hay đáp án trong lúc làm bài. Phần nghe được phát một lần.</li></ul></div>
         {!initial.catalog.available && <p role="status" className="placement-alert">{initial.catalog.reason || 'Ngân hàng chưa đủ câu phù hợp để mở bài đánh giá.'}</p>}
         {initial.catalog.adaptiveParts && <p className="placement-muted">Hiện có thể điều chỉnh độ khó ở Part {initial.catalog.adaptiveParts.join(', ')}. Các Part còn lại dùng để khảo sát ban đầu; chưa đủ bằng chứng để điều chỉnh độ khó.</p>}
-        <button className="primary-button" disabled={busy || !initial.catalog.available || !validPreferences(preferences)} onClick={start}>{busy ? 'Đang chuẩn bị…' : session ? 'Bắt đầu lượt đánh giá mới' : 'Bắt đầu đánh giá'}</button>
+        <button className="primary-button" disabled={busy || !initial.catalog.available || !validPreferences(preferences)} onClick={start}>{busy ? 'Đang chuẩn bị…' : session || visibleResult ? 'Bắt đầu lượt đánh giá mới' : 'Bắt đầu đánh giá'}</button>
       </section>
     </>}
   </div>;
@@ -128,6 +128,7 @@ function PlacementRunner({ session, busy, onAnswer, onExpire }: { session: Place
   if (!group?.questions.length) return <section role="alert" className="placement-state"><p>Máy chủ chưa cung cấp nhóm câu tiếp theo.</p><button onClick={() => void onExpire(session.id)}>Tải lại trạng thái</button></section>;
   const first = group.questions[0];
   const listening = group.part <= 4;
+  const hasMaterial = listening || Boolean(first.imageUrl || first.passage || first.stimulus?.documents.length);
   const ready = group.questions.every(q => answers[q.id]) && (!listening || audioComplete);
   const select = (id: number, answer: string) => {
     const next = { ...answers, [id]: answer }; setAnswers(next);
@@ -138,9 +139,9 @@ function PlacementRunner({ session, busy, onAnswer, onExpire }: { session: Place
     <div className="placement-progress"><p>Đã trả lời <strong>{session.answeredCount}</strong> · Tối đa {session.maxQuestions} câu</p><span aria-label="Thời gian còn lại">Còn {formatRemaining(timeLeft)}</span></div>
     <h2 id="placement-current-title" ref={heading} tabIndex={-1}>Part {group.part} · Câu {session.answeredCount + 1}{group.questions.length > 1 ? `–${session.answeredCount + group.questions.length}` : ''}</h2>
     {storageError && <p role="alert">Trình duyệt không lưu được bản nháp. Hãy giữ trang mở cho đến khi gửi phần trả lời.</p>}
-    <div className="placement-question-layout"><div className="placement-material">
+    <div className="placement-question-layout" data-material={hasMaterial}>{hasMaterial && <div className="placement-material">
       {listening ? <>{first.audioUrl ? <ExamListeningAudio attemptId={session.id} groupKey={`placement-${group.key}`} src={first.audioUrl} restSeconds={group.restSeconds} disabled={busy} onComplete={() => setAudioComplete(true)} /> : <p role="alert">Nhóm câu thiếu audio. Chưa thể gửi phần nghe; hãy tải lại trang hoặc báo lỗi nguồn bài.</p>}{first.imageUrl && <img className="exam-source-image" src={first.imageUrl} alt="Hình ảnh của bài nghe" />}{first.stimulus?.documents.length ? <ExamStimulus question={first} blankNumbers={blankNumbers} /> : null}</> : <ExamStimulus question={first} blankNumbers={blankNumbers} />}
-    </div><div className="placement-questions">{group.questions.map((q, index) => <fieldset key={q.id} disabled={busy} className="placement-question"><legend>Câu {session.answeredCount + index + 1}{group.part !== 2 ? ` · ${q.content}` : ' · Nghe và chọn phản hồi phù hợp'}</legend>{(['A', 'B', 'C', 'D'] as const).filter(letter => !(group.part === 2 && letter === 'D')).map(letter => <label key={letter} data-selected={answers[q.id] === letter || undefined}><input type="radio" name={`placement-question-${q.id}`} value={letter} checked={answers[q.id] === letter} onChange={() => select(q.id, letter)} /><span><strong>{letter}</strong>{' '}{group.part <= 2 ? '' : q[`option${letter}`]}</span></label>)}</fieldset>)}</div></div>
+    </div>}<div className="placement-questions">{group.questions.map((q, index) => <fieldset key={q.id} disabled={busy} className="placement-question"><legend>Câu {session.answeredCount + index + 1}{group.part !== 2 ? ` · ${q.content}` : ' · Nghe và chọn phản hồi phù hợp'}</legend>{(['A', 'B', 'C', 'D'] as const).filter(letter => !(group.part === 2 && letter === 'D')).map(letter => <label key={letter} data-selected={answers[q.id] === letter || undefined}><input type="radio" name={`placement-question-${q.id}`} value={letter} checked={answers[q.id] === letter} onChange={() => select(q.id, letter)} /><span><strong>{letter}</strong>{' '}{group.part <= 2 ? '' : q[`option${letter}`]}</span></label>)}</fieldset>)}</div></div>
     <div className="placement-submit"><p>{listening && !audioComplete ? 'Nghe hết audio và chờ hết thời gian trả lời để tiếp tục.' : 'Đáp án được khóa khi gửi. Nhóm tiếp theo sẽ được chọn theo kết quả của bạn.'}</p><button className="primary-button" disabled={busy || !ready} onClick={() => void onAnswer(group.questions.map(q => ({ questionId: q.id, selectedAnswer: answers[q.id] })))}>{busy ? 'Đang gửi…' : 'Gửi và tiếp tục'}</button></div>
   </section>;
 }
@@ -150,7 +151,38 @@ function PlacementResults({ session, busy, onRefresh }: { session: PlacementSess
   useEffect(() => { heading.current?.focus(); }, [session.id, session.status]);
   const result = session.result;
   if (!result) return null;
-  return <section className="placement-results" aria-labelledby="placement-result-title"><p className="placement-kicker">HỒ SƠ KHỞI ĐẦU</p><h2 id="placement-result-title" ref={heading} tabIndex={-1}>Nội dung nên học tiếp</h2><p>Đã trả lời {result.answered} câu · Đúng {result.correct} câu. Đây không phải điểm TOEIC quy đổi.</p><p>{result.note}</p><PlacementReference session={session} busy={busy} onRefresh={onRefresh} /><div className="placement-topics">{result.topics.map(topic => <article key={topic.skillId}><span>Part {topic.part}</span><h3>{topic.skillName}</h3><strong data-status={topic.status}>{statusLabels[topic.status]}</strong><p>{topic.correct}/{topic.attempts} câu đúng · {topic.independentGroups} nhóm tư liệu khác nhau</p></article>)}</div>{!result.topics.length && <p>Chưa đủ bằng chứng để kết luận về từng nhóm kỹ năng.</p>}<nav className="placement-result-links" aria-label="Gợi ý sau đánh giá">{result.recommendations.filter(item => item.href.startsWith('/') && !item.href.startsWith('//')).map(item => <Link key={`${item.href}:${item.label}`} to={item.href}>{item.label}</Link>)}<Link to="/recommendations">Xem gợi ý học của bạn</Link></nav>{session.limitations.length > 0 && <details><summary>Giới hạn của đánh giá sơ bộ</summary><ul>{session.limitations.map(note => <li key={note}>{note}</li>)}</ul></details>}</section>;
+  const renderTopic = (topic: typeof result.topics[number]) => (
+    <article key={topic.skillId}>
+      <span>Part {topic.part}</span>
+      <h3>{topic.skillName}</h3>
+      <strong data-status={topic.status}>{statusLabels[topic.status]}</strong>
+      <p>{topic.correct}/{topic.attempts} câu đúng · {topic.independentGroups} nhóm câu</p>
+    </article>
+  );
+  const links = result.recommendations.filter(item =>
+    item.href.startsWith('/') && !item.href.startsWith('//') && item.href !== '/recommendations');
+
+  return <section className="placement-results" aria-labelledby="placement-result-title">
+    <h2 id="placement-result-title" ref={heading} tabIndex={-1}>Nội dung nên học tiếp</h2>
+    <p><strong>{result.correct} / {result.answered} câu đúng</strong> trong phần đã gửi</p>
+    <nav className="placement-result-links" aria-label="Gợi ý sau đánh giá">
+      <Link className="primary-button" to="/recommendations">Xem gợi ý học của bạn</Link>
+      {links.map(item => <Link key={`${item.href}:${item.label}`} to={item.href}>{item.label}</Link>)}
+    </nav>
+    {result.topics.length
+      ? <div className="placement-topics">{result.topics.slice(0, 3).map(renderTopic)}</div>
+      : <p>Chưa đủ bằng chứng để kết luận về từng nhóm kỹ năng.</p>}
+    {result.topics.length > 3 && <details>
+      <summary>Xem thêm {result.topics.length - 3} kỹ năng</summary>
+      <div className="placement-topics">{result.topics.slice(3).map(renderTopic)}</div>
+    </details>}
+    <PlacementReference session={session} busy={busy} onRefresh={onRefresh} />
+    <details>
+      <summary>Cách đọc kết quả</summary>
+      <p>{result.note}</p>
+      {session.limitations.length > 0 && <ul>{session.limitations.map(note => <li key={note}>{note}</li>)}</ul>}
+    </details>
+  </section>;
 }
 
 function PlacementReference({ session, busy, onRefresh }: { session: PlacementSession; busy: boolean; onRefresh: () => void }) {

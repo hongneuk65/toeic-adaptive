@@ -1,3 +1,4 @@
+import { useScreenTutorContext } from '../components/rag/useTutorContext';
 import { MediaButton } from '../components/ui/MediaButton';
 import { VocabularyFlipCard } from '../components/vocabulary/VocabularyFlipCard';
 import { VocabularySentencePractice } from '../components/vocabulary/VocabularySentencePractice';
@@ -81,9 +82,13 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
   const [viewMode, setViewMode] = useState<'grid' | 'focus'>('focus');
   const [focusIndex, setFocusIndex] = useState(0);
   const [gridPage, setGridPage] = useState(1);
+  const [gridContextId, setGridContextId] = useState<number | null>(null);
   const gridPages = Math.max(1, Math.ceil(filtered.length / 12));
   const currentGridPage = Math.min(gridPage, gridPages);
   const visibleGridCards = filtered.slice((currentGridPage - 1) * 12, currentGridPage * 12);
+
+  const contextCard = viewMode === 'focus' ? filtered[focusIndex] || filtered[0] : visibleGridCards.find(card => card.id === gridContextId);
+  useScreenTutorContext(contextCard ? { kind: 'vocabulary', resourceId: String(contextCard.id), mode: viewMode === 'grid' ? 'flashcard' : practiceMode, label: contextCard.word } : null);
 
   // Modal thêm từ
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -166,6 +171,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
   };
 
   const toggleFlip = (id: number) => {
+    setGridContextId(id);
     setFlippedIds((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 

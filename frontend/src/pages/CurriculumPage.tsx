@@ -1,3 +1,4 @@
+import { useScreenTutorContext } from '../components/rag/useTutorContext';
 import { MediaButton } from '../components/ui/MediaButton';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -101,6 +102,7 @@ function QuizPanel({ unit, guided, active, onBusy }: { unit: CurriculumUnit; gui
   useEffect(() => { if (result && active) resultRef.current?.focus(); }, [result, active]);
   const complete = questions.length > 0 && questions.every(question => Number.isInteger(answers[question.id]));
   const question = questions[index];
+  useScreenTutorContext(active && question ? { kind: 'curriculum', resourceId: unit.id, index, mode: guided ? 'guided' : 'checkpoint', response: JSON.stringify({ selected: answers[question.id] }), label: unit.title } : null);
   const submit = async () => {
     if (!complete || pending) return;
     const signature = JSON.stringify(questions.map(item => [item.id, answers[item.id]]));
@@ -131,6 +133,7 @@ function QuizPanel({ unit, guided, active, onBusy }: { unit: CurriculumUnit; gui
 function UnitLesson({ unit }: { unit: CurriculumUnit }) {
   const [phase, setPhase] = useState<'knowledge' | 'guided' | 'checkpoint'>('knowledge');
   const [busy, setBusy] = useState(false);
+  useScreenTutorContext(phase === 'knowledge' ? { kind: 'curriculum', resourceId: unit.id, mode: 'knowledge', label: unit.title } : null);
   const onBusy = useCallback((value: boolean) => setBusy(value), []);
   useEffect(() => { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); }, [phase]);
   return <>

@@ -1,3 +1,4 @@
+import { useVocabularyTutorDraft } from '../rag/useTutorContext';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../auth/useAuth';
 import { api, getErrorMessage } from '../../lib/api';
@@ -30,6 +31,7 @@ export function VocabularySentencePractice(props: SentencePracticeProps) {
 function SentenceExercise({ card, userId, onBusyChange, onCompleted }: SentencePracticeProps & { userId?: number }) {
   const storageKey = userId === undefined ? null : `toeic:vocabulary-sentence:${userId}:${card.id}`;
   const [response, setResponse] = useState(() => readDraft(storageKey, card.word));
+  useVocabularyTutorDraft(card.id, response);
   const [feedback, setFeedback] = useState<SentenceFeedback | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');

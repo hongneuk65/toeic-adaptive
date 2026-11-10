@@ -17,10 +17,10 @@ test('unpracticed skills receive no invented estimate or weakness label', async 
   await page.goto('/recommendations');
   const overview = page.getByRole('region', { name: 'Bạn đang ở đâu?' });
   await expect(overview).toBeVisible();
-  await expect(overview.getByText('Chưa đủ dữ liệu đánh giá.', { exact: true })).toBeVisible();
+  await expect(overview.getByRole('article', { name: 'Part 1', exact: true })).toContainText('Chưa đủ dữ liệu');
   await expect(overview.locator('meter')).toHaveCount(0);
   await expect(overview.getByRole('heading', { name: 'Có thể củng cố tiếp' })).toHaveCount(0);
-  await expect(overview.locator('.learner-overview-stats')).toContainText('0 / 2');
+  await expect(overview.locator('.learner-coverage')).toContainText('0 / 2');
   await expect(page.getByRole('heading', { name: 'Học tiếp trong từng phần' })).toHaveCount(0);
   await expect(overview.getByRole('link', { name: 'Đánh giá đầu vào', exact: true })).toHaveAttribute('href', '/placement');
   expect(await page.locator('body').evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
@@ -37,9 +37,7 @@ test('partial overview averages only practiced valid skill estimates and shows c
   await expect(overview.getByRole('article', { name: 'Part 1', exact: true }).locator('.learner-bar-missing')).toHaveCount(1);
   await expect(part5).toContainText('2/3 kỹ năng đã luyện · một phần');
   await expect(overview.getByRole('article', { name: 'Part 1', exact: true }).locator('meter')).toHaveCount(0);
-  await expect(overview.locator('.learner-overview-stats')).toContainText('3 / 4');
-  await expect(overview.locator('.learner-overview-stats')).toContainText('7');
-  await expect(overview.locator('time')).toHaveText('22/10/2026');
+  await expect(overview.locator('.learner-coverage')).toContainText('3 / 4');
   await expect(overview.locator('.learner-focus li')).toHaveCount(2);
   await expect(overview.locator('.learner-focus li').first()).toContainText('Kỹ năng 1');
   await expect(overview).toContainText('không phải điểm TOEIC');

@@ -1,3 +1,4 @@
+import { useScreenTutorContext } from '../components/rag/useTutorContext';
 import { Pagination } from '../components/ui/Pagination';
 import { ReadingModes } from '../components/reading/ReadingModes';
 import { notifyLearningProgress } from '../lib/learning-progress';
@@ -127,6 +128,7 @@ function ReadingWorkspace({
   const version = attempt.version;
   const question = version.questions[index];
   const submitted = !!attempt.submittedAt;
+  useScreenTutorContext(question ? { kind: 'reading', resourceId: String(attempt.id), index, mode: submitted ? 'review' : 'practice', response: JSON.stringify({ selected: answers[index]?.selected, selectedText: selection?.text }), label: version.title } : null);
   const changeAnswers = (next: ReadingAttempt['answers']) => {
     currentDraft.current = { ...currentDraft.current, answers: next };
     writeReadingDraft(draftKey, currentDraft.current); setAnswers(next);

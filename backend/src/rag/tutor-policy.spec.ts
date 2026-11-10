@@ -7,6 +7,27 @@ import { explanationPolicy } from './explanation.policy';
 import { approvedSources, knowledgeHash, ReviewableKnowledge } from './tutor-knowledge.service';
 import { TutorContextService } from './tutor-context.service';
 import { parseTutorAnswer } from './rag-explainer.service';
+import { assertTutorHelpAccessible } from './tutor-access.policy';
+
+describe('Expired exam does not block unrelated learning', () => {
+  it.each(['expired', 'at-deadline', 'old-legacy', 'submitted', 'other-user'])('allows tutoring with a %s attempt', async scenario => {
+    const now = new Date('2026-11-06T01:00:00Z');
+    const attempt = { userId: scenario === 'other-user' ? 2 : 1,
+      submittedAt: scenario === 'submitted' ? now : null,
+      deadlineAt: scenario === 'old-legacy' ? null : new Date(now.getTime() + (scenario === 'expired' ? -1 : scenario === 'at-deadline' ? 0 : 60_000)),
+      startedAt: new Date(now.getTime() - 121 * 60_000) };
+    jest.useFakeTimers({ now });
+    try {
+      const findFirst = jest.fn(async ({ where }: any) => {
+        const matches = attempt.userId === where.userId && !attempt.submittedAt && where.OR.some((clause: any) =>
+          clause.deadlineAt === null ? attempt.deadlineAt === null && attempt.startedAt >= clause.startedAt.gte
+            : attempt.deadlineAt !== null && attempt.deadlineAt > clause.deadlineAt.gt);
+        return matches ? { id: 1 } : null;
+      });
+      await expect(assertTutorHelpAccessible({ examAttempt: { findFirst } } as unknown as PrismaService, 1)).resolves.toBeUndefined();
+    } finally { jest.useRealTimers(); }
+  });
+});
 
 const skill = { id: 7, code: 'P5_TENSE', name: 'Verb tenses' };
 const evidence: SkillEvidence = { ...skill, predictedSuccess: 0.8, attempts: 12, distinctQuestions: 8, recentAttempts: 8, lastPracticed: '2026-10-21T00:00:00Z', status: 'sufficient' };
@@ -78,11 +99,14 @@ describe('Server-owned question and exam context', () => {
   const db = { examAttempt: { findFirst: jest.fn(), findUnique: jest.fn() }, question: { findUnique: jest.fn() }, skill: { findMany: jest.fn() } };
   const service = new TutorContextService(db as unknown as PrismaService);
   beforeEach(() => { jest.clearAllMocks(); db.examAttempt.findFirst.mockResolvedValue(null); db.question.findUnique.mockResolvedValue(question); db.skill.findMany.mockResolvedValue([skill]); });
-  it('blocks all help for unsubmitted exams, including expired or unrelated questions', async () => {
+  it('blocks help during a live exam using a bounded deadline query', async () => {
     db.examAttempt.findFirst.mockResolvedValue({ id: 99 });
     await expect(service.resolve(1, { questionId: 1, selectedAnswer: 'B' })).rejects.toBeInstanceOf(ForbiddenException);
     expect(db.question.findUnique).not.toHaveBeenCalled();
-    expect(db.examAttempt.findFirst).toHaveBeenCalledWith({ where: { userId: 1, submittedAt: null }, select: { id: true } });
+    expect(db.examAttempt.findFirst).toHaveBeenCalledWith({ where: { userId: 1, submittedAt: null, OR: [
+      { deadlineAt: { gt: expect.any(Date) } },
+      { deadlineAt: null, startedAt: { gte: expect.any(Date) } },
+    ] }, select: { id: true } });
   });
   it('uses the submitted snapshot and recorded answer, ignoring a forged client choice', async () => {
     db.examAttempt.findUnique.mockResolvedValue({ userId: 1, submittedAt: new Date(), questionIds: [1], questionSnapshot: [{ ...question, skills: [{ skillId: 7 }] }], answers: [{ selectedAnswer: 'B' }] });
