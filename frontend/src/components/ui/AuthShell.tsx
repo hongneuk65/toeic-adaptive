@@ -14,7 +14,7 @@ export function AuthShell({ title, description, children, footer }: AuthShellPro
   return (
     <main className="prep-auth">
       <section className="prep-auth-form">
-        <Link to="/login" className="prep-auth-brand"><span aria-hidden="true" className="prep-auth-monogram">TA</span>TOEIC Adaptive</Link>
+        <Link to="/login" className="prep-auth-brand"><span className="prep-auth-monogram">TOEIC</span><span>ADAPTIVE</span></Link>
         <div className="prep-auth-form-content">
           <header><h1>{title}</h1><p>{description}</p></header>
           {children}

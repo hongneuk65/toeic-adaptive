@@ -1,7 +1,7 @@
 /* Admin is a working surface: grouped navigation, restrained color, readable density. */
 .admin-workspace {
-  --admin-blue:#28646a;
-  --admin-navy:#233c3d;
+  --admin-blue:#008f8f;
+  --admin-navy:#004343;
   --admin-muted:#627775;
   --admin-line:#dce5df;
   --admin-surface:#fffefa;
@@ -107,18 +107,6 @@
 .admin-workspace .admin-error button {text-decoration:none;border:1px solid currentColor;border-radius:6px;padding:5px 9px}
 .admin-workspace .admin-mobile-navigation {display:none}
 .admin-workspace :is(a,button) {text-decoration:none}
-html[data-theme=dark] #root .nature-app .admin-workspace {
-  --admin-blue:#b7cebd;--admin-navy:#e6e5dd;--admin-muted:#b9bdb4;
-  --admin-line:#485249;--admin-surface:#252c28;--admin-soft:#303a32;
-  --admin-canvas:#1e2521;--admin-active:#34463a;
-  background:var(--admin-canvas);color:var(--admin-navy);
-}
-html[data-theme=dark] #root .nature-app .admin-workspace :is(.admin-sidebar,.admin-topbar,.admin-panel,.admin-stat,.admin-attention,.admin-dialog) {background:var(--admin-surface);color:var(--admin-navy);border-color:var(--admin-line)}
-html[data-theme=dark] #root .nature-app .admin-workspace .admin-button.primary {background:#466c57;color:#fff;border-color:#617e69}
-html[data-theme=dark] #root .nature-app .admin-workspace .admin-brand>span {background:#466c57;color:#fff}
-html[data-theme=dark] #root .nature-app .admin-workspace :is(input,select,textarea) {background:#1c2520;color:var(--admin-navy);border-color:var(--admin-line)}
-html[data-theme=dark] #root .nature-app .admin-workspace .admin-notice {background:#293b31;color:#c0ddc9;border-color:#617c68}
-html[data-theme=dark] #root .nature-app .admin-workspace .admin-error {background:#3c2e2e;color:#eac0bf;border-color:#876564}
 @media(max-width:1100px) {
  .admin-workspace .admin-sidebar {width:224px}
  .admin-workspace .admin-main {margin-left:224px}
@@ -177,12 +165,7 @@ html[data-theme=dark] #root .nature-app .admin-workspace .admin-error {backgroun
 .admin-workspace .admin-source-note {background:var(--admin-soft);color:var(--admin-navy);border-color:var(--admin-line)}
 .admin-workspace .admin-source-note p,.admin-workspace .admin-inline-empty {color:var(--admin-muted)}
 .admin-workspace .admin-inline-empty {background:var(--admin-soft);border-color:var(--admin-line)}
-html[data-theme=dark] #root .nature-app .admin-workspace .admin-button.danger {background:#3c2e2e;color:#eac0bf;border-color:#876564}
-html[data-theme=dark] #root .nature-app .admin-workspace .admin-existing .primary-button {background:#466c57;color:#fff}
-html[data-theme=dark] #root .nature-app .admin-workspace :is(.admin-skill-picker,.admin-existing input,.admin-existing select,.admin-existing textarea) {border-color:var(--admin-line)}
 /* Keep admin tools clear of decorative global controls. */
-.nature-app:has(.admin-workspace) .ambient-motion-toggle {display:none}
-.nature-app:has(.admin-workspace) .ambient-background-light {animation:none}
 @media(min-width:801px) {
  .admin-workspace .admin-topbar {padding-right:96px}
 }

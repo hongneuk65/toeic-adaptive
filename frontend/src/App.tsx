@@ -1,11 +1,4 @@
-import './styles/color-theme.css';
-import { ThemeToggle } from './components/ui/ThemeToggle';
-import './styles/site-nature-theme.css';
-import './styles/study-polish.css';
-import './styles/clear-surfaces.css';
-import './styles/learning-motion.css';
 import { useLearningMotion } from './hooks/useLearningMotion';
-import { AmbientBackground } from './components/ambient/AmbientBackground';
 import './styles/study-shell.css';
 import './styles/learning-workspace.css';
 import './styles/section-experiences.css';
@@ -102,13 +95,12 @@ const AppNavbar = ({ focusMode }: { focusMode: boolean }) => {
     <a href="#learning-main" className="skip-link">Đến nội dung học</a>
     <div className="app-header-inner">
       <div className="app-navigation-capsule">
-        <Link to="/dashboard" className="app-brand"><span className="app-brand-mark" aria-hidden="true">TA</span><span>TOEIC Adaptive</span></Link>
+        <Link to="/dashboard" className="app-brand" aria-label="TOEIC Adaptive — Trang chủ"><span className="app-brand-mark" aria-hidden="true">TOEIC</span><span className="app-brand-name" aria-hidden="true">ADAPTIVE</span></Link>
         {!focusMode && <LearningNavigation />}
       </div>
       <div className="app-header-actions">
-        <ThemeToggle />
-        {!focusMode && <Link to="/recommendations" className="app-start-action">{learningActionLabel(status)}</Link>}
         <button onClick={logout} className="app-account-action">Đăng xuất</button>
+        {!focusMode && <Link to="/recommendations" className="app-start-action">{learningActionLabel(status)}</Link>}
       </div>
     </div>
   </header>;
@@ -181,11 +173,6 @@ const AppLayout: React.FC = () => {
   );
 };
 
-function StandaloneThemeToggle() {
-  const { pathname } = useLocation();
-  return /^\/(login|register|admin)(?:\/|$)/.test(pathname) ? <ThemeToggle className="theme-toggle-standalone" /> : null;
-}
-
 function AuthenticatedLearningLayout() {
   const { user } = useAuth();
   const { pathname } = useLocation();
@@ -196,10 +183,8 @@ function AuthenticatedLearningLayout() {
 export default function App() {
   useInteractiveMotion();
   return (
-    <div className="nature-app"><AuthProvider>
+    <div className="forum-app"><AuthProvider>
       <BrowserRouter>
-        <AmbientBackground />
-        <StandaloneThemeToggle />
         <Routes>
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />

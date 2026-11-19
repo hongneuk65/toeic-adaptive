@@ -34,7 +34,7 @@ for (const path of ['/login', '/register']) {
     await expect(page).toHaveURL(/\/dashboard$/);
     expect(linked).toBe(true); expect(postedPassword).toBe('existing-password');
     expect(await page.evaluate(() => localStorage.getItem('accessToken'))).toBe('application-jwt');
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Học TOEIC');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('TOEIC');
     expect(errors).toEqual([]);
   });
 }

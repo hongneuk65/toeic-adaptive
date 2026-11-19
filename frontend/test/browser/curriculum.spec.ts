@@ -78,7 +78,7 @@ test('home resumes the enrolled curriculum without fabricating a completed exerc
  await page.getByRole('button',{name:'Bắt đầu lộ trình',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Hôm nay học gì?',exact:true})).toBeVisible();
  await page.goto('/dashboard');
- await expect(page.locator('.prep-home-hero-cta')).toHaveAttribute('href','/curriculum');
+ await expect(page.locator('.forum-hero-cta')).toHaveAttribute('href','/curriculum');
  await expect(page.getByRole('link',{name:'Tiếp tục Câu cơ bản',exact:true})).toHaveAttribute('href','/curriculum?unit=f01');
  await expect(page.getByRole('link',{name:'Học theo lộ trình',exact:true})).toHaveAttribute('href','/curriculum');
 });

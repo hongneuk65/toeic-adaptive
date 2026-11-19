@@ -180,9 +180,9 @@ test('exam catalog failure can be retried without starting an unavailable exam',
 test('learning sections have top navigation and distinct task layouts', async ({ page }, testInfo) => {
   await fixture(page);
   await page.goto('/dashboard');
-  await expect(page.locator('#prep-home-title')).toBeVisible();
+  await expect(page.locator('#forum-hero-title')).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('homepage-brand-reference.png') });
-  const homeBrand = await page.locator('.app-brand').innerText();
+  const homeBrand = await page.locator('.app-header .app-brand').innerText();
   if (testInfo.project.name === 'mobile') {
     await page.locator('.mobile-nav-trigger').click();
   } else {
@@ -190,7 +190,7 @@ test('learning sections have top navigation and distinct task layouts', async ({
   }
   await page.locator('.learning-navigation').getByRole('link', { name: 'Reading', exact: true }).click();
   await expect(page).toHaveURL(/\/reading$/);
-  await expect(page.locator('.app-brand')).toHaveText(homeBrand, { useInnerText: true });
+  await expect(page.locator('.app-header .app-brand')).toHaveText(homeBrand, { useInnerText: true });
   await expect(page.locator('.app-navigation-capsule .learning-navigation')).toBeVisible();
   await expect(page.locator('.study-navigation')).toHaveCount(0);
   const errors: string[] = [];
@@ -248,12 +248,10 @@ test('typed retrieval preserves the first answer and attempt ID when saving is r
 });
 
 
-test('vocabulary photo workspace keeps folder details and keyboard actions usable', async ({ page }, testInfo) => {
+test('vocabulary workspace keeps folder details and keyboard actions usable', async ({ page }, testInfo) => {
   await fixture(page);
-  const photo = page.waitForResponse(response => response.url().includes('/images/garden-study.webp'));
   await page.goto('/flashcards');
   await expect(page.getByRole('heading', { name: 'Thư mục từ vựng', exact: true })).toBeVisible();
-  expect((await photo).ok()).toBe(true);
   const folder = page.locator('.prep-folder-tile').first();
   await expect(folder.getByRole('link', { name: 'Office vocabulary', exact: true })).toHaveAttribute('href', '/flashcards/1');
   await expect(folder.getByText('Mã: TOPIC1', { exact: true })).toBeHidden();
@@ -271,15 +269,13 @@ test('vocabulary photo workspace keeps folder details and keyboard actions usabl
   }
 });
 
-for (const theme of ['light', 'dark']) test(`exam selected answer is blue in ${theme} mode`, async ({ page }) => {
+test('exam selected answer is highlighted', async ({ page }) => {
   await fixture(page);
-  await page.addInitScript(value => localStorage.setItem('toeic:color-theme', value), theme);
   await page.goto('/exam/14');
   await page.locator('.exam-option').first().click();
   const selected = page.locator('.exam-option[data-selected]');
   await expect(selected).toHaveCount(1);
-  await expect(selected).toHaveCSS('background-color', theme === 'dark' ? 'rgb(32, 62, 97)' : 'rgb(232, 241, 255)');
-  await expect(page.locator('.ambient-motion-toggle')).toHaveCount(0);
+  await expect(selected).toHaveCSS('background-color', 'rgb(238, 247, 241)');
 });
 
 

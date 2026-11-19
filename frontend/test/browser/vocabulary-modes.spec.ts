@@ -83,27 +83,6 @@ test('dictation hides answer until server grading and speaking feedback stays te
  await page.screenshot({path:info.outputPath('vocabulary-speaking.png'),fullPage:false});
 });
 
-test('site nature background has no floating control and honors reduced motion across pages',async({page},info)=>{
- await fixture(page);
- await page.goto('/flashcards');
- const backdrop=page.locator('.ambient-background');
- await expect(backdrop).toHaveAttribute('aria-hidden','true');
- await expect(backdrop).toHaveAttribute('data-paused', 'false');
- await expect(page.locator('.ambient-motion-toggle')).toHaveCount(0);
- await page.emulateMedia({reducedMotion:'reduce'});
- await expect(backdrop).toHaveAttribute('data-paused','true');
- await expect(page.locator('.ambient-motion-toggle')).toHaveCount(0);
- await page.emulateMedia({reducedMotion:'no-preference'});
- await page.goto('/placement');
- await expect(backdrop).toHaveAttribute('data-paused','true');
- await expect(page.getByRole('button',{name:'Tạm dừng nền',exact:true})).toHaveCount(0);
- await page.goto('/dashboard');
- await expect(page.locator('.nature-app')).toBeVisible();
- await expect(page.locator('.home-space-props')).toHaveCount(0);
- await page.screenshot({path:info.outputPath('nature-dashboard.png'),fullPage:false});
- expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-});
-
 
 test('study session keeps wrong answer feedback until explicitly continued',async({page})=>{
  await fixture(page);
@@ -139,17 +118,13 @@ test('typed recall keeps feedback until continued and protects an unsaved attemp
  await expect(page.getByRole('button',{name:'Trắc nghiệm',exact:true})).toBeEnabled();
 });
 
-test('vocabulary studio keeps its controls inside narrow light and dark screens', async ({page},info) => {
+test('vocabulary studio keeps its controls inside narrow screens', async ({page},info) => {
  await fixture(page);
  if(info.project.name==='mobile') await page.setViewportSize({width:360,height:800});
  await page.goto('/flashcards/1');
  await expect(page.getByLabel('Câu trả lời của bạn',{exact:true})).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
- await page.screenshot({path:info.outputPath('vocabulary-studio-light.png'),fullPage:false});
- await page.getByRole('button',{name:'Bật giao diện tối',exact:true}).click();
- await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
- expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
- await page.screenshot({path:info.outputPath('vocabulary-studio-dark.png'),fullPage:false});
+ await page.screenshot({path:info.outputPath('vocabulary-studio.png'),fullPage:false});
 });
 
 test('one microphone records, transcribes and offers playback without uploading audio', async ({ page }, info) => {

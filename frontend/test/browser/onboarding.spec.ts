@@ -52,7 +52,7 @@ test('returning learner gets continue action without invitation', async ({ page 
   await page.goto('/dashboard');
   await expect(page.locator('.app-start-action')).toHaveText('Học tiếp');
   await expect(page.getByRole('dialog')).not.toBeVisible();
-  await expect(page.locator('.prep-home-hero-cta')).toHaveText('Học tiếp');
+  await expect(page.locator('.forum-hero-cta')).toContainText('Học tiếp');
 });
 
 test('unavailable status does not block learning or mislabel progress', async ({ page }) => {

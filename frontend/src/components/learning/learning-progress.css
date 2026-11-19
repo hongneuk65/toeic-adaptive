@@ -1,19 +1,13 @@
 .learning-progress {
-  --progress-accent: #126d66;
-  --progress-active: #dcefeb;
+  --progress-accent: #008f8f;
+  --progress-active: #e7f1f3;
   --progress-error: #a54a28;
   padding: 24px;
   min-width: 0;
   border: 1px solid var(--nature-line, #d8e3e2);
   border-radius: 20px;
   background: var(--nature-surface, #fff);
-  color: var(--nature-ink, #22384b);
-}
-
-html[data-theme=dark] .learning-progress {
-  --progress-accent: #73d4c2;
-  --progress-active: #24464b;
-  --progress-error: #ffb08e;
+  color: var(--nature-ink, #008f8f);
 }
 
 .progress-heading {
@@ -48,7 +42,7 @@ html[data-theme=dark] .learning-progress {
   padding: 4px;
   border: 1px solid var(--nature-line, #d8e3e2);
   border-radius: 12px;
-  background: var(--nature-soft, #eff5f4);
+  background: var(--nature-soft, #eef5f6);
 }
 
 .progress-modes button {
@@ -100,7 +94,7 @@ html[data-theme=dark] .learning-progress {
   margin-bottom: 12px;
   border: 1px solid var(--nature-line, #d8e3e2);
   border-radius: 12px;
-  background: var(--nature-soft, #eff5f4);
+  background: var(--nature-soft, #eef5f6);
   color: var(--nature-muted, #617680);
   font-size: 12px;
   font-variant-numeric: tabular-nums;

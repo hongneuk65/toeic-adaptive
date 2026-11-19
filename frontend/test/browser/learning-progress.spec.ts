@@ -29,10 +29,9 @@ test('progress switches charts, filters and exposes counts without overflow', as
   await expect(section.getByRole('table')).toBeVisible();
   expect(await page.locator('body').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
   await section.screenshot({path:info.outputPath('learning-progress.png')});
-  await page.getByRole('button',{name:'Bật giao diện tối'}).click();
   await section.getByRole('button',{name:'Tỷ lệ đúng',exact:true}).click();
   await expect(section.getByRole('img')).toBeVisible();
-  await section.screenshot({path:info.outputPath('learning-progress-dark.png')});
+  await section.screenshot({path:info.outputPath('learning-progress-accuracy.png')});
 });
 test('progress failure stays local and can retry to an empty state',async({page})=>{
   let fail=true;

@@ -2,14 +2,14 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <script>
-      (() => { try { const saved = localStorage.getItem('toeic:color-theme'); const theme = saved === 'light' || saved === 'dark' ? saved : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.dataset.theme = theme; document.documentElement.style.colorScheme = theme; } catch { document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } })();
-    </script>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TOEIC Adaptive</title>
 
-    <!-- Google Fonts từ mau.docx -->
+    <meta name="theme-color" content="#004646" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600&family=Cal+Sans&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>

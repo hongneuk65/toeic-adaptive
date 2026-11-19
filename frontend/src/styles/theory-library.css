@@ -1,12 +1,12 @@
-.theory-library { --theory-ink:#233876; --theory-blue:#1463e8; --theory-line:#d1dced; color:var(--theory-ink); }
+.theory-library { --theory-ink:#008f8f; --theory-blue:#239591; --theory-line:#e7f1f3; color:var(--theory-ink); }
 .theory-library .theory-section-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; }
 .theory-library h2 { font-size:20px; font-weight:700; letter-spacing:-.025em; line-height:1.35; }
 .theory-library .theory-section-heading p { font-size:13px; color:#52647f; margin-top:4px; line-height:1.5; }
 .theory-library .theory-back { font-size:13px; font-weight:600; }
 .theory-library .theory-catalog { background:#fff; border:1px solid var(--theory-line); border-radius:18px; padding:22px; }
-.theory-library .theory-browse-switch { display:flex; flex-shrink:0; padding:4px; gap:4px; background:#eef3fb; border-radius:12px; }
+.theory-library .theory-browse-switch { display:flex; flex-shrink:0; padding:4px; gap:4px; background:#f1f7f8; border-radius:12px; }
 .theory-library .theory-browse-switch button { min-height:40px; padding:8px 13px; border-radius:9px; font-size:13px; font-weight:600; color:#52647f; }
-.theory-library .theory-browse-switch button[aria-pressed=true] { color:var(--theory-blue); background:#fff; box-shadow:0 1px 5px #23387614; }
+.theory-library .theory-browse-switch button[aria-pressed=true] { color:var(--theory-blue); background:#fff; box-shadow:0 1px 5px #008f8f14; }
 .theory-library .theory-filters { display:grid; grid-template-columns:minmax(180px,1fr) minmax(160px,1fr) minmax(130px,.6fr); align-items:end; gap:12px; margin-bottom:12px; }
 .theory-library .theory-filters label { display:flex; flex-direction:column; min-width:0; gap:6px; font-size:12px; font-weight:600; }
 .theory-library .theory-filters-part .theory-part-filter { grid-column:2; grid-row:1; }
@@ -15,7 +15,7 @@
 .theory-library .theory-results-heading { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; min-height:36px; margin-bottom:8px; color:#52647f; font-size:12px; }
 .theory-library .theory-lessons { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:24px; }
 .theory-library .theory-lesson { display:flex; align-items:center; gap:12px; padding:16px 0; text-align:left; border-top:1px solid var(--theory-line); min-width:0; }
-.theory-library .theory-part { display:grid; place-items:center; width:36px; height:36px; flex-shrink:0; border-radius:10px; font-size:12px; font-weight:700; background:#e9f0fc; }
+.theory-library .theory-part { display:grid; place-items:center; width:36px; height:36px; flex-shrink:0; border-radius:10px; font-size:12px; font-weight:700; background:#eef5f7; }
 .theory-library .theory-lesson-copy { display:flex; flex-direction:column; min-width:0; gap:4px; }
 .theory-library .theory-lesson-copy strong { font-size:14px; line-height:1.5; overflow-wrap:anywhere; }
 .theory-library .theory-lesson-copy>span { font-size:11px; color:#52647f; }
@@ -26,7 +26,7 @@
 .theory-library .theory-reader { padding:24px clamp(20px,5vw,64px); background:#fff; border:1px solid var(--theory-line); border-radius:18px; }
 .theory-library .theory-reader article { max-width:76ch; margin:24px auto 0; }
 .theory-library .theory-reader-meta { display:flex; gap:9px; flex-wrap:wrap; color:#52647f; font-size:12px; margin-bottom:12px; }
-.theory-library .theory-reader-meta span { background:#e5ecf6; border-radius:6px; padding:5px 9px; }
+.theory-library .theory-reader-meta span { background:#e8f1f3; border-radius:6px; padding:5px 9px; }
 .theory-library .theory-reader h2 { font-size:clamp(24px,3vw,30px); }
 .theory-library .theory-reader-body { margin:24px 0; font-size:16px; line-height:1.9; overflow-wrap:anywhere; }
 .theory-library .theory-reader-body table { display:block; overflow-x:auto; max-width:100%; }

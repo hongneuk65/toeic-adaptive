@@ -90,19 +90,18 @@ test('listening failed saved session can be retried without leaving the page', a
  expect(reads).toBeGreaterThanOrEqual(2);
 });
 
-test('practice studio stays contained in dark mode across library and study', async ({page}, info) => {
+test('practice studio stays contained across library and study', async ({page}, info) => {
  await fixture(page);
- await page.addInitScript(() => localStorage.setItem('toeic:color-theme','dark'));
  for (const [name,path] of [['reading-library','/reading'],['listening-library','/listening'],['reading-study','/reading?attempt=1'],['listening-study','/listening?session=7']]) {
   await page.goto(path);
   await expect(page.locator('.practice-studio')).toBeVisible();
   await expect(page.getByRole('heading',{name:'Chưa mở được trang học',exact:true})).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await page.screenshot({path:info.outputPath(name+'-dark.png'),fullPage:false});
+  await page.screenshot({path:info.outputPath(name+'.png'),fullPage:false});
  }
 });
 
-test('learning motion respects live reduced motion and preserves the study answer', async ({page},info) => {
+test('learning motion respects live reduced motion and preserves the study answer', async ({page}) => {
  await fixture(page);
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.goto('/reading');
@@ -110,10 +109,6 @@ test('learning motion respects live reduced motion and preserves the study answe
  await expect(card).toBeVisible();
  await expect(page.locator('#learning-main')).toHaveAttribute('data-learning-motion','full');
  await card.evaluate(async element=>{ await Promise.all(element.getAnimations().map(animation=>animation.finished.catch(()=>undefined))); });
- if(info.project.name==='desktop') {
-  await card.hover();
-  await expect.poll(()=>card.evaluate(element=>getComputedStyle(element).transform)).not.toBe('none');
- }
  await page.emulateMedia({reducedMotion:'reduce'});
  await expect(page.locator('#learning-main')).toHaveAttribute('data-learning-motion','reduced');
  await expect.poll(()=>card.evaluate(element=>getComputedStyle(element).transform)).toBe('none');
