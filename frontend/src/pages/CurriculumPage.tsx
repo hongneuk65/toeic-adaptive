@@ -110,7 +110,7 @@ function QuizPanel({ unit, guided, active, onBusy }: { unit: CurriculumUnit; gui
     const active = new AbortController(); controller.current = active;
     setPending(true); onBusy(true); setError('');
     try {
-      const response = await api<CurriculumResult>(`/curriculum/units/${encodeURIComponent(unit.id)}/submit`, { method: 'POST', data: { requestId: request.current!.id, answers }, signal: active.signal });
+      const response = await api<CurriculumResult>(`/curriculum/units/${encodeURIComponent(unit.id)}/submit`, { method: 'POST', data: { requestId: request.current!.id, contentVersion: unit.contentVersion, answers }, signal: active.signal });
       if (!active.signal.aborted) { setResult(response); notifyLearningProgress(); }
     } catch (cause) { if (!active.signal.aborted) setError(getErrorMessage(cause)); }
     finally { if (!active.signal.aborted) { setPending(false); onBusy(false); } }
@@ -152,7 +152,7 @@ function CurriculumLessonLoader({ unitId }: { unitId: string }) {
   const resource = useAsyncResource(load);
   if (resource.error) return <><PageHeader title="Bài học" variant="compact" actions={<Link className="secondary-button" to="/curriculum">Về lộ trình</Link>} /><ResourceError message={resource.error} retry={resource.reload} /></>;
   if (!resource.data) return <p role="status" className="curriculum-surface">Đang mở bài học…</p>;
-  return <UnitLesson unit={resource.data} key={resource.data.id} />;
+  return <UnitLesson unit={resource.data} key={`${resource.data.id}-${resource.data.contentVersion}`} />;
 }
 function CurriculumOverviewLoader() {
   const load = useCallback((signal: AbortSignal) => api<CurriculumOverview>('/curriculum', { signal }), []);

@@ -4,7 +4,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { ExamAttempt, Prisma } from '@prisma/client';
 import { questionSelect } from '../common/question-select';
 import { importedQuestions } from '../common/imported-questions';
-import { selectQuestionGroups } from './select-question-groups';
+import { fittingGroups, selectQuestionGroups } from './select-question-groups';
 import { buildListeningPlan } from './listening-plan';
 import { PrismaService } from '../prisma/prisma.service';
 import { MasteryQueueService } from '../queue/mastery-queue.service';
@@ -34,11 +34,25 @@ export class ExamService {
   }
 
   async catalog() {
-    const counts = await this.prisma.question.groupBy({ by: ['part'], where: importedQuestions, _count: { _all: true } });
-    const byPart = Array.from({ length: 7 }, (_, i) => ({ part: i + 1, count: counts.find(c => c.part === i + 1)?._count._all || 0 }));
+    const [individual, audio, reading] = await Promise.all([
+      this.prisma.question.groupBy({ by: ['part'], where: { ...importedQuestions, part: { in: [1, 2, 5] } }, _count: { _all: true } }),
+      this.prisma.question.groupBy({ by: ['part', 'audioUrl'], where: { ...importedQuestions, part: { in: [3, 4] } }, _count: { _all: true } }),
+      this.prisma.question.groupBy({ by: ['part', 'passage'], where: { ...importedQuestions, part: { in: [6, 7] } }, _count: { _all: true } }),
+    ]);
+    const all = [...individual, ...audio, ...reading];
+    const usable = [...audio.filter(g => g.audioUrl), ...reading.filter(g => g.passage)];
+    const byPart = EXAM_COUNTS.FULL.map((needed, i) => {
+      const part = i + 1;
+      const count = all.filter(g => g.part === part).reduce((n, g) => n + g._count._all, 0);
+      const sizes = usable.filter(g => g.part === part).map(g => g._count._all);
+      const fits = (target: number) => [1, 2, 5].includes(part)
+        ? count >= target : fittingGroups(sizes, size => size, target).length > 0;
+      return { part, count, available: fits(needed), miniAvailable: fits(EXAM_COUNTS.MINI[i]) };
+    });
     return { source: 'SANTA_EDNET', totalQuestions: byPart.reduce((sum, p) => sum + p.count, 0), byPart,
       modes: Object.entries(EXAM_COUNTS).map(([examType, requirements]) => ({ examType,
-        available: requirements.every((n, i) => byPart[i].count >= n), questionCount: requirements.reduce((sum, n) => sum + n, 0) })) };
+        available: requirements.every((n, i) => !n || (examType === 'MINI' ? byPart[i].miniAvailable : byPart[i].available)),
+        questionCount: requirements.reduce((sum, n) => sum + n, 0) })) };
   }
 
   private async selectQuestions(examType: string, parts?: number[]) {
@@ -98,14 +112,15 @@ export class ExamService {
     }
   }
 
-  async submitExam(userId: number, dto: SubmitExamDto) {
+  async submitExam(userId: number, dto: SubmitExamDto): Promise<{ attemptId: number; submittedAt?: Date | null; listeningCorrect: number; readingCorrect: number; totalCorrect: number; listeningScore: number | null; readingScore: number | null; totalScore: number | null }> {
     const attempt = await this.getOwnedAttempt(userId, dto.attemptId);
     if (attempt.submittedAt) return this.submissionResult(attempt);
     this.assertOpen(attempt);
     this.validateAnswers(attempt, dto.answers);
     const questions = await this.questionsFor(attempt);
     const deadline = attempt.deadlineAt ?? this.deadline(attempt.examType, attempt.selectedParts, questions, attempt.startedAt);
-    const answers = Date.now() > deadline.getTime() ? this.draft(attempt) : dto.answers;
+    const expired = Date.now() >= deadline.getTime();
+    const answers = expired ? this.draft(attempt) : dto.answers;
     const selected = new Map(answers.map(a => [a.questionId, a.selectedAnswer]));
     const byId = new Map(questions.map((q) => [q.id, q]));
     const records = attempt.questionIds.map((questionId) => ({
@@ -123,7 +138,7 @@ export class ExamService {
     const submittedAt = new Date();
     await this.prisma.$transaction(async (tx) => {
       const claimed = await tx.examAttempt.updateMany({
-        where: { id: attempt.id, submittedAt: null },
+        where: { id: attempt.id, submittedAt: null, ...(expired && { draftRevision: attempt.draftRevision }) },
         data: { submittedAt, ...scores },
       });
       if (!claimed.count) return;
@@ -137,6 +152,7 @@ export class ExamService {
     });
     const saved = await this.getOwnedAttempt(userId, attempt.id);
     if (saved.submittedAt) return this.submissionResult(saved);
+    if (expired && saved.draftRevision !== attempt.draftRevision) return this.submitExam(userId, dto);
     return { attemptId: attempt.id, listeningCorrect, readingCorrect, totalCorrect, ...scores };
   }
 

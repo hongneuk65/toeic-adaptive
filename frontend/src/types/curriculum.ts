@@ -18,6 +18,7 @@ export interface CurriculumOverview {
   researchSources: { title: string; url: string }[];
 }
 export interface CurriculumUnit {
+  contentVersion: string;
   id: string; title: string; objectives: string[]; prerequisites: string[]; minutes: number;
   knowledge: string; examples: { prompt: string; explanation: string }[];
   vocabulary: { word: string; meaning: string; example: string }[];

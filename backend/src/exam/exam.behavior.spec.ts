@@ -32,7 +32,7 @@ describe('Exam behavior', () => {
       findUnique: jest.fn<() => Promise<ExamAttempt | null>>(),
       create: jest.fn<() => Promise<ExamAttempt>>(),
     },
-    question: { findMany: jest.fn<() => Promise<typeof questions>>() },
+    question: { groupBy: jest.fn<() => Promise<unknown[]>>(), findMany: jest.fn<() => Promise<typeof questions>>() },
     examAnswer: { findMany: jest.fn<() => Promise<unknown[]>>() },
     $transaction: jest.fn<(callback: (client: typeof tx) => Promise<void>) => Promise<void>>(),
   };
@@ -177,6 +177,28 @@ describe('Exam behavior', () => {
     db.examAttempt.findUnique.mockResolvedValue({ ...makeAttempt(), submittedAt: startedAt });
     expect(await service.submitExam(1, { attemptId: 10, answers: [] })).toEqual(expect.objectContaining({attemptId: 10, submittedAt: startedAt}));
     expect(tx.examAnswer.createMany).not.toHaveBeenCalled();
+  });
+
+  it('grades the latest saved draft when the revision changes at the deadline', async () => {
+    const deadlineAt = new Date(0);
+    const first = { ...makeAttempt(), deadlineAt, draftRevision: 1, draftAnswers: [] };
+    const latest = { ...first, draftRevision: 2, draftAnswers: [{ questionId: 1, selectedAnswer: 'A' }] };
+    db.examAttempt.findUnique.mockResolvedValueOnce(first).mockResolvedValue(latest);
+    tx.examAttempt.updateMany.mockResolvedValueOnce({ count: 0 }).mockResolvedValueOnce({ count: 1 });
+    const result = await service.submitExam(1, { attemptId: 10, answers: [] });
+    expect(result.totalCorrect).toBe(1);
+    expect(tx.examAttempt.updateMany).toHaveBeenLastCalledWith(expect.objectContaining({
+      where: { id: 10, submittedAt: null, draftRevision: 2 },
+    }));
+    expect(tx.examAnswer.createMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('checks group sizes when the bank contains enough individual questions', async () => {
+    db.question.groupBy.mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ part: 3, audioUrl: 'group', _count: { _all: 40 } }])
+      .mockResolvedValueOnce([]);
+    const catalog = await service.catalog();
+    expect(catalog.byPart[2]).toMatchObject({ count: 40, available: false, miniAvailable: false });
   });
 
   it('allows only one concurrent submission to claim an attempt', async () => {

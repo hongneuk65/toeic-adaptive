@@ -9,7 +9,7 @@ import { useAsyncResource } from '../hooks/useAsyncResource';
 interface ExamCatalog {
   source: 'SANTA_EDNET';
   totalQuestions: number;
-  byPart: { part: number; count: number }[];
+  byPart: { part: number; count: number; available?: boolean }[];
   modes: { examType: ExamSession['examType']; available: boolean; questionCount: number }[];
 }
 const parts = [
@@ -39,7 +39,10 @@ export const ExamListPage = () => {
   const starting = useRef(false);
   const [error, setError] = useState('');
   const catalog = useAsyncResource(useCallback((signal: AbortSignal) => api<ExamCatalog>('/exam/catalog', { signal }), []));
-  const available = (part: number, count: number) => (catalog.data?.byPart.find(item => item.part===part)?.count ?? 0) >= count;
+  const available = (part: number, count: number) => {
+    const entry = catalog.data?.byPart.find(item => item.part === part);
+    return entry?.available ?? ((entry?.count ?? 0) >= count);
+  };
   const availableParts = parts.filter(item => available(item.part,item.count)).map(item => item.part);
   const selectedMode = catalog.data?.modes.find(mode => mode.examType===selected);
   const chosen = parts.filter(item => selectedParts.includes(item.part));

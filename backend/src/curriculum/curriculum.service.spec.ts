@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { CURRICULUM_VERSION } from './policy';
 import { jest } from '@jest/globals';
 import { CurriculumService } from './curriculum.service';
 import { CurriculumController } from './curriculum.controller';
@@ -39,6 +41,7 @@ describe('persistent user-owned curriculum',()=>{
   db.$transaction=jest.fn<any>().mockImplementation(async(fn:any)=>fn(db));
   service=new CurriculumService(db as PrismaService);
  });
+ const version=(u: typeof unit)=>createHash('sha256').update(JSON.stringify([CURRICULUM_VERSION,u])).digest('hex');
  const answers=()=>Object.fromEntries(unit.checkpoint.map(q=>[q.id,q.answer]));
  async function enroll(userId=1,trackId=first.id){return service.enroll(userId,{trackId,minutesPerDay:30});}
  it('returns no checkpoint answer or explanation before submission',async()=>{
@@ -47,8 +50,19 @@ describe('persistent user-owned curriculum',()=>{
   for(const q of result.checkpoint){expect(q).not.toHaveProperty('answer');expect(q).not.toHaveProperty('explanation');}
   expect(result.guided[0]).toHaveProperty('answer');
  });
+ it('only grades the content version returned when the learner opened the unit', async()=>{
+  await enroll();
+  const opened=await service.unit(1,unit.id);
+  const dto={requestId:'version_check',answers:answers()};
+  await expect(service.submit(1,unit.id,{...dto,contentVersion:'0'.repeat(64)})).rejects.toThrow('tải lại');
+  await expect(service.submit(1,unit.id,dto)).rejects.toThrow('tải lại');
+  expect(attempts.size).toBe(0);
+  await expect(service.submit(1,unit.id,{...dto,contentVersion:opened.contentVersion})).resolves.toMatchObject({passed:true});
+  await expect(service.submit(1,unit.id,dto)).resolves.toMatchObject({passed:true});
+  expect(attempts.size).toBe(1);
+ });
  it('persists server-graded completion once and replays stored results on duplicate requests',async()=>{
-  await enroll();const dto={requestId:'request_0001',answers:answers()};
+  await enroll();const dto={contentVersion:version(unit),requestId:'request_0001',answers:answers()};
   const result=await service.submit(1,unit.id,dto), replay=await service.submit(1,unit.id,dto);
   expect(result).toEqual(replay);expect(result).toMatchObject({score:100,passed:true});
   expect(attempts.size).toBe(1);expect(progress.size).toBe(1);
@@ -59,7 +73,7 @@ describe('persistent user-owned curriculum',()=>{
  });
  it('scopes attempts and progress to authenticated user even when request IDs match',async()=>{
   await enroll(1);await enroll(2);
-  const dto={requestId:'same_request',answers:answers()};await service.submit(1,unit.id,dto);
+  const dto={contentVersion:version(unit),requestId:'same_request',answers:answers()};await service.submit(1,unit.id,dto);
   expect((await service.overview(2)).progress.completed).toBe(0);
   await service.submit(2,unit.id,dto);expect(attempts.size).toBe(2);
   expect((await service.overview(1)).progress.completed).toBe(1);
@@ -67,12 +81,12 @@ describe('persistent user-owned curriculum',()=>{
  it('rejects locked units and invalid answers without saving progress',async()=>{
   await enroll();const locked=first.units.find(u=>u.prerequisites.length>0)!;
   await expect(service.unit(1,locked.id)).rejects.toThrow('kiến thức nền');
-  await expect(service.submit(1,locked.id,{requestId:'locked_request',answers:Object.fromEntries(locked.checkpoint.map(q=>[q.id,q.answer]))})).rejects.toThrow('chưa được mở');
-  await expect(service.submit(1,unit.id,{requestId:'invalid_request',answers:{}})).rejects.toThrow('đầy đủ');
+  await expect(service.submit(1,locked.id,{contentVersion:version(locked),requestId:'locked_request',answers:Object.fromEntries(locked.checkpoint.map(q=>[q.id,q.answer]))})).rejects.toThrow('chưa được mở');
+  await expect(service.submit(1,unit.id,{contentVersion:version(unit),requestId:'invalid_request',answers:{}})).rejects.toThrow('đầy đủ');
   expect(progress.size).toBe(0);expect(attempts.size).toBe(0);
  });
  it('retains prior track progress and due reviews after switching tracks',async()=>{
-  await enroll();await service.submit(1,unit.id,{requestId:'request_saved',answers:answers()});
+  await enroll();await service.submit(1,unit.id,{contentVersion:version(unit),requestId:'request_saved',answers:answers()});
   const saved=progress.get(key(1,unit.id));saved.nextReviewAt=new Date('2020-01-01');
   attempts.get(key(1,'request_saved')).createdAt=new Date('2020-01-01');
   const nextTrack=CURRICULUM_TRACKS[1];await enroll(1,nextTrack.id);
@@ -83,8 +97,8 @@ describe('persistent user-owned curriculum',()=>{
  });
  it('stops the daily plan after a successful full unit and counts repeats only once',async()=>{
   await enroll();
-  await service.submit(1,unit.id,{requestId:'daily_pass_1',answers:answers()});
-  await service.submit(1,unit.id,{requestId:'daily_pass_2',answers:answers()});
+  await service.submit(1,unit.id,{contentVersion:version(unit),requestId:'daily_pass_1',answers:answers()});
+  await service.submit(1,unit.id,{contentVersion:version(unit),requestId:'daily_pass_2',answers:answers()});
   const overview=await service.overview(1);
   expect(overview.daySummary).toMatchObject({budgetMinutes:30,completedMinutes:unit.minutes,remainingMinutes:0});
   expect(overview.today).toEqual([]);
@@ -93,7 +107,7 @@ describe('persistent user-owned curriculum',()=>{
  it('does not consume the daily workload budget when an attempt fails',async()=>{
   await enroll();
   const wrong=Object.fromEntries(unit.checkpoint.map(q=>[q.id,(q.answer+1)%q.options.length]));
-  await service.submit(1,unit.id,{requestId:'daily_fail_1',answers:wrong});
+  await service.submit(1,unit.id,{contentVersion:version(unit),requestId:'daily_fail_1',answers:wrong});
   const overview=await service.overview(1);
   expect(overview.daySummary).toMatchObject({budgetMinutes:30,completedMinutes:0,remainingMinutes:30});
   expect(overview.today[0]).toMatchObject({id:unit.id,reason:'new'});

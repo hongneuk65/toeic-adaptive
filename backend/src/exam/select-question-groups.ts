@@ -8,6 +8,19 @@ function sourcePosition(question: GroupableQuestion): number | undefined {
   return typeof stimulus.questionPosition === 'number' ? stimulus.questionPosition : undefined;
 }
 
+// The catalog and the actual draw must agree on which whole groups fit.
+export function fittingGroups<T>(groups: T[], sizeOf: (group: T) => number, count: number): T[] {
+  const choices = new Map<number, T[]>([[0, []]]);
+  for (const group of groups) {
+    for (const [size, selected] of Array.from(choices.entries())) {
+      const next = size + sizeOf(group);
+      if (next <= count && !choices.has(next)) choices.set(next, [...selected, group]);
+    }
+    if (choices.has(count)) break;
+  }
+  return choices.get(count) ?? [];
+}
+
 export function selectQuestionGroups<T extends GroupableQuestion>(questions: T[], count: number, part: number): T[] {
   const grouped = new Map<string, T[]>();
   for (const question of questions) {
@@ -20,16 +33,7 @@ export function selectQuestionGroups<T extends GroupableQuestion>(questions: T[]
   for (let i = groups.length - 1; i > 0; i--) {
     const j = randomInt(i + 1); [groups[i], groups[j]] = [groups[j], groups[i]];
   }
-  // Exact subset sum keeps conversations and reading passages together.
-  const choices = new Map<number, T[][]>([[0, []]]);
-  for (const group of groups) {
-    for (const [size, selected] of Array.from(choices.entries())) {
-      const next = size + group.length;
-      if (next <= count && !choices.has(next)) choices.set(next, [...selected, group]);
-    }
-    if (choices.has(count)) break;
-  }
-  return (choices.get(count) || []).flatMap(group => [...group].sort((a, b) => {
+  return fittingGroups(groups, group => group.length, count).flatMap(group => [...group].sort((a, b) => {
     const positionA = sourcePosition(a), positionB = sourcePosition(b);
     if (positionA !== undefined && positionB !== undefined) return positionA - positionB;
     if (part === 6) return Number(a.content.match(/\[(\d+)\]/)?.[1] || 0) - Number(b.content.match(/\[(\d+)\]/)?.[1] || 0);

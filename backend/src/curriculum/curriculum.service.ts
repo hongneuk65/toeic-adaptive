@@ -20,6 +20,9 @@ const json = (value: unknown) => value as Prisma.InputJsonValue;
 /** Original curriculum evidence stays separate from calibrated DAS3H observations. */
 @Injectable()
 export class CurriculumService {
+ private checkpointVersion(unit: (typeof CURRICULUM_TRACKS)[number]['units'][number]) {
+  return createHash('sha256').update(JSON.stringify([CURRICULUM_VERSION, unit])).digest('hex');
+ }
  constructor(private readonly prisma: PrismaService) {}
  private locate(id: string) {
   for (const track of CURRICULUM_TRACKS) {
@@ -84,7 +87,7 @@ export class CurriculumService {
   ]);
   const access = unitSummary(unit, states, enrollment?.trackId === track.id);
   if (!access.unlocked) throw new ConflictException('Chọn lộ trình và hoàn thành bài kiến thức nền trước khi mở bài này.');
-  return { ...unit, checkpoint: unit.checkpoint.map(safeCheckpoint), trackId: track.id, access };
+  return { ...unit, contentVersion: this.checkpointVersion(unit), checkpoint: unit.checkpoint.map(safeCheckpoint), trackId: track.id, access };
  }
  async submit(userId: number, id: string, dto: SubmitCurriculumDto) {
   const { track, unit } = this.locate(id);
@@ -102,6 +105,9 @@ export class CurriculumService {
    if (prior) {
     if (prior.unitId !== id || prior.payloadHash !== payloadHash) throw new ConflictException('Mã gửi bài đã được dùng cho câu trả lời khác.');
     return { ...(prior.result as object), attemptId: prior.id };
+   }
+   if (dto.contentVersion !== this.checkpointVersion(unit)) {
+    throw new ConflictException('Nội dung bài học đã thay đổi. Vui lòng tải lại bài trước khi gửi đáp án.');
    }
    const grade = gradeCheckpoint(unit.checkpoint, dto.answers);
    const [enrollment, states] = await Promise.all([
