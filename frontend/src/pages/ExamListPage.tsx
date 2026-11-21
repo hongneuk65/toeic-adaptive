@@ -63,8 +63,8 @@ export const ExamListPage = () => {
   const duration = selected === 'CUSTOM' ? estimatedMinutes : selected === 'FULL' ? 120 : 60;
   const readiness = catalog.loading ? 'Đang kiểm tra ngân hàng câu hỏi…' : catalog.error ? 'Chưa tải được dữ liệu. Vui lòng thử lại.' : ready ? 'Sẵn sàng bắt đầu' : selected === 'CUSTOM' && !chosen.length ? 'Chọn ít nhất một Part để tiếp tục.' : 'Chưa đủ câu hỏi cho lựa chọn này.';
   return <div className="exam-selection">
-    <aside className="exam-selection-header"><div><p className="exam-selection-eyebrow">DÀNH CHO NGƯỜI MỚI</p><h2>Chưa biết nên bắt đầu từ đâu?</h2></div><Link to="/placement" className="primary-button">Đánh giá đầu vào</Link></aside>
     <header className="exam-selection-header"><div><p className="exam-selection-eyebrow">LUYỆN TẬP & LUYỆN THI</p><h1>Chọn bài luyện TOEIC</h1></div><Link to="/history"><StudyIcon name="clock" />Lịch sử làm bài</Link></header>
+    <aside className="exam-placement-nudge" aria-label="Dành cho người mới"><p><span aria-hidden="true">🔔</span> <strong>Chưa biết nên bắt đầu từ đâu?</strong> Làm bài đánh giá đầu vào để hệ thống gợi ý Part cần luyện trước.</p><Link to="/placement" className="primary-button">Đánh giá đầu vào</Link></aside>
     <fieldset className="exam-selection-modes" disabled={busy}><legend className="sr-only">Hình thức luyện thi</legend>{modes.map(mode => <label key={mode.type} data-selected={selected === mode.type || undefined}><input type="radio" name="exam-mode" value={mode.type} checked={selected === mode.type} onChange={() => {setSelected(mode.type);setError('');}} /><span><strong>{mode.label}</strong><small>{mode.detail}</small></span></label>)}</fieldset>
     <section className="exam-selection-workspace" aria-label="Thiết lập bài luyện">
       <div className="exam-selection-content">

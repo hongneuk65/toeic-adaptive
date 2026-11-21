@@ -1,5 +1,5 @@
 .learning-progress {
-  --progress-accent: #008f8f;
+  --progress-accent: #005c5c;
   --progress-active: #e7f1f3;
   --progress-error: #a54a28;
   padding: 24px;
@@ -7,7 +7,7 @@
   border: 1px solid var(--nature-line, #d8e3e2);
   border-radius: 20px;
   background: var(--nature-surface, #fff);
-  color: var(--nature-ink, #008f8f);
+  color: var(--nature-ink, #005c5c);
 }
 
 .progress-heading {

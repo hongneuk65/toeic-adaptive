@@ -1,7 +1,7 @@
 /* Vocabulary studio: real set identity and one focused learning surface. */
-.study-layout[data-section=flashcards] .vocabulary-studio.prep-flashcard-focus {padding:24px;background:var(--nature-soft);border:1px solid var(--nature-line);border-radius:20px}
-.study-layout[data-section=flashcards] .vocabulary-studio.prep-flashcard-focus .primary-button {background:#008f8f;color:#fff;border-color:#008f8f;min-height:44px}
-@media(max-width:639px) {.study-layout[data-section=flashcards] .vocabulary-studio.prep-flashcard-focus {padding:12px;border-radius:16px}}
+.study-layout[data-section=flashcards] .vocabulary-studio.prep-flashcard-focus {padding:0;background:none;border:0;border-radius:20px}
+.study-layout[data-section=flashcards] .vocabulary-studio.prep-flashcard-focus .primary-button {background:var(--forum-red);color:#fff;border-color:transparent;min-height:44px}
+@media(max-width:639px) {.study-layout[data-section=flashcards] .vocabulary-studio.prep-flashcard-focus {padding:0}}
 .vocabulary-studio.prep-flashcard-focus .vocabulary-study-heading .page-header {flex-direction:row;align-items:center;gap:12px}
 .vocabulary-studio.prep-flashcard-focus .vocabulary-study-heading .page-header h1 {font-size:24px;text-align:left}
 .vocabulary-studio.prep-flashcard-focus .vocabulary-study-heading .page-header-actions {width:auto;flex-shrink:0}
@@ -13,7 +13,7 @@
   --studio-line: var(--nature-line, #d7e1db);
   --studio-surface: var(--nature-surface, #fffefa);
   --studio-soft: var(--nature-soft, #edf2ec);
-  --studio-accent: var(--study-blue, #008f8f);
+  --studio-accent: var(--study-blue, #005c5c);
   color: var(--studio-ink);
   padding: 0;
   border-radius: 0;

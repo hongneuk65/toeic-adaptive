@@ -63,7 +63,7 @@ export function TheoryReadingPage() {
     <PageHeader variant="compact" title="Kiến thức TOEIC" />
     {!lessonId && <ActivitySuggestions section="theory" compact />}
     {lessonId ? <section className="theory-reader" aria-label="Nội dung bài học">
-      <button className="theory-back secondary-button" onClick={() => changeFilter('lesson', '')}>Thư viện bài học</button>
+      <div className="theory-back-row"><button className="theory-back secondary-button" onClick={() => changeFilter('lesson', '')}><span aria-hidden="true">←</span> Thư viện bài học</button></div>
       {detail.loading ? <p role="status" className="theory-state">Đang tải bài học…</p> : detail.error ? <div role="alert" className="theory-state">{detail.error} <button onClick={detail.reload}>Thử lại</button></div> : detail.data ? <article>
         <div className="theory-reader-meta"><span>Part {detail.data.part}</span>{selectedSummary && <span>{selectedSummary.topic.title}</span>}</div>
         <h2>{detail.data.title}</h2>

@@ -1,13 +1,12 @@
 /* Practice libraries share the same measured rhythm; the task stays in front of
    the garden backdrop. Colours inherit the site's light and dark palettes. */
 .study-layout:is([data-section=reading],[data-section=listening]) .practice-studio.prep-learning-study {
-  background:var(--nature-soft);border:1px solid var(--nature-line);border-radius:20px;padding:24px;
+  background:none;border:0;border-radius:0;padding:0;
 }
 .study-layout:is([data-section=reading],[data-section=listening]) .practice-studio.prep-learning-study .primary-button {
-  background:#008f8f;color:#fff;border-color:#008f8f;min-height:44px;
+  background:var(--forum-red);color:#fff;border-color:transparent;min-height:44px;
 }
 @media(max-width:639px) {
-  .study-layout:is([data-section=reading],[data-section=listening]) .practice-studio.prep-learning-study {padding:12px;border-radius:16px}
 }
 .study-layout:is([data-section=reading],[data-section=listening]) .practice-studio.prep-learning-study .section-disclosure {
   padding:14px 18px;background:var(--nature-surface);border:1px solid var(--nature-line);border-radius:12px;color:var(--nature-ink);
@@ -19,7 +18,7 @@
   --practice-ink:var(--nature-ink,#004242);
   --practice-muted:var(--nature-muted,#607570);
   --practice-line:var(--nature-line,#d8e3db);
-  --practice-accent:var(--study-blue,#008f8f);
+  --practice-accent:var(--study-blue,#005c5c);
   gap:20px;
 }
 .study-layout:is([data-section=reading],[data-section=listening]) .practice-studio > .page-header {
@@ -27,7 +26,7 @@
 }
 .study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .study-mode-grid {gap:12px}
 .study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .study-mode-card {
-  position:relative;min-height:98px;padding:19px 22px;border-radius:12px;
+  position:relative;min-height:98px;padding:19px 22px;border-radius:6px;
   background:var(--practice-surface);border:1px solid var(--practice-line);box-shadow:none;
 }
 .study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .study-mode-card:is([aria-pressed=true],[aria-expanded=true]) {
@@ -103,3 +102,20 @@
   .study-layout:is([data-section=reading],[data-section=listening]) .practice-studio :is(.prep-reading-passage,.prep-question-surface,.prep-listening-player,.practice-study-heading) {padding:18px;border-radius:12px}
   .study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .practice-study-heading h1 {font-size:21px}
 }
+
+/* Forum layout: the library uses the full width; "Góc học của bạn" is a slim strip above it. */
+.study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .prep-library-layout { display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
+.study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .prep-library-layout > .prep-learning-sidebar { order: -1; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 28px; padding: 14px 20px; border: 0; border-radius: 12px; background: var(--forum-beige); }
+.study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .prep-learning-sidebar > * { margin: 0 !important; }
+.study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .prep-learning-sidebar h2 { color: var(--forum-teal); font-family: var(--font-display); font-size: 15px; font-weight: 400; line-height: 28px; }
+.study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .prep-learning-sidebar .section-disclosure { flex: 1 1 260px; min-width: 0; border: 0; }
+.study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .prep-learning-sidebar .section-disclosure > summary { padding: 4px 0; font-size: 14px; }
+.study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .prep-library-catalog { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .prep-library-catalog .prep-learning-card { border-radius: 14px; }
+.study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .prep-library-catalog .prep-learning-card > .learning-card-heading { color: var(--forum-ink); font-family: var(--font-app); font-weight: 500; line-height: 1.45; }
+.study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .prep-library-catalog .prep-learning-card > .learning-card-action { color: var(--forum-red); font-family: var(--font-display); font-weight: 400; }
+.study-layout:is([data-section=reading],[data-section=listening]) .practice-studio .prep-library-catalog .prep-learning-card > .learning-card-action::after { content: ' →'; }
+
+/* A study task is one centred reading column on a white page. */
+.study-layout:is([data-section=reading],[data-section=listening]) .prep-learning-page .prep-study-preview { max-width: 860px; margin-inline: auto; }
+.study-layout[data-section=listening] .practice-studio.listening-studio.prep-learning-study > * { width: 100%; max-width: 860px; margin-inline: auto; }

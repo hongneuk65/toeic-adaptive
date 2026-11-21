@@ -1,12 +1,12 @@
-button.media-circle{display:inline-flex;align-items:center;justify-content:center;flex:0 0 46px;width:46px;height:46px;min-height:46px;min-width:46px;padding:0;border:1px solid #c7dbd6;border-radius:50%;background:#e7f1f3;color:#008f8f;box-shadow:none;cursor:pointer;vertical-align:middle}
+button.media-circle{display:inline-flex;align-items:center;justify-content:center;flex:0 0 46px;width:46px;height:46px;min-height:46px;min-width:46px;padding:0;border:1px solid #c7dbd6;border-radius:50%;background:#e7f1f3;color:#005c5c;box-shadow:none;cursor:pointer;vertical-align:middle}
 button.media-circle:hover{background:#e7f1f3;border-color:#82b2bb}
-button.media-circle:focus-visible{outline:3px solid #008f8f;outline-offset:3px}
+button.media-circle:focus-visible{outline:3px solid #005c5c;outline-offset:3px}
 button.media-circle:disabled{opacity:.5;cursor:not-allowed}
-button.media-circle-mic{background:#008f8f;color:#fff;border-color:#008f8f}
+button.media-circle-mic{background:#005c5c;color:#fff;border-color:#005c5c}
 button.media-circle-mic[data-active]{background:#ad3e54;color:#fff;border-color:#ad3e54}
 .audio-control-row{display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap}
 .audio-clip-control{flex:1;min-width:min(100%,180px);max-width:480px}
-.audio-seek{flex:1;width:80px;min-width:50px;accent-color:#008f8f;cursor:pointer;min-height:32px}
+.audio-seek{flex:1;width:80px;min-width:50px;accent-color:#005c5c;cursor:pointer;min-height:32px}
 .audio-time{font-size:11px;color:var(--nature-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .audio-control-row audio{display:none}
 .media-record-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-width:0}
@@ -31,7 +31,7 @@ button.media-circle-mic[data-active]{background:#ad3e54;color:#fff;border-color:
 .listening-player-layout>label{font-size:11px;flex-shrink:0}
 .speaking-microphone>.audio-clip-control{min-width:0;width:100%}
 .speaking-microphone>.audio-clip-control .audio-control-row{gap:8px}
-button.media-circle-mic:hover{background:#008f8f;color:#fff;border-color:#008f8f}
+button.media-circle-mic:hover{background:#005c5c;color:#fff;border-color:#005c5c}
 button.media-circle-mic[data-active]:hover{background:#983449;color:#fff;border-color:#983449}
 .study-layout[data-section=flashcards] .vocabulary-studio .vocabulary-practice-modes{grid-template-columns:repeat(6,minmax(0,1fr))}
 @media(max-width:639px){.study-layout[data-section=flashcards] .vocabulary-studio .vocabulary-practice-modes{grid-template-columns:repeat(3,minmax(0,1fr))}}

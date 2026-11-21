@@ -29,7 +29,7 @@
 .study-layout[data-section=theory] .app-content{max-width:1240px}
 .study-layout[data-section=theory] .page-header-feature{padding:0 0 24px;border-bottom:1px solid var(--study-line)}
 .study-layout[data-section=theory] .prep-knowledge-tabs{background:transparent;border-radius:0;padding:0 0 12px;border-bottom:1px solid #e7f1f3;gap:8px}
-.study-layout[data-section=theory] .prep-knowledge-tabs button{border-radius:999px;color:#6b7d96;min-height:44px}
+.study-layout[data-section=theory] .prep-knowledge-tabs button{border-radius:6px;color:#6b7d96;min-height:44px}
 .study-layout[data-section=theory] .prep-knowledge-tabs button[aria-pressed=true]{background:var(--study-navy);color:#fff;box-shadow:none}
 .study-layout[data-section=theory] .prep-theory-outline{position:static;padding:20px 24px;border-radius:24px;border:1px solid var(--study-line);background:#f1f7f8}
 .study-layout[data-section=theory] .prep-theory-outline nav{display:flex;flex-wrap:wrap;gap:8px;max-height:220px;margin-top:14px}
@@ -59,10 +59,10 @@
 .study-layout[data-section=history] .page-header{padding:0 0 24px;border-bottom:1px solid var(--study-line)}
 .study-layout[data-section=history] .history-list{border:0;border-radius:0;background:transparent;overflow:visible}
 .study-layout[data-section=history] .history-card{position:relative;background:var(--workspace-surface);margin:0 0 16px 20px;border:1px solid #e7f1f3;border-radius:14px;padding:23px}
-.study-layout[data-section=history] .history-card::before{content:'';position:absolute;left:-20px;top:32px;width:9px;height:9px;border-radius:50%;background:#239591;box-shadow:0 0 0 5px #edf4f6}
+.study-layout[data-section=history] .history-card::before{content:'';position:absolute;left:-20px;top:32px;width:9px;height:9px;border-radius:50%;background:#137a74;box-shadow:0 0 0 5px #edf4f6}
 .study-layout[data-section=history] .history-card::after{content:'';position:absolute;left:-16px;top:49px;bottom:-30px;width:1px;background:#e7f1f3}
 .study-layout[data-section=history] .history-card:last-child::after{display:none}
-@media(hover:hover){.study-layout[data-section=listening] .prep-learning-card:hover,.study-layout[data-section=flashcards] .prep-folder-tile:hover{transform:translateY(-3px);box-shadow:0 10px 24px #008f8f0c}.study-layout[data-section=reading] .prep-learning-library .prep-learning-card:hover{background:var(--workspace-soft)}}
+@media(hover:hover){.study-layout[data-section=listening] .prep-learning-card:hover,.study-layout[data-section=flashcards] .prep-folder-tile:hover{transform:translateY(-3px);box-shadow:0 10px 24px #005c5c0c}.study-layout[data-section=reading] .prep-learning-library .prep-learning-card:hover{background:var(--workspace-soft)}}
 @media(min-width:1000px){.study-layout[data-section=reading] .prep-learning-sidebar{grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}}
 @media(max-width:1100px){.study-layout[data-section=listening] .prep-learning-library .prep-library-catalog,.study-layout[data-section=flashcards] .prep-folder-catalog{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.study-layout[data-section=reading] .prep-learning-library .prep-learning-card{grid-template-columns:32px minmax(0,1fr);gap:8px 12px;padding:20px 6px}.study-layout[data-section=reading] .prep-learning-library .prep-learning-card>span:nth-child(4){grid-column:2;grid-row:auto;justify-self:start;font-size:11px;padding:8px 12px}.study-layout[data-section=reading] .prep-learning-library .prep-learning-card>span:nth-child(2){font-size:18px}.study-layout[data-section=listening] .prep-learning-library>.page-header{padding:0 0 24px;border-radius:0}.study-layout[data-section=listening] .prep-learning-library>.page-header h1{font-size:28px}.study-layout[data-section=listening] .prep-learning-library .prep-library-catalog{grid-template-columns:1fr}.study-layout[data-section=listening] .prep-learning-card{padding:22px}.study-layout[data-section=flashcards] .prep-folder-catalog{grid-template-columns:1fr}.study-layout[data-section=theory] .prep-theory-reading{padding:25px 20px}.study-layout[data-section=theory] .prep-theory-outline{padding:18px}.study-layout[data-section=theory] .prep-theory-outline nav{display:none}.study-layout[data-section=recommendations] .prep-priority-skill{padding:26px}.study-layout[data-section=recommendations] .prep-priority-skill h2{font-size:24px}.study-layout[data-section=history] .history-card{padding:18px;margin-left:14px}.study-layout[data-section=history] .history-card::before{left:-14px}.study-layout[data-section=history] .history-card::after{left:-10px}}
@@ -85,20 +85,20 @@
 .study-layout[data-section=recommendations] .prep-priority-skill{padding:28px 32px}
 @media(max-width:700px){.study-layout[data-section] .page-header-feature{min-height:0}.study-layout[data-section=reading] .prep-library-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px}.study-layout[data-section=reading] .prep-library-filters>select:last-child{grid-column:1/-1}.study-layout[data-section=reading] .prep-library-filters select{font-size:13px;padding:10px;min-width:0}.study-layout[data-section=reading] .prep-learning-library .prep-learning-card{padding:20px 16px}.study-layout[data-section=recommendations] .prep-priority-skill{padding:24px}}
 /* Program identity follows the corresponding cards on the homepage. */
-.study-layout[data-section=reading]{--section-accent:#239591;--section-tint:#f1f7f8}
-.study-layout[data-section=listening]{--section-accent:#008f8f;--section-tint:#f0f6f8}
-.study-layout[data-section=theory]{--section-accent:#008f8f;--section-tint:#e8f1f3}
+.study-layout[data-section=reading]{--section-accent:#137a74;--section-tint:#f1f7f8}
+.study-layout[data-section=listening]{--section-accent:#005c5c;--section-tint:#f0f6f8}
+.study-layout[data-section=theory]{--section-accent:#005c5c;--section-tint:#e8f1f3}
 .study-layout[data-section=flashcards]{--section-accent:#926728;--section-tint:#f8f1e7}
-.study-layout[data-section=history],.study-layout[data-section=recommendations]{--section-accent:#239591;--section-tint:#f1f7f8}
+.study-layout[data-section=history],.study-layout[data-section=recommendations]{--section-accent:#137a74;--section-tint:#f1f7f8}
 .study-layout[data-section] .page-header-eyebrow{color:var(--section-accent,var(--study-blue))}
 .study-layout[data-section=reading] .prep-learning-library .prep-library-catalog{background:var(--section-tint)}
 .study-layout[data-section=listening] .prep-learning-card,.study-layout[data-section=flashcards] .prep-folder-tile{background:var(--section-tint);border-color:var(--study-line);border-radius:24px}
 .study-layout[data-section=listening] .prep-learning-card::before,.study-layout[data-section=flashcards] .vocabulary-folder-icon{background:#ffffffa6;color:var(--section-accent)}
 .study-layout[data-section=flashcards] .prep-folder-tile h2{color:var(--section-accent)}
-.study-layout[data-section=flashcards] .prep-folder-tile .primary-button{background:#fff;color:var(--section-accent);border:1px solid #e7f1f3;border-radius:999px}
+.study-layout[data-section=flashcards] .prep-folder-tile .primary-button{background:#fff;color:var(--section-accent);border:1px solid #e7f1f3;border-radius:6px}
 .study-layout[data-section=theory] .prep-theory-outline{background:var(--section-tint)}
 .study-layout[data-section=theory] .prep-knowledge-tabs button[aria-pressed=true],.study-layout[data-section=theory] .prep-theory-outline nav button[aria-current=true]{background:var(--section-accent);border-color:var(--section-accent)}
-.study-layout[data-section=recommendations] .prep-priority-skill{background:#008f8f;border-radius:28px}
+.study-layout[data-section=recommendations] .prep-priority-skill{background:#005c5c;border-radius:28px}
 .study-layout[data-section=listening] .prep-learning-library>.page-header h1{font-size:36px}
 @media(max-width:700px){.study-layout[data-section=listening] .prep-learning-library>.page-header h1{font-size:30px}.study-layout[data-section] :is(.prep-learning-card,.prep-folder-tile){border-radius:24px}}
 @media(max-width:700px){.study-layout[data-section=listening] input[aria-label="Tìm bài nghe"]{flex-basis:100%;width:100%;min-height:44px}}
