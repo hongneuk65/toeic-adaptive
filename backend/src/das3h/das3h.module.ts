@@ -4,6 +4,7 @@ import { Das3hService } from './das3h.service';
 import { Das3hController } from './das3h.controller';
 import { AdaptiveSchedulerService } from './adaptive-scheduler.service';
 import { PracticeSupportService } from './practice-support.service';
+import { MistakeReviewService } from './mistake-review.service';
 
 import { PrismaModule } from '../prisma/prisma.module';
 import { MasteryQueueModule } from '../queue/mastery-queue.module';
@@ -18,6 +19,7 @@ import { MasteryQueueModule } from '../queue/mastery-queue.module';
     ],
     providers: [
         PracticeSupportService,
+        MistakeReviewService,
         Das3hService,
         AdaptiveSchedulerService,
     ],

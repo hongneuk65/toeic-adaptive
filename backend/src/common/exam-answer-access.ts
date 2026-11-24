@@ -14,3 +14,15 @@ export async function assertQuestionAnswersAccessible(prisma: PrismaService, use
   });
   if (openExam) throw new ForbiddenException('Nộp bài thi đang làm trước khi xem đáp án hoặc luyện lại câu hỏi này.');
 }
+
+/** Questions inside an unsubmitted, still-open exam; listing views must hide them too. */
+export async function openExamQuestionIds(prisma: PrismaService, userId: number, now = new Date()) {
+  const open = await prisma.examAttempt.findMany({
+    where: { userId, submittedAt: null, OR: [
+      { deadlineAt: { gt: now } },
+      { deadlineAt: null, startedAt: { gte: new Date(now.getTime() - 120 * 60_000) } },
+    ] },
+    select: { questionIds: true },
+  });
+  return new Set(open.flatMap(attempt => attempt.questionIds));
+}

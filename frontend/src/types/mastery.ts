@@ -49,10 +49,36 @@ export type AdaptiveQuestion = ExamQuestion;
 
 export interface AdaptiveQuestionResponse {
   selectedQuestion: AdaptiveQuestion;
-  predictedProb: number;
-  targetProb: number;
+  predictedProb: number | null;
+  targetProb: number | null;
   evaluatedCandidatesCount: number;
   isExploration: boolean;
+}
+
+export interface MistakeReviewQuestion {
+  questionId: number;
+  wrongCount: number;
+  attempts: number;
+  lastWrongAt: string;
+  predictedProbability: number | null;
+}
+
+export interface MistakeReviewSkill {
+  skillId: number;
+  skillName: string;
+  part: number;
+  masteryScore: number | null;
+  recentWrongRate: number;
+  dueCount: number;
+  reason: string;
+  questions: MistakeReviewQuestion[];
+}
+
+export interface MistakeReviewPlan {
+  skills: MistakeReviewSkill[];
+  openMistakes: number;
+  dueMistakes: number;
+  hiddenDueMistakes: number;
 }
 
 export interface AnswerAdaptiveResponse {

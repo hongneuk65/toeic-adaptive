@@ -22,11 +22,17 @@ interface Props {
   onAnswerRecorded: () => void;
   onNextQuestion?: () => void;
   contextLabel?: string;
+  /** Ôn lại đúng các câu từng sai theo thứ tự; không chọn câu thích ứng mới. */
+  reviewQuestionIds?: number[];
 }
 
-export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswerRecorded, onNextQuestion, contextLabel }) => {
-  const load = useCallback((signal: AbortSignal) =>
-    api<AdaptiveQuestionResponse>(`/das3h/adaptive-question?skillId=${skill.skillId}`, { signal }), [skill.skillId]);
+export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswerRecorded, onNextQuestion, contextLabel, reviewQuestionIds }) => {
+  const [reviewIndex, setReviewIndex] = useState(0);
+  const reviewId = reviewQuestionIds?.[reviewIndex];
+  const reviewTotal = reviewQuestionIds?.length ?? 0;
+  const load = useCallback((signal: AbortSignal) => reviewId
+    ? api<AdaptiveQuestionResponse>(`/das3h/review-question?questionId=${reviewId}&skillId=${skill.skillId}`, { signal })
+    : api<AdaptiveQuestionResponse>(`/das3h/adaptive-question?skillId=${skill.skillId}`, { signal }), [skill.skillId, reviewId]);
   const { data: adaptiveData, loading: loadingAdaptive, error, reload } = useAsyncResource(load);
   const [practiceAttemptId, setPracticeAttemptId] = useState(() => crypto.randomUUID());
   const answerPayload = useRef<string | null>(null);
@@ -48,8 +54,7 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
 
   useEffect(() => () => pendingAnswer.current?.abort(), []);
 
-  const loadQuestion = () => {
-    if (pendingAnswer.current) return;
+  const resetAnswer = () => {
     dialog.current?.focus();
     setSelectedOpt(null);
     setPracticeAttemptId(crypto.randomUUID());
@@ -58,7 +63,24 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
     setAnswerResult(null);
     setShowRagModal(false);
     setSubmitError('');
+  };
+
+  const loadQuestion = () => {
+    if (pendingAnswer.current) return;
+    resetAnswer();
     reload();
+  };
+
+  const hasNextReview = reviewTotal > 0 && reviewIndex + 1 < reviewTotal;
+  const nextQuestion = () => {
+    if (pendingAnswer.current) return;
+    if (reviewTotal > 0) {
+      if (!hasNextReview) return;
+      resetAnswer();
+      setReviewIndex(index => index + 1);
+      return;
+    }
+    if (onNextQuestion) onNextQuestion(); else loadQuestion();
   };
 
   const submitAdaptiveAnswer = async () => {
@@ -102,7 +124,7 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
         <div className="flex justify-between items-start gap-4 border-b border-paper-kraft pb-3">
           <div className="min-w-0">
             <span className="text-xs font-semibold text-ink-medium">
-              {contextLabel || 'Luyện kỹ năng'}
+              {contextLabel || 'Luyện kỹ năng'}{reviewTotal > 0 ? ` · Câu ${reviewIndex + 1}/${reviewTotal}` : ''}
             </span>
             <h3 className="text-xl font-semibold leading-snug break-words text-ink-dark mt-1">
               {skill.skillName} (Part {skill.part})
@@ -126,7 +148,7 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
           </div>
         ) : !adaptiveData ? (
           <div role="alert" className="py-8 text-center text-ink-medium">
-            {error || 'Không tìm thấy câu hỏi thích ứng cho kỹ năng này.'}
+            {error || (reviewTotal > 0 ? 'Không mở được câu ôn này.' : 'Không tìm thấy câu hỏi thích ứng cho kỹ năng này.')}
             <button onClick={loadQuestion} className="block mx-auto mt-3 underline">Thử lại</button>
           </div>
         ) : (
@@ -241,12 +263,13 @@ export const AdaptivePracticeModal: React.FC<Props> = ({ skill, onClose, onAnswe
                 </button>
               ) : (
                 <>
-                  <button
-                    onClick={onNextQuestion || loadQuestion}
+                  {reviewTotal > 0 && !hasNextReview && <p role="status" className="text-sm text-ink-medium sm:mr-auto">Đã ôn hết các câu trong nhóm này.</p>}
+                  {(reviewTotal === 0 || hasNextReview) && <button
+                    onClick={nextQuestion}
                     className="primary-button"
                   >
                     Câu tiếp theo
-                  </button>
+                  </button>}
                   <button
                     onClick={onClose}
                     className="secondary-button"

@@ -7,9 +7,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAsyncResource } from '../hooks/useAsyncResource';
 import { api } from '../lib/api';
-import type { LearningPlanItem, SkillMasteryItem, UserMasteryProfile } from '../types/mastery';
+import type { LearningPlanItem, MistakeReviewSkill, SkillMasteryItem, UserMasteryProfile } from '../types/mastery';
 import { AdaptivePracticeModal } from '../components/AdaptivePracticeModal';
 import { PageHeader } from '../components/ui/PageHeader';
+import { MistakeReview } from '../components/MistakeReview';
 
 interface TopicGroup {
   id: string; title: string; description: string; parts: number[]; skillIds: number[];
@@ -69,7 +70,7 @@ export function RecommendationsPage() {
     window.addEventListener(LEARNING_PROGRESS_UPDATED, reload);
     return () => { window.removeEventListener('focus', reload); window.removeEventListener(LEARNING_PROGRESS_UPDATED, reload); };
   }, [reload]);
-  const [practiceSession, setPracticeSession] = useState<{ title: string; skills: SkillMasteryItem[]; index: number; turn: number } | null>(null);
+  const [practiceSession, setPracticeSession] = useState<{ title: string; skills: SkillMasteryItem[]; index: number; turn: number; reviewQuestionIds?: number[] } | null>(null);
   const [filter, setFilter] = useState<TopicFilter>('all');
   const [page, setPage] = useState(1);
   const topics = profile?.topicGroups ?? [];
@@ -85,6 +86,10 @@ export function RecommendationsPage() {
   const practiceSkill = (id: number) => {
     const skill = profile?.skills.find(item => item.skillId === id);
     if (skill) setPracticeSession({ title: skill.skillName, skills: [skill], index: 0, turn: 0 });
+  };
+  const reviewMistakes = (item: MistakeReviewSkill) => {
+    const skill = skillsById.get(item.skillId) ?? { skillId: item.skillId, skillCode: '', skillName: item.skillName, part: item.part, masteryScore: item.masteryScore ?? 0, practiceCount: 0, lastPracticed: null };
+    setPracticeSession({ title: 'Ôn câu hay sai', skills: [skill], index: 0, turn: 0, reviewQuestionIds: item.questions.map(q => q.questionId) });
   };
   const practice = (topic: TopicGroup) => {
     const first = topic.recommendedSkillId;
@@ -104,6 +109,7 @@ export function RecommendationsPage() {
         <div className="topic-section-heading"><h2 id="today-topics-title">Buổi học tiếp theo</h2></div>
         {learningPlan && !groupedPriorities.length ? planPriorities.length ? <div className="topic-priorities">{planPriorities.map((item, index) => <PlanCard key={item.skillId} item={item} index={index} availableSkills={profile.skills} onPractice={practiceSkill} />)}</div> : <div className="topic-empty"><h3>Chưa có kỹ năng sẵn sàng để gợi ý</h3><p>Chọn bài từ thư viện.</p><Link className="secondary-button" to="/theory">Mở thư viện kiến thức</Link></div> : priorities.length ? <div className="topic-priorities topic-group-priorities">{priorities.map((topic, index) => <TopicCard key={topic.id} topic={topic} index={index} onPractice={practice} featured={index === 0} focusNames={(topic.focusSkillIds ?? []).filter(id => topic.practiceSkillIds?.includes(id)).flatMap(id => { const name = skillsById.get(id)?.skillName; return name ? [name] : []; })} />)}</div> : <div className="topic-empty"><h3>Chưa có chủ đề phù hợp</h3><p>Chọn bài từ thư viện.</p><Link className="secondary-button" to="/theory">Mở thư viện kiến thức</Link></div>}
       </section>
+      <MistakeReview onReview={reviewMistakes} />
       <LearningProgress />
       <LearnerOverview skills={profile.skills} onPractice={practiceSkill} />
       <details className="topic-browse">
@@ -116,6 +122,6 @@ export function RecommendationsPage() {
       </details>
       <section className="topic-next-paths" aria-label="Các cách học khác"><Link to="/flashcards"><span className="topic-path-icon" aria-hidden="true">Aa</span><div><h2>Ôn từ vựng</h2></div></Link><Link to="/exam"><span className="topic-path-icon" aria-hidden="true">✓</span><div><h2>Luyện đề</h2></div></Link></section>
     </>}
-    {practiceSession && <AdaptivePracticeModal key={`${practiceSession.skills[practiceSession.index].skillId}-${practiceSession.turn}`} skill={practiceSession.skills[practiceSession.index]} contextLabel={practiceSession.title} onNextQuestion={() => setPracticeSession(current => current ? { ...current, index: (current.index + 1) % current.skills.length, turn: current.turn + 1 } : null)} onClose={() => setPracticeSession(null)} onAnswerRecorded={reload} />}
+    {practiceSession && <AdaptivePracticeModal key={`${practiceSession.skills[practiceSession.index].skillId}-${practiceSession.turn}`} skill={practiceSession.skills[practiceSession.index]} contextLabel={practiceSession.title} reviewQuestionIds={practiceSession.reviewQuestionIds} onNextQuestion={() => setPracticeSession(current => current ? { ...current, index: (current.index + 1) % current.skills.length, turn: current.turn + 1 } : null)} onClose={() => setPracticeSession(null)} onAnswerRecorded={reload} />}
   </div>;
 }

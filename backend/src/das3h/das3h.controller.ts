@@ -17,6 +17,7 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { AdaptiveAnswerDto, PracticeSupportDto, RecordMasteryDto } from './dto/adaptive-answer.dto';
 import { PracticeSupportService } from './practice-support.service';
+import { MistakeReviewService } from './mistake-review.service';
 import { getUserId } from '../common/user-id';
 
 @Controller('das3h')
@@ -28,10 +29,27 @@ export class Das3hController {
         private readonly adaptiveScheduler: AdaptiveSchedulerService,
         private readonly masteryQueueService: MasteryQueueService,
         private readonly practiceSupport: PracticeSupportService,
+        private readonly mistakeReview: MistakeReviewService,
     ) { }
 
     @Get('status')
     getModelStatus() { return this.das3hService.getModelStatus(); }
+
+    /** Một vài kỹ năng yếu kèm các câu người học hay sai nhất, xếp theo dự đoán DAS3H. */
+    @Get('mistake-review')
+    getMistakeReview(@Req() req: any) {
+        return this.mistakeReview.forUser(getUserId(req));
+    }
+
+    /** Mở lại một câu từng làm sai để ôn; chấm qua POST /das3h/answer-adaptive. */
+    @Get('review-question')
+    getReviewQuestion(
+        @Req() req: any,
+        @Query('questionId', ParseIntPipe) questionId: number,
+        @Query('skillId', ParseIntPipe) skillId: number,
+    ) {
+        return this.mistakeReview.reviewQuestion(getUserId(req), questionId, skillId);
+    }
 
     @Post('practice-support')
     getPracticeSupport(@Req() req: any, @Body() body: PracticeSupportDto) {
