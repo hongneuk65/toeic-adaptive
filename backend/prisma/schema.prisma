@@ -670,3 +670,16 @@ model AdminAuditLog {
   @@index([createdAt])
   @@index([entity, entityId])
 }
+
+// Mã đăng nhập một lần gửi qua email. Chỉ lưu mã băm, không lưu mã gốc.
+model EmailOtp {
+  id         Int       @id @default(autoincrement())
+  email      String
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email, createdAt])
+}

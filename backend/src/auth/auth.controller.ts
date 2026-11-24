@@ -5,10 +5,12 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { OnboardingDto } from './dto/onboarding.dto';
 import { RequestBudgetGuard } from '../common/request-budget.guard';
+import { EmailOtpService } from './email-otp.service';
+import { RequestEmailOtpDto, VerifyEmailOtpDto } from './dto/email-otp.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private emailOtp: EmailOtpService) {}
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
@@ -39,5 +41,22 @@ export class AuthController {
   @UseGuards(RequestBudgetGuard)
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Get('otp/config')
+  otpConfig() {
+    return { enabled: this.emailOtp.enabled };
+  }
+
+  @Post('otp/request')
+  @UseGuards(RequestBudgetGuard)
+  requestOtp(@Body() dto: RequestEmailOtpDto) {
+    return this.emailOtp.request(dto.email);
+  }
+
+  @Post('otp/verify')
+  @UseGuards(RequestBudgetGuard)
+  verifyOtp(@Body() dto: VerifyEmailOtpDto) {
+    return this.emailOtp.verify(dto.email, dto.code);
   }
 }

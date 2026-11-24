@@ -1,20 +1,35 @@
 import { AuthShell } from '../components/ui/AuthShell';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { api, getErrorMessage } from '../lib/api';
 import { learningReturnTo } from '../auth/return-to';
 import { GoogleSignIn } from '../components/GoogleSignIn';
+import { EmailCodeLogin } from '../components/EmailCodeLogin';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [otpEnabled, setOtpEnabled] = useState(false);
+  const [useCode, setUseCode] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    api<{ enabled: boolean }>('/auth/otp/config', { signal: controller.signal })
+      .then(res => setOtpEnabled(res.enabled === true)).catch(() => setOtpEnabled(false));
+    return () => controller.abort();
+  }, []);
+
+  const finishLogin = async (token: string) => {
+    const user = await login(token);
+    navigate(user.role === 'ADMIN' ? '/admin' : learningReturnTo(location.state?.returnTo), { replace: true });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,8 +42,7 @@ export const LoginPage: React.FC = () => {
         data: { email, password },
       });
 
-      const user = await login(res.accessToken);
-      navigate(user.role === 'ADMIN' ? '/admin' : learningReturnTo(location.state?.returnTo), { replace: true });
+      await finishLogin(res.accessToken);
     } catch (err) {
       setErrorMessage(getErrorMessage(err, 'Đăng nhập thất bại. Vui lòng kiểm tra lại!'));
     } finally {
@@ -41,6 +55,7 @@ export const LoginPage: React.FC = () => {
       {location.state?.registered && <p role="status" className="mb-4 text-sm text-accent-navy">Đã tạo tài khoản. Đăng nhập để bắt đầu học.</p>}
       {errorMessage && <p role="alert" className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{errorMessage}</p>}
       <GoogleSignIn />
+      {useCode ? <EmailCodeLogin initialEmail={email} onToken={finishLogin} onCancel={() => setUseCode(false)} /> : <>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label htmlFor="login-email" className="form-label">Email</label>
@@ -52,6 +67,8 @@ export const LoginPage: React.FC = () => {
         </div>
         <button type="submit" disabled={loading} className="primary-button w-full">{loading ? 'Đang đăng nhập...' : 'Đăng nhập'}</button>
       </form>
+      {otpEnabled && <button type="button" className="secondary-button mt-4 w-full" onClick={() => { setErrorMessage(null); setUseCode(true); }}>Đăng nhập bằng mã gửi qua email</button>}
+      </>}
     </AuthShell>
   );
 };
