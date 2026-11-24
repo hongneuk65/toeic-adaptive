@@ -36,3 +36,6 @@ ednet_santa_mapping_clean/
 /.report-qa/
 /backend/public/
 /backend/demo-assets.manifest.json
+
+# Local assistant workspace
+.claude/
