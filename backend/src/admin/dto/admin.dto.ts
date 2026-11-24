@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsEnum,
   IsIn,
+  IsISO8601,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -13,8 +14,9 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateIf,
 } from 'class-validator';
-import { Difficulty, Role } from '@prisma/client';
+import { Difficulty, QuestionStatus, Role } from '@prisma/client';
 
 export class AdminQueryDto {
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
@@ -23,6 +25,19 @@ export class AdminQueryDto {
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(7) part?: number;
   @IsOptional() @IsIn(['true', 'false']) resolved?: string;
   @IsOptional() @IsIn(['CRAWL', 'OTHER']) source?: 'CRAWL' | 'OTHER';
+  @IsOptional() @IsEnum(QuestionStatus) status?: QuestionStatus;
+}
+
+export class KnowledgeReviewDto {
+  @IsIn(['APPROVE', 'REVOKE']) action: 'APPROVE' | 'REVOKE';
+  @ValidateIf((dto: KnowledgeReviewDto) => dto.action === 'APPROVE') @IsString() @IsNotEmpty() @MaxLength(2000) sourceUri?: string;
+  @ValidateIf((dto: KnowledgeReviewDto) => dto.action === 'APPROVE') @IsString() @IsNotEmpty() @MaxLength(200) sourceVersion?: string;
+  // The version the reviewer actually read; any later edit invalidates the approval.
+  @ValidateIf((dto: KnowledgeReviewDto) => dto.action === 'APPROVE') @IsISO8601() expectedUpdatedAt?: string;
+}
+
+export class QuestionStatusDto {
+  @IsEnum(QuestionStatus) status: QuestionStatus;
 }
 export class UpdateQuestionDto {
   @IsOptional() @IsInt() @Min(1) @Max(7) part?: number;

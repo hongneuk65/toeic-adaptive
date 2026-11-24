@@ -165,7 +165,7 @@ export class ListeningService {
   }
   async sourceStatus(userId: number, id: number, admin = false, range?: { start: number; end: number }) {
     const source = await this.source(userId, id, admin);
-    const practiceQuestions = await this.prisma.question.findMany({ where: { audioUrl: source.url }, select: questionSelect, orderBy: { id: 'asc' } });
+    const practiceQuestions = await this.prisma.question.findMany({ where: { status: 'PUBLISHED', audioUrl: source.url }, select: questionSelect, orderBy: { id: 'asc' } });
     const measured = (practiceQuestions[0]?.stimulus as { audioDurationSeconds?: number } | null)?.audioDurationSeconds;
     const effectiveRange = range && measured && source.ownerId === null ? { start: range.start, end: Math.min(range.end, measured) } : range;
     const transcript = await this.transcriptFor(id, source.videoId, effectiveRange);

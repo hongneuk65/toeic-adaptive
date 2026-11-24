@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import {
 } from './dto/admin.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { AdminAccessGuard } from './admin-access.guard';
+import { importedQuestions } from '../common/imported-questions';
 
 describe('Admin management protections', () => {
   const prisma = {
@@ -45,7 +47,7 @@ describe('Admin management protections', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
-    knowledgeChunk: { count: jest.fn(), deleteMany: jest.fn(), findUnique: jest.fn(), update: jest.fn(), create: jest.fn() },
+    knowledgeChunk: { count: jest.fn(), deleteMany: jest.fn(), findUnique: jest.fn(), update: jest.fn(), updateMany: jest.fn(), create: jest.fn() },
     flashcard: { findUnique: jest.fn(), update: jest.fn(), create: jest.fn() },
     flashcardFolder: { upsert: jest.fn() },
     readingReport: { findUnique: jest.fn(), update: jest.fn() },
@@ -101,7 +103,7 @@ describe('Admin management protections', () => {
     expect(result.items[0]).toMatchObject({ source: 'CRAWL' });
   });
   it('accepts a real three-choice Part 2 create DTO', async () => {
-    const dto = { part: 2, content: 'Listen', optionA: 'A', optionB: 'B', optionC: 'C', correctAnswer: 'A', skillIds: [2] };
+    const dto = { part: 2, content: 'Listen', audioUrl: '/media/p2.mp3', optionA: 'A', optionB: 'B', optionC: 'C', correctAnswer: 'A', skillIds: [2] };
     expect(await validate(plainToInstance(CreateQuestionDto, dto))).toHaveLength(0);
     prisma.skill.count.mockResolvedValue(1);
     prisma.skill.findMany.mockResolvedValue([{ id: 2, part: 2 }]);
@@ -320,5 +322,105 @@ describe('Admin management protections', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(prisma.flashcard.update).not.toHaveBeenCalled();
     expect(prisma.flashcardFolder.upsert).not.toHaveBeenCalled();
+  });
+
+  describe('question media integrity', () => {
+    const base = { content: 'Q', optionA: 'A', optionB: 'B', optionC: 'C', optionD: 'D', correctAnswer: 'A', skillIds: [2] };
+    it('stores blank optional media as NULL on create', async () => {
+      prisma.skill.count.mockResolvedValue(1);
+      prisma.skill.findMany.mockResolvedValue([{ id: 2, part: 5 }]);
+      await service.createQuestion({ ...base, part: 5, passage: '   ', audioUrl: '', imageUrl: '' });
+      expect(prisma.question.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ passage: null, audioUrl: null, imageUrl: null }) }));
+    });
+    it('requires the media each Part needs before creating', async () => {
+      await expect(service.createQuestion({ ...base, part: 1, audioUrl: '/a.mp3' })).rejects.toThrow('Part 1 cần hình ảnh');
+      await expect(service.createQuestion({ ...base, part: 3, audioUrl: ' ' })).rejects.toThrow('Part 3 cần âm thanh');
+      await expect(service.createQuestion({ ...base, part: 7, passage: '' })).rejects.toThrow('Part 7 cần đoạn văn');
+      expect(prisma.question.create).not.toHaveBeenCalled();
+    });
+    it('accepts only HTTPS or same-origin media paths', async () => {
+      for (const audioUrl of ['http://cdn.test/a.mp3', 'javascript:alert(1)', '//cdn.test/a.mp3'])
+        await expect(service.createQuestion({ ...base, part: 2, optionD: undefined, audioUrl })).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.question.create).not.toHaveBeenCalled();
+    });
+    it('does not treat blank-to-NULL normalization as a media change', async () => {
+      currentQuestion({ passage: '' });
+      await service.updateQuestion(1, { passage: '', explanation: 'Fixed' });
+      const data = prisma.question.update.mock.calls[0][0].data;
+      expect(data.passage).toBeNull();
+      expect(data.stimulus).toEqual(question.stimulus);
+    });
+    it('rejects removing required media but keeps legacy rows editable for text fixes', async () => {
+      currentQuestion();
+      await expect(service.updateQuestion(1, { audioUrl: '' })).rejects.toThrow('Part 2 cần âm thanh');
+      expect(prisma.question.update).not.toHaveBeenCalled();
+      currentQuestion({ audioUrl: null });
+      await service.updateQuestion(1, { explanation: 'Typo fix' });
+      expect(prisma.question.update).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('question lifecycle', () => {
+    const draft = { id: 4, part: 2, status: 'DRAFT', correctAnswer: 'A', optionD: '', audioUrl: '/a.mp3', passage: null, imageUrl: null, skills: [{ skill: { part: 2 } }] };
+    it('keeps learner banks limited to published items', () => {
+      expect(importedQuestions).toMatchObject({ status: 'PUBLISHED' });
+    });
+    it('creates admin questions as drafts', async () => {
+      prisma.skill.count.mockResolvedValue(1);
+      prisma.skill.findMany.mockResolvedValue([{ id: 2, part: 2 }]);
+      await service.createQuestion({ part: 2, content: 'Q', audioUrl: '/a.mp3', optionA: 'A', optionB: 'B', optionC: 'C', correctAnswer: 'A', skillIds: [2] });
+      expect(prisma.question.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: 'DRAFT' }) }));
+    });
+    it('publishes only complete items', async () => {
+      prisma.question.findUnique.mockResolvedValue({ ...draft, audioUrl: '', skills: [] });
+      await expect(service.setQuestionStatus(4, { status: 'PUBLISHED' })).rejects.toThrow(/Part 2 cần âm thanh; Câu hỏi chưa gắn kỹ năng/);
+      expect(prisma.question.update).not.toHaveBeenCalled();
+      prisma.question.findUnique.mockResolvedValue(draft);
+      await service.setQuestionStatus(4, { status: 'PUBLISHED' });
+      expect(prisma.question.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 4 }, data: { status: 'PUBLISHED' } }));
+    });
+    it('archives without re-validating and rejects unknown items', async () => {
+      prisma.question.findUnique.mockResolvedValue({ ...draft, status: 'PUBLISHED', audioUrl: null });
+      await service.setQuestionStatus(4, { status: 'ARCHIVED' });
+      expect(prisma.question.update).toHaveBeenCalledWith(expect.objectContaining({ data: { status: 'ARCHIVED' } }));
+      prisma.question.findUnique.mockResolvedValue(null);
+      await expect(service.setQuestionStatus(9, { status: 'PUBLISHED' })).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('knowledge review from the admin UI', () => {
+    const updatedAt = new Date('2026-11-20T10:00:00.000Z');
+    const chunk = { id: 8, title: 'Rule', content: 'Body', part: 5, skillCode: null, category: 'Grammar', keywords: ['rule'], lessonId: null,
+      sourceUri: null, sourceVersion: null, reviewStatus: 'DRAFT', reviewedAt: null, reviewedBy: null, approvedContentHash: null, updatedAt };
+    const approve = { action: 'APPROVE' as const, sourceUri: 'https://example.edu/rule', sourceVersion: 'v1', expectedUpdatedAt: updatedAt.toISOString() };
+    it('approves exactly the version the reviewer read', async () => {
+      prisma.knowledgeChunk.findUnique.mockResolvedValue(chunk);
+      prisma.user.findUnique.mockResolvedValue({ email: 'reviewer@test' });
+      prisma.knowledgeChunk.updateMany.mockResolvedValue({ count: 1 });
+      await expect(service.reviewKnowledge(1, 8, approve)).resolves.toMatchObject({ reviewStatus: 'APPROVED', index: 'DISABLED' });
+      expect(prisma.knowledgeChunk.updateMany).toHaveBeenCalledWith({ where: { id: 8, updatedAt },
+        data: expect.objectContaining({ reviewStatus: 'APPROVED', reviewedBy: 'reviewer@test', sourceUri: 'https://example.edu/rule', sourceVersion: 'v1' }) });
+    });
+    it('rejects stale, non-HTTPS and concurrently edited approvals', async () => {
+      prisma.knowledgeChunk.findUnique.mockResolvedValue(chunk);
+      await expect(service.reviewKnowledge(1, 8, { ...approve, expectedUpdatedAt: '2026-11-19T00:00:00.000Z' })).rejects.toBeInstanceOf(ConflictException);
+      await expect(service.reviewKnowledge(1, 8, { ...approve, sourceUri: 'http://example.edu' })).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.knowledgeChunk.updateMany).not.toHaveBeenCalled();
+      prisma.knowledgeChunk.updateMany.mockResolvedValue({ count: 0 });
+      await expect(service.reviewKnowledge(1, 8, approve)).rejects.toBeInstanceOf(ConflictException);
+    });
+    it('keeps the approval when embedding indexing fails', async () => {
+      const embeddings = { enabled: true, index: jest.fn(async () => { throw new Error('HTTP 429'); }) };
+      service = new AdminService(prisma as unknown as PrismaService, embeddings as never);
+      prisma.knowledgeChunk.findUnique.mockResolvedValue(chunk);
+      prisma.knowledgeChunk.updateMany.mockResolvedValue({ count: 1 });
+      await expect(service.reviewKnowledge(1, 8, approve)).resolves.toMatchObject({ reviewStatus: 'APPROVED', index: 'FAILED' });
+    });
+    it('revokes approved knowledge', async () => {
+      prisma.knowledgeChunk.findUnique.mockResolvedValue({ ...chunk, reviewStatus: 'APPROVED' });
+      prisma.knowledgeChunk.updateMany.mockResolvedValue({ count: 1 });
+      await service.reviewKnowledge(1, 8, { action: 'REVOKE' });
+      expect(prisma.knowledgeChunk.updateMany).toHaveBeenCalledWith({ where: { id: 8 }, data: { reviewStatus: 'REVOKED' } });
+    });
   });
 });

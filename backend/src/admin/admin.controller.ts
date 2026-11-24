@@ -10,6 +10,7 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminService } from './admin.service';
@@ -17,6 +18,8 @@ import { CreateQuestionDto } from './dto/create-question.dto';
 import {
   AdminQueryDto,
   KnowledgeDto,
+  KnowledgeReviewDto,
+  QuestionStatusDto,
   SystemFlashcardDto,
   ResolveReportDto,
   SkillDto,
@@ -25,9 +28,11 @@ import {
   UserRoleDto,
 } from './dto/admin.dto';
 import { AdminAccessGuard } from './admin-access.guard';
+import { AdminAuditInterceptor } from './admin-audit.interceptor';
 
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), AdminAccessGuard)
+@UseInterceptors(AdminAuditInterceptor)
 export class AdminController {
   constructor(private adminService: AdminService) {}
   @Get('overview') overview() {
@@ -69,6 +74,9 @@ export class AdminController {
   @Get('listening-reports') listeningReports(@Query() q: AdminQueryDto) {
     return this.adminService.list('listeningReports', q);
   }
+  @Get('audit-logs') auditLogs(@Query() q: AdminQueryDto) {
+    return this.adminService.list('auditLogs', q);
+  }
   @Get('ai-events') ai(@Query() q: AdminQueryDto) {
     return this.adminService.list('aiEvents', q);
   }
@@ -80,6 +88,12 @@ export class AdminController {
     @Body() dto: UpdateQuestionDto,
   ) {
     return this.adminService.updateQuestion(id, dto);
+  }
+  @Patch('questions/:id/status') questionStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: QuestionStatusDto,
+  ) {
+    return this.adminService.setQuestionStatus(id, dto);
   }
   @Post('skills') createSkill(@Body() dto: SkillDto) {
     return this.adminService.saveSkill(dto);
@@ -129,6 +143,13 @@ export class AdminController {
     @Body() dto: KnowledgeDto,
   ) {
     return this.adminService.saveKnowledge(dto, id);
+  }
+  @Patch('knowledge/:id/review') reviewKnowledge(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: KnowledgeReviewDto,
+    @Req() req: { user: { id: number } },
+  ) {
+    return this.adminService.reviewKnowledge(req.user.id, id, dto);
   }
   @Post('flashcards') createFlashcard(
     @Body() dto: SystemFlashcardDto,

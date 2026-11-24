@@ -12,6 +12,13 @@ enum Role {
   ADMIN
 }
 
+// Admin-authored items stay out of learner banks until published; archived items keep exam history.
+enum QuestionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 enum Difficulty {
   EASY
   MEDIUM
@@ -33,6 +40,7 @@ model User {
   placementAttempts PlacementAttempt[]
   trainedDas3hStates TrainedDas3hState[]
   trainedDas3hObservations TrainedDas3hObservation[]
+  adminAuditLogs AdminAuditLog[]
   curriculumEnrollment CurriculumEnrollment?
   curriculumProgress CurriculumProgress[]
   curriculumAttempts CurriculumAttempt[]
@@ -110,6 +118,7 @@ model Question {
   itemDifficulty Float // δ_j (Equated Delta khởi tạo theo Part)
   totalAttempts  Int        @default(0)
   totalCorrect   Int        @default(0)
+  status         QuestionStatus @default(PUBLISHED)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
@@ -117,6 +126,7 @@ model Question {
 
   @@index([part])
   @@index([difficulty])
+  @@index([status])
 }
 
 // Bảng trung gian hiện thực hóa quan hệ nhiều-nhiều (Q-matrix)
@@ -644,4 +654,19 @@ model CurriculumAttempt {
   createdAt DateTime @default(now())
   @@unique([userId, requestId])
   @@index([userId, unitId, createdAt])
+}
+
+// Append-only trail of successful admin mutations (written after the request succeeds).
+model AdminAuditLog {
+  id        Int      @id @default(autoincrement())
+  actorId   Int?
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  Int?
+  detail    Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entity, entityId])
 }

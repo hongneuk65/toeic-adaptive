@@ -4,14 +4,29 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { KnowledgeEmbeddingService } from '../rag/knowledge-embedding.service';
+import { KnowledgeReviewError, approveKnowledge, revokeKnowledge } from '../rag/knowledge-review';
+import { importedQuestions } from '../common/imported-questions';
+import { loadModel, modelQuestionSelect, trainedSourceId } from '../das3h/trained-das3h';
 import { CreateQuestionDto } from './dto/create-question.dto';
+import {
+  QUESTION_MEDIA_FIELDS,
+  assertMediaUrls,
+  assertQuestionMedia,
+  blankToNull,
+  normalizeQuestionMedia,
+  questionMediaProblems,
+} from './question-media';
 
-import { Prisma, Role } from '@prisma/client';
+import { Prisma, QuestionStatus, Role } from '@prisma/client';
 import {
   AdminQueryDto,
   KnowledgeDto,
+  KnowledgeReviewDto,
+  QuestionStatusDto,
   SystemFlashcardDto,
   SkillDto,
   TheoryDto,
@@ -36,7 +51,8 @@ type AdminResource =
   | 'listeningSources'
   | 'readingReports'
   | 'listeningReports'
-  | 'aiEvents';
+  | 'aiEvents'
+  | 'auditLogs';
 interface ListDelegate {
   findMany(args: unknown): Promise<unknown[]>;
   count(args: unknown): Promise<number>;
@@ -63,7 +79,10 @@ const INITIAL_DELTA_BY_PART: Record<number, number> = {
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Optional() private readonly embeddings?: KnowledgeEmbeddingService,
+  ) {}
 
   async getAllSkills() {
     return this.prisma.skill.findMany({
@@ -73,6 +92,9 @@ export class AdminService {
 
   async createQuestion(dto: CreateQuestionDto) {
     this.validateQuestionOptions(dto.part, dto.correctAnswer, dto.optionD);
+    const media = normalizeQuestionMedia({ passage: dto.passage, audioUrl: dto.audioUrl, imageUrl: dto.imageUrl });
+    assertMediaUrls(media);
+    assertQuestionMedia(dto.part, media);
     // Kiểm tra tính hợp lệ của các skillId
     const skillsCount = await this.prisma.skill.count({
       where: { id: { in: dto.skillIds } },
@@ -88,9 +110,9 @@ export class AdminService {
     const question = await this.prisma.question.create({
       data: {
         part: dto.part,
-        passage: dto.passage,
-        audioUrl: dto.audioUrl,
-        imageUrl: dto.imageUrl,
+        passage: media.passage,
+        audioUrl: media.audioUrl,
+        imageUrl: media.imageUrl,
         content: dto.content,
         optionA: dto.optionA,
         optionB: dto.optionB,
@@ -100,6 +122,8 @@ export class AdminService {
         explanation: '[admin-question]' + (dto.explanation ? '\n' + dto.explanation : ''),
         difficulty: dto.difficulty,
         itemDifficulty: defaultDelta,
+        // Admin items are reviewed before learners can receive them.
+        status: QuestionStatus.DRAFT,
         skills: {
           create: dto.skillIds.map((id) => ({
             skill: { connect: { id } },
@@ -135,6 +159,11 @@ export class AdminService {
       aiEvents,
       recentExams,
       questionParts,
+      draftQuestions,
+      archivedQuestions,
+      publishedMissingMedia,
+      knowledgePending,
+      das3hCoverage,
     ] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.user.count({ where: { role: Role.ADMIN } }),
@@ -159,6 +188,16 @@ export class AdminService {
         _count: { _all: true },
         orderBy: { part: 'asc' },
       }),
+      this.prisma.question.count({ where: { status: QuestionStatus.DRAFT } }),
+      this.prisma.question.count({ where: { status: QuestionStatus.ARCHIVED } }),
+      // Learner-visible items that a Part cannot be answered without (legacy rows).
+      this.prisma.question.count({ where: { AND: [importedQuestions, { OR: [
+        { part: 1, OR: [{ imageUrl: null }, { imageUrl: '' }] },
+        { part: { in: [1, 2, 3, 4] }, OR: [{ audioUrl: null }, { audioUrl: '' }] },
+        { part: { in: [6, 7] }, OR: [{ passage: null }, { passage: '' }] },
+      ] }] } }),
+      this.prisma.knowledgeChunk.count({ where: { reviewStatus: 'DRAFT' } }),
+      this.das3hCoverage(),
     ]);
     return {
       counts: {
@@ -175,10 +214,31 @@ export class AdminService {
         openReadingReports,
         openListeningReports,
         aiEvents,
+        draftQuestions,
+        archivedQuestions,
+        publishedMissingMedia,
+        knowledgePending,
       },
       recentExams,
       questionParts,
+      das3hCoverage,
     };
+  }
+
+  private coverageCache?: { at: number; value: { mode: string; covered: number; published: number } };
+  /** Share of learner-visible items the fitted DAS3H model may score; the rest use legacy scoring. */
+  private async das3hCoverage() {
+    if (this.coverageCache && Date.now() - this.coverageCache.at < 60_000) return this.coverageCache.value;
+    const model = loadModel();
+    const published = await this.prisma.question.count({ where: importedQuestions });
+    let covered = 0;
+    if (model) {
+      const rows = await this.prisma.question.findMany({ where: { AND: [importedQuestions, { explanation: { startsWith: '[santa-ednet:' } }] }, select: modelQuestionSelect });
+      covered = rows.filter(row => trainedSourceId(model, row)).length;
+    }
+    const value = { mode: model ? 'trained-own-das3h' : 'legacy-heuristic', covered, published };
+    this.coverageCache = { at: Date.now(), value };
+    return value;
   }
 
   async list(resource: AdminResource, query: AdminQueryDto) {
@@ -231,10 +291,16 @@ export class AdminService {
           folder: { select: { id: true, name: true, readingKey: true } },
         },
       },
+      auditLogs: {
+        model: this.prisma.adminAuditLog,
+        fields: ['action', 'entity'],
+        include: { actor: { select: SAFE_USER } },
+      },
       knowledge: {
         model: this.prisma.knowledgeChunk,
         fields: ['title', 'category', 'skillCode'],
         part: true,
+        include: { _count: { select: { embeddings: true } } },
       },
       readingArticles: {
         model: this.prisma.readingArticle,
@@ -317,6 +383,7 @@ export class AdminService {
       if (query.source === 'CRAWL') Object.assign(where, crawl);
       else where.AND = [{ OR: [{ explanation: null }, { NOT: crawl }] }];
     }
+    if (resource === 'questions' && query.status) where.status = query.status;
     const model = config.model as unknown as ListDelegate;
     const [items, total] = await Promise.all([
       model.findMany({
@@ -330,9 +397,29 @@ export class AdminService {
       model.count({ where }),
     ]);
     return { items: resource === 'questions' ? items.map(item => {
-      const question = item as { explanation?: string | null };
-      return { ...question, source: question.explanation?.startsWith('[santa-ednet:') ? 'CRAWL' : 'OTHER' };
+      const question = item as { explanation?: string | null; part: number; passage?: string | null; audioUrl?: string | null; imageUrl?: string | null };
+      return { ...question, source: question.explanation?.startsWith('[santa-ednet:') ? 'CRAWL' : 'OTHER',
+        mediaIssues: questionMediaProblems(question.part, question) };
+    }) : resource === 'knowledge' ? items.map(item => {
+      const { _count, ...row } = item as { _count?: { embeddings: number } };
+      return { ...row, indexedChunks: _count?.embeddings ?? 0 };
     }) : items, total, page, pageSize };
+  }
+
+  /** DRAFT -> PUBLISHED re-checks everything a learner needs; ARCHIVED keeps exam history intact. */
+  async setQuestionStatus(id: number, dto: QuestionStatusDto) {
+    const current = await this.prisma.question.findUnique({ where: { id }, include: { skills: { include: { skill: true } } } });
+    if (!current) throw new NotFoundException('Không tìm thấy câu hỏi');
+    if (current.status === dto.status) return current;
+    if (dto.status === QuestionStatus.PUBLISHED) {
+      const problems = questionMediaProblems(current.part, current);
+      if (current.part === 2 && current.correctAnswer === 'D') problems.push('Part 2 chỉ có đáp án A, B hoặc C');
+      if (current.part !== 2 && !current.optionD?.trim()) problems.push('Thiếu phương án D');
+      if (!current.skills.length) problems.push('Câu hỏi chưa gắn kỹ năng');
+      if (current.skills.some(link => link.skill.part !== current.part)) problems.push('Kỹ năng không cùng Part với câu hỏi');
+      if (problems.length) throw new BadRequestException(`Chưa thể xuất bản: ${problems.join('; ')}`);
+    }
+    return this.prisma.question.update({ where: { id }, data: { status: dto.status }, include: { skills: { include: { skill: true } } } });
   }
 
   async updateQuestion(id: number, dto: UpdateQuestionDto) {
@@ -344,12 +431,19 @@ export class AdminService {
       }))
     )
       throw new NotFoundException('Không tìm thấy câu hỏi');
-    const { skillIds, ...data } = dto;
+    const { skillIds, ...data } = normalizeQuestionMedia(dto);
+    assertMediaUrls(data);
     const current = await this.prisma.question.findUniqueOrThrow({
       where: { id },
       include: { skills: true },
     });
     const part = dto.part ?? current.part;
+    // Compare against normalized stored values so '' -> NULL is not a media change.
+    const stored = Object.fromEntries(QUESTION_MEDIA_FIELDS.map(field => [field, blankToNull(field, current[field])])) as Record<(typeof QUESTION_MEDIA_FIELDS)[number], string | null>;
+    const mediaTouched = QUESTION_MEDIA_FIELDS.filter(field => data[field] !== undefined && data[field] !== stored[field]);
+    const merged = Object.fromEntries(QUESTION_MEDIA_FIELDS.map(field => [field, data[field] !== undefined ? data[field] : stored[field]]));
+    // Never make an item worse; legacy rows with missing media stay editable for text fixes.
+    if (part !== current.part || mediaTouched.length) assertQuestionMedia(part, merged);
     this.validateQuestionOptions(part, dto.correctAnswer ?? current.correctAnswer, dto.optionD ?? current.optionD);
     if (part === 2) data.optionD = '';
     // Keep provenance used by the learning/exam bank when administrators rewrite explanations.
@@ -361,11 +455,11 @@ export class AdminService {
     // Source documents and measured duration are derived from the original media.
     const stimulus = current.stimulus;
     let derived = stimulus && typeof stimulus === 'object' && !Array.isArray(stimulus) ? { ...stimulus } : undefined;
-    const stimulusChanged = (['audioUrl', 'imageUrl', 'passage'] as const).some(field => dto[field] !== undefined && dto[field] !== current[field]);
+    const stimulusChanged = mediaTouched.length > 0;
     if (stimulusChanged) derived = { ...derived, _trainedItemInvalidated: true };
     if (derived) {
-      if ((dto.passage !== undefined && dto.passage !== current.passage) || (dto.imageUrl !== undefined && dto.imageUrl !== current.imageUrl) || part !== current.part) derived.documents = [];
-      if (dto.audioUrl !== undefined && dto.audioUrl !== current.audioUrl) delete derived.audioDurationSeconds;
+      if (mediaTouched.includes('passage') || mediaTouched.includes('imageUrl') || part !== current.part) derived.documents = [];
+      if (mediaTouched.includes('audioUrl')) delete derived.audioDurationSeconds;
     }
     await this.validateQuestionSkills(
       dto.part ?? current.part,
@@ -526,6 +620,35 @@ export class AdminService {
           approvedContentHash: null,
         } })
       : this.prisma.knowledgeChunk.create({ data: dto });
+  }
+  async reviewKnowledge(actorId: number, id: number, dto: KnowledgeReviewDto) {
+    const row = await this.prisma.knowledgeChunk.findUnique({ where: { id } });
+    if (!row) throw new NotFoundException('Không tìm thấy tài liệu');
+    try {
+      if (dto.action === 'REVOKE') {
+        await revokeKnowledge(this.prisma, id);
+        return { id, reviewStatus: 'REVOKED' };
+      }
+      if (new Date(dto.expectedUpdatedAt!).getTime() !== row.updatedAt.getTime())
+        throw new KnowledgeReviewError('Nội dung đã thay đổi trong lúc duyệt. Tải lại rồi duyệt lại.', 'conflict');
+      const actor = await this.prisma.user.findUnique({ where: { id: actorId }, select: { email: true } });
+      const { approvedContentHash } = await approveKnowledge(this.prisma, row, {
+        sourceUri: dto.sourceUri!, sourceVersion: dto.sourceVersion!, reviewedBy: actor?.email ?? `admin#${actorId}`,
+      });
+      // Approval stands even if indexing fails; lexical retrieval still uses approved rows.
+      let index: 'INDEXED' | 'DISABLED' | 'FAILED' = 'DISABLED', chunks = 0;
+      if (this.embeddings?.enabled) {
+        try {
+          chunks = await this.embeddings.index({ id, title: row.title, content: row.content, approvedContentHash });
+          index = 'INDEXED';
+        } catch { index = 'FAILED'; }
+      }
+      return { id, reviewStatus: 'APPROVED', index, chunks };
+    } catch (error) {
+      if (error instanceof KnowledgeReviewError)
+        throw error.kind === 'conflict' ? new ConflictException(error.message) : new BadRequestException(error.message);
+      throw error;
+    }
   }
   async saveSystemFlashcard(
     dto: SystemFlashcardDto,

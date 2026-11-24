@@ -26,6 +26,13 @@ export function questionFingerprint(q: ModelQuestion): string {
 export function sourceQuestionId(q: ModelQuestion): string | undefined {
   return q.explanation?.match(/^\[santa-ednet:(q\d+)\]/)?.[1];
 }
+/** Source id when the fitted model may score this exact item; undefined means legacy scoring. */
+export function trainedSourceId(model: TrainedModel, q: ModelQuestion): string | undefined {
+  if (q.stimulus && typeof q.stimulus === 'object' && '_trainedItemInvalidated' in q.stimulus && q.stimulus._trainedItemInvalidated === true) return undefined;
+  const id = sourceQuestionId(q);
+  if (!id || !model.questions[id] || model.applicationBridge[id] !== questionFingerprint(q)) return undefined;
+  return id;
+}
 export function validateModel(model: TrainedModel): void {
   const finite = (n: unknown) => typeof n === 'number' && Number.isFinite(n);
   if (model.schemaVersion !== 1 || model.featureContract !== 'own-das3h-d0-cumulative-v1'
@@ -75,10 +82,7 @@ export class TrainedDas3h {
       : { mode: 'legacy-heuristic', version: null };
   }
   private eligible(model: TrainedModel, q: ModelQuestion): string | undefined {
-    if (q.stimulus && typeof q.stimulus === 'object' && '_trainedItemInvalidated' in q.stimulus && q.stimulus._trainedItemInvalidated === true) return undefined;
-    const id = sourceQuestionId(q);
-    if (!id || !model.questions[id] || model.applicationBridge[id] !== questionFingerprint(q)) return undefined;
-    return id;
+    return trainedSourceId(model, q);
   }
   async predictMany(userId: number, ids: number[], now = new Date(), db = this.db): Promise<Map<number, number>> {
     const model = loadModel();

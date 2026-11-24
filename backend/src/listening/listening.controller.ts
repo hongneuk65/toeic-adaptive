@@ -12,6 +12,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { ListeningService } from './listening.service';
 import { AnswerDto, ProgressDto, PublishDto, ReportDto, SegmentDto, SettingsDto, SourceDto, SubtitleDto, TranscriptRequestDto, ListeningCatalogQueryDto } from './listening.dto';
+import { importedQuestions } from '../common/imported-questions';
 
 interface ListeningRequest { user: { id: number; role: Role } }
 export const mediaDirectory = () => resolve(process.env.LISTENING_MEDIA_DIR || './storage/listening');
@@ -57,7 +58,7 @@ export class ListeningAdminController {
   @Post('sources/:id/transcript') retry(@Req() req: ListeningRequest, @Param('id', ParseIntPipe) id: number) { return this.service.requestTranscript(req.user.id, id, true); }
   @Patch('settings') settings(@Body() dto: SettingsDto) { return this.service.updateSettings(dto); }
   @Patch('reports/:id') resolve(@Param('id', ParseIntPipe) id: number) { return this.prisma.listeningReport.update({ where: { id }, data: { resolved: true } }); }
-  @Get('system-audio') audio() { return this.prisma.question.findMany({ where: { audioUrl: { not: null } }, select: { id: true, audioUrl: true, content: true }, take: 100 }); }
+  @Get('system-audio') audio() { return this.prisma.question.findMany({ where: { ...importedQuestions, audioUrl: { not: null } }, select: { id: true, audioUrl: true, content: true }, take: 100 }); }
   @Post('media')
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 20 * 1024 * 1024, files: 1 } }))
   async upload(@Req() req: ListeningRequest, @UploadedFile() file?: { buffer: Buffer; mimetype: string }) {
