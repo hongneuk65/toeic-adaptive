@@ -81,7 +81,7 @@ export class AuthService {
     async verifyRegistration(rawEmail: string, code: string) {
         const email = normalizeEmail(rawEmail);
         const user = await this.prisma.user.findFirst({ where: { email: { equals: email, mode: 'insensitive' } } });
-        if (!user) throw new UnauthorizedException('Mã không đúng hoặc đã hết hạn. Vui lòng gửi lại mã mới.');
+        if (!user || user.emailVerifiedAt) throw new UnauthorizedException('Mã không đúng hoặc đã hết hạn. Vui lòng đăng nhập hoặc gửi lại mã mới.');
         if (!user.emailVerifiedAt) {
             await this.emailOtp.consume(email, 'REGISTER', code);
             await this.prisma.user.update({ where: { id: user.id }, data: { emailVerifiedAt: new Date() } });

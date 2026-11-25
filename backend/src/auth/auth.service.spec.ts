@@ -62,6 +62,23 @@ describe('AuthService registration with email verification', () => {
     expect(db.user.update.mock.calls[0][0].data.emailVerifiedAt).toBeInstanceOf(Date);
   });
 
+  it('never issues a token through registration verification for an already verified account', async () => {
+    db.user.findFirst.mockResolvedValue({ id: 4, email: 'a@b.co', role: 'USER', emailVerifiedAt: new Date() });
+    for (const code of ['000000', '123456']) {
+      await expect(service.verifyRegistration('a@b.co', code)).rejects.toBeInstanceOf(UnauthorizedException);
+    }
+    expect(jwt.signAsync).not.toHaveBeenCalled();
+    expect(db.user.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid registration codes without updating the account or issuing a token', async () => {
+    db.user.findFirst.mockResolvedValue({ id: 4, email: 'a@b.co', role: 'USER', emailVerifiedAt: null });
+    otp.consume.mockRejectedValue(new UnauthorizedException('Invalid code'));
+    await expect(service.verifyRegistration('a@b.co', '000000')).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(jwt.signAsync).not.toHaveBeenCalled();
+    expect(db.user.update).not.toHaveBeenCalled();
+  });
+
   it('blocks password login until the email is verified', async () => {
     const passwordHash = await bcrypt.hash('secret1', 4);
     db.user.findFirst.mockResolvedValue({ id: 5, email: 'a@b.co', role: 'USER', passwordHash, emailVerifiedAt: null });
