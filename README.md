@@ -49,7 +49,7 @@ Dừng hệ thống: `docker compose down`. Xóa cả dữ liệu để chạy l
 ### Dữ liệu học
 
 - **Bản ZIP nộp kèm khóa luận** có tệp `backend/prisma/public-library.json.gz`. Ở lần chạy đầu, hệ thống tự nạp 5.049 câu hỏi, 114 bài lý thuyết, 196 bài đọc, 854 thẻ từ vựng và dữ liệu Listening. Audio và hình ảnh của đề thi (khoảng 658 MB) không kèm theo vì vượt giới hạn dung lượng nộp, nên các câu Part 1 đến 4 vẫn hiển thị nhưng không phát được âm thanh. Từ điển tra nghĩa nhanh cũng không kèm theo.
-- **Bản trên GitHub** không có tệp dữ liệu này vì nội dung câu hỏi được thu thập từ nguồn có bản quyền. Khi đó hệ thống tự nạp dữ liệu mẫu tổng hợp (danh mục kỹ năng, bài lý thuyết, 300 câu hỏi mẫu và một bài nghe mẫu) để mọi chức năng đều dùng thử được. Để có thư viện thật, chép tệp `public-library.json.gz` từ bản ZIP vào `backend/prisma/` rồi chạy `docker compose down -v` và `docker compose up -d --build`.
+- **Bản trên GitHub** không có tệp dữ liệu này vì nội dung câu hỏi được thu thập từ nguồn có bản quyền. Khi đó hệ thống tự nạp dữ liệu mẫu (danh mục kỹ năng, bài lý thuyết, kho tri thức cho gia sư, một bài nghe mẫu và 300 câu hỏi tổng hợp) để thử đăng ký, đăng nhập, lý thuyết, luyện nghe và trang quản trị. Thi thử và luyện tập thích ứng chỉ dùng câu hỏi trong thư viện thật nên cần tệp dữ liệu của bản ZIP. Để có thư viện thật, chép tệp `public-library.json.gz` từ bản ZIP vào `backend/prisma/` rồi chạy `docker compose down -v` và `docker compose up -d --build`.
 
 ### Tài khoản quản trị
 
