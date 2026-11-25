@@ -10,6 +10,7 @@ import { AuthProvider } from './auth/AuthContext';
 import { useAuth } from './auth/useAuth';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
+import { GithubCallbackPage } from './pages/GithubCallbackPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 const CurriculumPage = lazy(() => import('./pages/CurriculumPage').then(module => ({ default: module.CurriculumPage })));
@@ -188,6 +189,7 @@ export default function App() {
         <Routes>
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/login/github" element={<GithubCallbackPage />} />
             <Route path="/register" element={<RegisterPage />} />
           </Route>
           <Route element={<ProtectedRoute />}>

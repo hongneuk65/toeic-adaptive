@@ -9,6 +9,8 @@ import { GoogleAuthService } from './google-auth.service';
 import { GoogleAuthController } from './google-auth.controller';
 import { EmailOtpService } from './email-otp.service';
 import { MailService } from './mail.service';
+import { GithubAuthService } from './github-auth.service';
+import { GithubAuthController } from './github-auth.controller';
 
 @Module({
   imports: [
@@ -19,8 +21,8 @@ import { MailService } from './mail.service';
       signOptions: { expiresIn: '7d' },
     }),
   ],
-  controllers: [AuthController, GoogleAuthController],
-  providers: [AuthService, JwtStrategy, GoogleAuthService, EmailOtpService, MailService],
+  controllers: [AuthController, GoogleAuthController, GithubAuthController],
+  providers: [AuthService, JwtStrategy, GoogleAuthService, GithubAuthService, EmailOtpService, MailService],
   exports: [AuthService],
 })
 export class AuthModule { }

@@ -6,6 +6,7 @@ import { api, getErrorMessage } from '../lib/api';
 import { learningReturnTo } from '../auth/return-to';
 import { GoogleSignIn } from '../components/GoogleSignIn';
 import { EmailCodeLogin } from '../components/EmailCodeLogin';
+import { GithubSignIn } from '../components/GithubSignIn';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -55,6 +56,7 @@ export const LoginPage: React.FC = () => {
       {location.state?.registered && <p role="status" className="mb-4 text-sm text-accent-navy">Đã tạo tài khoản. Đăng nhập để bắt đầu học.</p>}
       {errorMessage && <p role="alert" className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{errorMessage}</p>}
       <GoogleSignIn />
+      <GithubSignIn returnTo={location.state?.returnTo} />
       {useCode ? <EmailCodeLogin initialEmail={email} onToken={finishLogin} onCancel={() => setUseCode(false)} /> : <>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>

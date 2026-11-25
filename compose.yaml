@@ -64,6 +64,9 @@ services:
       SMTP_FROM: ${SMTP_FROM:-}
       OTP_DEV_LOG: ${OTP_DEV_LOG:-false}
       OTP_SECRET: ${OTP_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_REDIRECT_URI: ${GITHUB_REDIRECT_URI:-}
     depends_on:
       migrate: {condition: service_completed_successfully}
       redis: {condition: service_healthy}
