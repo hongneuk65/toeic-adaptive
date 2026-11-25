@@ -72,3 +72,9 @@ Gợi ý hiện có trong từng thư viện lý thuyết, từ vựng, nghe và
 Các phần thích ứng trên nhánh nghiên cứu: [kế hoạch chọn kỹ năng](docs/adaptive-learning-plan.md), [hỗ trợ sau lỗi sai](docs/adaptive-practice-support.md), [đối chứng KT](experiments/kt-benchmark/README.md), [sinh câu hỏi từ nguồn](docs/reading-source-generation.md) và [thực nghiệm lập kế hoạch theo hướng ExRec](experiments/exrec-sandbox/README.md).
 
 Module Reading có thư viện 25 bài mẫu, bài cá nhân AI, lịch sử theo phiên bản và từ vựng riêng. Sau migration, chạy `npm run seed:reading --prefix backend`. Xem [cấu hình, kiểm thử và hướng dẫn demo Reading](docs/reading.md).
+
+## Email xác nhận trong bản nộp
+
+Sau khi sao chép `.env.example` thành `.env`, bản nộp sử dụng Gmail SMTP để gửi OTP tới email thật khi đăng ký và đặt lại mật khẩu. Đăng nhập thông thường vẫn dùng email và mật khẩu. Máy cần truy cập Internet và kết nối được smtp.gmail.com:465. Mailpit, nếu còn chạy, chỉ là công cụ thử nghiệm và không nhận OTP trong cấu hình mặc định này. Nếu tài khoản gửi thư bị giới hạn hoặc mật khẩu ứng dụng bị thu hồi, cần cập nhật SMTP trong `.env`.
+
+Trước khi chạy, điền SMTP_PASS trong tệp .env bằng mật khẩu ứng dụng Gmail được cấp riêng. Tệp mẫu không chứa mật khẩu. Không có SMTP_PASS hợp lệ thì không gửi được OTP thật.
