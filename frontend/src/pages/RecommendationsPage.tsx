@@ -30,7 +30,7 @@ function PlanCard({ item, index, availableSkills, onPractice }: { item: Learning
   return <article className={`topic-card learning-plan-card${index === 0 ? ' topic-card-featured' : ''}`}>
     <div className="topic-card-top"><span className="topic-step">{String(index + 1).padStart(2, '0')}</span><span className="topic-status">{PLAN_STATUS[item.priority]}</span></div>
     <p className="topic-parts">Part {item.part}</p><h3>{item.skillName}</h3>
-    {dueLabel && <p className="topic-evidence">Ôn từ: <time dateTime={item.reviewDueAt!}>{dueLabel}</time></p>}
+    {dueLabel && <p className="topic-evidence">Cần ôn từ ngày <time dateTime={item.reviewDueAt!}>{dueLabel}</time></p>}
     <div className="topic-actions">
       <button className={index === 0 ? 'primary-button' : 'secondary-button'} onClick={() => onPractice(item.skillId)} disabled={!availableSkills.some(skill => skill.skillId === item.skillId)} aria-label={`Luyện ${item.skillName}`}>Luyện kỹ năng</button>
       {item.lesson && <Link className="topic-text-link study-action-button" to={`/theory?lesson=${item.lesson.id}`}>Học kiến thức</Link>}

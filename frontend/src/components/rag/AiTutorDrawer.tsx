@@ -237,7 +237,7 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
         <div className="tutor-workspace-context">
           <span aria-live="polite">
             {pageLabel && <small className="block">Đang mở: {pageLabel}</small>}
-            {(initialQuestionId || screen) && (tutor.question?.label ?? screen?.label ?? `Câu hỏi #${initialQuestionId}`)}
+            {(initialQuestionId || screen) && <span className="block">{tutor.question?.label ?? screen?.label ?? `Câu hỏi #${initialQuestionId}`}</span>}
           </span>
           {(initialQuestionId || screen) && <button onClick={tutor.clear} className="rounded border border-paper-kraft px-2 py-1 text-xs">Hỏi chung · bỏ câu này</button>}
         </div>

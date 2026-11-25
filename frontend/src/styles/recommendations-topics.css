@@ -182,7 +182,9 @@
 }
 
 .learner-part-group .learner-part-chart .learner-part > strong.learner-part-unknown {
-  max-width: 64px;
+  max-width: 104px;
+  white-space: normal;
+  overflow: visible;
   font-size: 11px;
   text-align: end;
 }
@@ -198,6 +200,21 @@
   stroke-width: 0;
 }
 .learner-part-group .learner-bar-value { fill: #005c5c; }
+.learner-part-group .learner-bar-track {
+  fill: currentColor;
+  opacity: .12;
+  stroke-width: 0;
+}
+/* The SVG bar is the visual; keep the meter for screen readers only. */
+.learner-part-group .learner-part meter {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 
 .learner-overview .learner-focus { margin-top: 12px; }
 .learner-overview .learner-focus summary { cursor: pointer; padding-block: 6px; font-size: 14px; }
@@ -244,3 +261,7 @@
 .mistake-review-card .primary-button { margin-top:auto; align-self:flex-start; }
 @media(max-width:1050px) { .mistake-review-list { grid-template-columns:1fr 1fr; } }
 @media(max-width:640px) { .mistake-review-list { grid-template-columns:1fr; } .mistake-review-card { padding:18px; } }
+
+/* Featured plan card sits on a dark background; keep its title and dates readable. */
+.topic-card.topic-card-featured h3 { color: #fff; }
+.topic-card.topic-card-featured :is(.topic-parts, .topic-evidence, .topic-evidence time) { color: #e7f1f3; }

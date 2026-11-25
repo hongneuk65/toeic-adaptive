@@ -110,10 +110,9 @@ test('typed recall keeps feedback until continued and protects an unsaved attemp
  await page.getByRole('button',{name:'Kiểm tra đáp án',exact:true}).click();
  await expect(page.getByRole('button',{name:'Trắc nghiệm',exact:true})).toBeDisabled();
  await expect(page.getByRole('button',{name:'Thẻ tiếp',exact:true})).toBeDisabled();
- await page.getByRole('button',{name:'Lưu lượt ôn',exact:true}).click();
  await expect(page.getByRole('region', {name:'Luyện nhớ chủ động'}).locator('p.text-2xl')).toHaveText('invoice');
- await expect(page.getByRole('button',{name:'Đã lưu lượt ôn',exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Tiếp tục',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Từ tiếp theo',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Từ tiếp theo',exact:true}).click();
  await expect(page.getByRole('heading',{name:'cuộc họp',exact:true})).toBeVisible();
  await expect(page.getByRole('button',{name:'Trắc nghiệm',exact:true})).toBeEnabled();
 });

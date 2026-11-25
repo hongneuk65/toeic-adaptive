@@ -38,6 +38,16 @@ interface FolderDetail {
   isOwner: boolean;
 }
 
+const MODE_HINTS = {
+  flashcard: 'Lật thẻ để xem nghĩa, rồi tự đánh giá đã nhớ hay chưa.',
+  typed: 'Nhìn nghĩa tiếng Việt và gõ lại từ tiếng Anh. Kết quả dùng để xếp lịch ôn.',
+  quiz: 'Chọn từ đúng với nghĩa trong 4 phương án.',
+  dictation: 'Nghe phát âm rồi gõ lại từ.',
+  sentence: 'Viết một câu có dùng từ, AI góp ý cách dùng.',
+  speaking: 'Nói một câu có dùng từ, nghe lại giọng mình và nhận góp ý của AI.',
+  grid: 'Xem nhanh toàn bộ thẻ trong thư mục.',
+} as const;
+
 interface CardReview { cardId: number; known: boolean; reviewCount: number; dueAt?: string; intervalDays?: number; schedulingSource?: string; memory?: VocabularyMemoryEstimate }
 
 export const FlashcardStudyPage: React.FC = () => {
@@ -150,8 +160,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
       setRetryingId(null);
       const typedReview = payload.attempt.recallMode === 'typed';
       if (sessionActive && !typedReview) { setSessionReviewed(ids => [...ids, id]); setFocusIndex(0); setFlippedIds({}); }
-      const scheduleLabel = result.schedulingSource === 'hlr-prior-experimental' ? 'Lịch cá nhân hóa thử nghiệm' : result.schedulingSource?.startsWith('hlr-trained:') ? 'Lịch cá nhân hóa từ dữ liệu ôn' : 'Lịch ôn cố định';
-      setNotice(`${result.known ? 'Đã nhớ' : 'Cần ôn thêm'}${result.dueAt ? ` · Ôn tiếp: ${new Date(result.dueAt).toLocaleString('vi-VN')}` : ''} · ${scheduleLabel}.`);
+      setNotice(`${result.known ? 'Đã nhớ' : 'Cần ôn thêm'}${result.dueAt ? ` · Ôn lại vào ${new Date(result.dueAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}` : ''}.`);
       // Keep typed feedback visible; refreshing due cards would remove this card.
       if (!typedReview) { setDueTime(new Date().getTime()); loadData(); }
       return true;
@@ -286,6 +295,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
         <div role="group" aria-label="Cách học từ vựng" className="vocabulary-practice-modes">
           {([['flashcard', 'Flashcard'], ['typed', 'Viết từ'], ['quiz', 'Trắc nghiệm'], ['dictation', 'Nghe–gõ'], ['sentence', 'Đặt câu'], ['speaking', 'Luyện nói']] as const).map(([mode, label]) => <button key={mode} type="button" aria-pressed={viewMode === 'focus' && practiceMode === mode} disabled={navigationLocked} onClick={() => { setPracticeMode(mode); if (viewMode !== 'focus') handleSwitchViewMode('focus'); }}>{label}</button>)}
         </div>
+        <p className="vocabulary-mode-hint text-sm text-ink-medium">{MODE_HINTS[viewMode === 'grid' ? 'grid' : practiceMode]}</p>
         <div className="vocabulary-options-row">
           <details className="vocabulary-study-options">
             <summary>Tùy chọn học</summary>
@@ -300,7 +310,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
               </div>
             </div>
           </details>
-          {!loading && data && <p role="status" className="vocabulary-result-count">{sessionActive ? `Đã ôn ${sessionReviewed.length} · còn ${filtered.length}` : `${filtered.length} từ`}</p>}
+          {!loading && data && <p role="status" className="vocabulary-result-count">{sessionActive ? `Đã ôn ${sessionReviewed.length} · còn ${filtered.length}` : reviewFilter === 'due' && !search && data.cards.length > filtered.length ? `${filtered.length}/${data.cards.length} từ đến hạn ôn` : `${filtered.length} từ`}</p>}
         </div>
       </section>
 
@@ -313,6 +323,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
         <div className="w-full rounded-xl bg-paper-white px-5 py-10 text-center space-y-3">
           <p className="text-base font-medium text-ink-medium">{sessionActive ? 'Bạn đã hoàn thành các thẻ trong buổi ôn này.' : search ? 'Không tìm thấy từ.' : reviewFilter === 'due' ? 'Chưa có thẻ đến hạn.' : reviewFilter === 'needed' ? 'Không còn thẻ cần ôn.' : reviewFilter === 'known' ? 'Chưa có thẻ được đánh dấu đã nhớ.' : 'Thư mục này chưa có từ vựng nào.'}</p>
           {search && <button className="secondary-button" onClick={() => { setSearch(''); setGridPage(1); setFocusIndex(0); }}>Xóa tìm kiếm</button>}
+          {!search && !sessionActive && reviewFilter !== 'all' && (data?.cards.length ?? 0) > 0 && <button className="secondary-button" onClick={() => { setReviewFilter('all'); setGridPage(1); setFocusIndex(0); setFlippedIds({}); }}>Ôn tất cả {data?.cards.length} từ</button>}
           {folder?.isOwner && !search && !sessionActive && data?.cards.length === 0 && (
             <button
               onClick={() => setIsModalOpen(true)}
@@ -398,7 +409,7 @@ const FlashcardStudy: React.FC<{ folderId?: string }> = ({ folderId }) => {
             return (
               <>
                 {practiceMode === 'flashcard' ? <VocabularyFlipCard key={card.id} card={card} pending={reviewingId !== null || (retryingId !== null && retryingId !== card.id)} onReview={reviewCard} /> : practiceMode === 'typed' ? <>
-                  <FlashcardRecall key={card.id} card={card} pending={reviewingId !== null} onReview={reviewCard} onBusyChange={setPracticeLocked} onCompleted={() => {
+                  <FlashcardRecall key={card.id} card={card} siblings={data?.cards ?? []} pending={reviewingId !== null} onReview={reviewCard} onBusyChange={setPracticeLocked} onCompleted={() => {
                     setPracticeLocked(false);
                     if (sessionActive) { setSessionReviewed(ids => [...new Set([...ids, card.id])]); setFocusIndex(0); }
                     else if (reviewFilter !== 'due') setFocusIndex(index => Math.min(index + 1, filtered.length - 1));

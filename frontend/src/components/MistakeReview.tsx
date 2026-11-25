@@ -17,14 +17,15 @@ export function MistakeReview({ onReview }: { onReview: (skill: MistakeReviewSki
     window.addEventListener(LEARNING_PROGRESS_UPDATED, reload);
     return () => window.removeEventListener(LEARNING_PROGRESS_UPDATED, reload);
   }, [reload]);
-  if (!data?.skills.length) return null;
+  const skills = Array.isArray(data?.skills) ? data.skills.filter(skill => Array.isArray(skill.questions) && skill.questions.length > 0) : [];
+  if (!skills.length) return null;
   return <section className="mistake-review" aria-labelledby="mistake-review-title">
     <div className="topic-section-heading">
       <h2 id="mistake-review-title">Ôn câu hay sai</h2>
       <span className="topic-heading-note">Ưu tiên kỹ năng yếu, mỗi lần vài câu</span>
     </div>
     <div className="mistake-review-list">
-      {data.skills.map(skill => {
+      {skills.map(skill => {
         const expected = skill.questions.map(q => q.predictedProbability).filter((p): p is number => p !== null);
         const average = expected.length ? expected.reduce((a, b) => a + b, 0) / expected.length : null;
         const repeated = skill.questions.filter(q => q.wrongCount >= 2).length;
@@ -42,6 +43,6 @@ export function MistakeReview({ onReview }: { onReview: (skill: MistakeReviewSki
         </article>;
       })}
     </div>
-    {data.hiddenDueMistakes > 0 && <p className="topic-footnote">Còn {data.hiddenDueMistakes} câu sai khác sẽ được gợi ý sau khi bạn ôn xong nhóm này.</p>}
+    {(data?.hiddenDueMistakes ?? 0) > 0 && <p className="topic-footnote">Còn {data?.hiddenDueMistakes} câu sai khác sẽ được gợi ý sau khi bạn ôn xong nhóm này.</p>}
   </section>;
 }

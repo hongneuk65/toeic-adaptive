@@ -39,3 +39,4 @@ ednet_santa_mapping_clean/
 
 # Local assistant workspace
 .claude/
+Claude outputs/

@@ -21,6 +21,8 @@ async function fixture(page: Page, options: { lostDraft?: boolean; lostSubmit?: 
     if (path === '/theory/catalog') return json([{ id: 1, title: 'Word forms', part: 5, skillId: 1, skill: { code: 'P5_PARTS_OF_SPEECH', name: 'Từ loại' }, topic: { id: 'word-forms', title: 'Từ loại & cấu trúc câu', description: 'Danh, động, tính, trạng từ.' } }]);
     if (path === '/theory/1') return json({ id: 1, title: 'Word forms', part: 5, skill: { name: 'Grammar', code: 'GRAMMAR' }, content: '## Identify the missing word\nRead the words before and after the blank.\n\nNouns name people, places and things.' });
     if (path === '/flashcards/folders') return json([1, 2, 3].map(id => ({ id, name: ['Office vocabulary', 'Travel and transport', 'Business meetings'][id - 1], description: 'Từ vựng theo ngữ cảnh thường gặp trong bài thi TOEIC.', count: 12, authorName: 'Library', isOwner: false, code: `TOPIC${id}` })));
+    if (path === '/mastery/progress') return json({ days: 30, points: [], truncated: false });
+    if (path === '/das3h/mistake-review') return json({ version: 'mistake-review-v1', skills: [], openMistakes: 0, dueMistakes: 0, hiddenDueMistakes: 0 });
     if (path === '/mastery/me') return json({ userId: 1, skills: [{ skillId: 1, skillCode: 'GRAMMAR', skillName: 'Word forms', part: 5, masteryScore: 0.3, practiceCount: 4, lastPracticed: null }], partBreakdown: [], overallMastery: 0.3 });
     if (path === '/rag/priority-roadmap') return json({ prioritySteps: [] });
     if (path === '/auth/login') { options.unauthorized = false; return json({ accessToken: 'restored-fixture' }); }
@@ -103,8 +105,8 @@ test('flashcard due filter and keyboard recall hide the answer until committed',
   await page.getByLabel('Câu trả lời của bạn').fill('invoice');
   await page.getByLabel('Câu trả lời của bạn').press('Enter');
   await expect(page.getByRole('paragraph').filter({ hasText: /^invoice$/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Lưu lượt ôn', exact: true }).click();
-  await page.getByRole('button', { name: 'Tiếp tục', exact: true }).click();
+  await expect(page.getByText('✓ Chính xác', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Từ tiếp theo', exact: true }).click();
   await page.getByText('Tùy chọn học', { exact: true }).click();
   await page.getByLabel('Lọc trạng thái ghi nhớ').selectOption('known');
   await expect(page.getByRole('heading', { name: 'cuộc họp', exact: true })).toBeVisible();
@@ -233,14 +235,14 @@ test('typed retrieval preserves the first answer and attempt ID when saving is r
   await page.getByRole('button', { name: 'Kiểm tra đáp án', exact: true }).click();
   await expect(page.getByLabel('Câu trả lời của bạn')).toHaveAttribute('readonly', '');
   await expect(page.getByRole('button', { name: 'Đã nhớ', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Lưu lượt ôn', exact: true }).click();
+  await expect(page.getByText('✗ Chưa đúng', { exact: true })).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('Lượt ôn chưa được xác nhận');
   await expect(page.getByLabel('Lọc trạng thái ghi nhớ')).toBeDisabled();
   await page.getByText('Tùy chọn học', { exact: true }).click();
   await expect(page.getByRole('button', { name: 'Tất cả thẻ', exact: true })).toBeDisabled();
-  await page.getByRole('button', { name: 'Lưu lượt ôn', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Đã lưu lượt ôn', exact: true })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Tiếp tục', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Lưu lại lượt ôn', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Lưu lại lượt ôn', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Từ tiếp theo', exact: true })).toBeVisible();
   expect(requests).toHaveLength(2);
   expect(requests[0]).toEqual(requests[1]);
   expect(requests[0]).toMatchObject({ response: 'wrong', recallMode: 'typed', known: false });
