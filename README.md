@@ -10,7 +10,7 @@ Chỉ cần cài [Docker Desktop](https://www.docker.com/products/docker-desktop
 
 1. Mở Docker Desktop và chờ đến khi Docker báo đang chạy.
 2. Mở terminal tại thư mục chứa tệp `compose.yaml` (thư mục gốc của repo, hoặc thư mục `Source` nếu dùng bản ZIP nộp).
-3. Tạo tệp cấu hình từ tệp mẫu. Trong bản ZIP nộp kèm khóa luận, tệp mẫu đã có sẵn tài khoản Gmail gửi mã xác nhận nên dùng được ngay. Bản trên GitHub để trống `SMTP_PASS`, xem mục Email xác nhận ở cuối trang.
+3. Tạo tệp cấu hình từ tệp mẫu. Giá trị mẫu dùng được ngay; muốn mã xác nhận được gửi tới hộp thư thật thì điền thêm `SMTP_PASS` (xem mục Email xác nhận ở cuối trang).
 
    ```bash
    cp .env.example .env          # Windows PowerShell: Copy-Item .env.example .env
@@ -24,7 +24,7 @@ Chỉ cần cài [Docker Desktop](https://www.docker.com/products/docker-desktop
 
    Lần đầu mất khoảng 10 đến 20 phút để tải image nền, cài thư viện và build. Các lần sau khởi động trong vài chục giây.
 
-5. Mở trình duyệt tại **http://localhost:8080** và chọn Đăng ký. Nhập email và mật khẩu, hệ thống gửi mã xác nhận 6 chữ số tới email đó. Với bản ZIP nộp kèm khóa luận, mã được gửi qua Gmail tới hộp thư thật của địa chỉ đã đăng ký (kiểm tra cả thư rác). Với bản lấy từ GitHub, mã được gửi vào hộp thư thử nghiệm Mailpit tại **http://localhost:8025**. Nhập mã để xác nhận là đăng nhập vào hệ thống.
+5. Mở trình duyệt tại **http://localhost:8080** và chọn Đăng ký. Nhập email và mật khẩu, hệ thống gửi mã xác nhận 6 chữ số. Khi `SMTP_PASS` còn trống, mã được đưa vào hộp thư thử nghiệm Mailpit: mở **http://localhost:8025**, đọc mã trong email mới nhất rồi nhập vào trang đăng ký. Khi đã điền `SMTP_PASS`, mã được gửi qua Gmail tới hộp thư thật (kiểm tra cả thư rác). Xác nhận xong là đăng nhập vào hệ thống.
 
 Lệnh `docker compose up` tự chạy lần lượt các bước sau, không cần làm tay:
 
@@ -48,8 +48,8 @@ Dừng hệ thống: `docker compose down`. Xóa cả dữ liệu để chạy l
 
 ### Dữ liệu học
 
-- **Bản ZIP nộp kèm khóa luận** có tệp `backend/prisma/public-library.json.gz`. Ở lần chạy đầu, hệ thống tự nạp 5.049 câu hỏi, 114 bài lý thuyết, 196 bài đọc, 854 thẻ từ vựng và dữ liệu Listening. Audio và hình ảnh của đề thi (khoảng 658 MB) không kèm theo vì vượt giới hạn dung lượng nộp, nên các câu Part 1 đến 4 vẫn hiển thị nhưng không phát được âm thanh. Từ điển tra nghĩa nhanh cũng không kèm theo.
-- **Bản trên GitHub** không có tệp dữ liệu này vì nội dung câu hỏi được thu thập từ nguồn có bản quyền. Khi đó hệ thống tự nạp dữ liệu mẫu (danh mục kỹ năng, bài lý thuyết, kho tri thức cho gia sư, một bài nghe mẫu và 300 câu hỏi tổng hợp) để thử đăng ký, đăng nhập, lý thuyết, luyện nghe và trang quản trị. Thi thử và luyện tập thích ứng chỉ dùng câu hỏi trong thư viện thật nên cần tệp dữ liệu của bản ZIP. Để có thư viện thật, chép tệp `public-library.json.gz` từ bản ZIP vào `backend/prisma/` rồi chạy `docker compose down -v` và `docker compose up -d --build`.
+- Kho mã (cả bản trên GitHub và bản ZIP nộp kèm khóa luận) có tệp `backend/prisma/public-library.json.gz`. Ở lần chạy đầu, hệ thống tự nạp 5.049 câu hỏi, 114 bài lý thuyết, 196 bài đọc, 854 thẻ từ vựng và dữ liệu Listening. Audio và hình ảnh của đề thi (khoảng 658 MB) không kèm theo vì vượt giới hạn dung lượng nộp, nên các câu Part 1 đến 4 vẫn hiển thị nhưng không phát được âm thanh. Từ điển tra nghĩa nhanh cũng không kèm theo.
+- Nội dung câu hỏi được thu thập từ Santa và chỉ dùng cho mục đích nghiên cứu. Nếu thiếu tệp dữ liệu này, hệ thống tự nạp dữ liệu mẫu tổng hợp để vẫn thử được đăng ký, lý thuyết và luyện nghe.
 
 ### Tài khoản quản trị
 
@@ -64,7 +64,7 @@ docker compose exec postgres psql -U toeic -d toeic -c "UPDATE \"User\" SET role
 | Biến | Tác dụng |
 |---|---|
 | `GEMINI_API_KEY` | Bật gia sư AI, giải thích lỗi sai bằng AI và embedding cho RAG. Để trống thì các chức năng này không hoạt động, phần còn lại của hệ thống vẫn chạy |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Tài khoản gửi mã xác nhận. Mặc định là Gmail (`smtp.gmail.com`, cổng 465, `SMTP_SECURE=true`, mật khẩu ứng dụng). Để trống `SMTP_HOST` thì mã được gửi vào Mailpit |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Tài khoản gửi mã xác nhận. Mặc định là Gmail (`smtp.gmail.com`, cổng 465, `SMTP_SECURE=true`, mật khẩu ứng dụng). Để trống `SMTP_PASS` thì mã được gửi vào Mailpit |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Đăng nhập bằng GitHub |
 | `MAILPIT_PORT` | Đổi cổng của Mailpit khi cổng 8025 đã bị dùng |
 | `WEB_PORT` | Đổi cổng web khi cổng 8080 đã bị chương trình khác dùng, đồng thời sửa `FRONTEND_URL` theo cùng cổng. PostgreSQL và Redis không mở cổng ra máy nên không trùng với cơ sở dữ liệu có sẵn |
@@ -86,7 +86,7 @@ npm run dev:backend             # API: http://localhost:3000
 npm run dev:frontend            # Web: http://localhost:5173
 ```
 
-Tệp `compose.dev.yaml` mở cổng 5432 và 6379 cho PostgreSQL, Redis (đổi bằng `POSTGRES_HOST_PORT`, `REDIS_HOST_PORT` trong `.env`). Email chứa mã xác nhận khi đăng ký xem tại http://localhost:8025. Mật khẩu PostgreSQL trong `backend/.env` (biến `DATABASE_URL`) phải trùng `POSTGRES_PASSWORD` trong `.env`; hai tệp mẫu đã khớp nhau. Để có dữ liệu trên cơ sở dữ liệu trống, chạy `node --env-file=.env scripts/import-public-content.cjs prisma/public-library.json.gz --if-empty` trong thư mục `backend` (cần tệp dữ liệu từ bản ZIP), hoặc `npm run seed:demo --prefix backend` để sinh dữ liệu mẫu tổng hợp.
+Tệp `compose.dev.yaml` mở cổng 5432 và 6379 cho PostgreSQL, Redis (đổi bằng `POSTGRES_HOST_PORT`, `REDIS_HOST_PORT` trong `.env`). Email chứa mã xác nhận khi đăng ký xem tại http://localhost:8025. Mật khẩu PostgreSQL trong `backend/.env` (biến `DATABASE_URL`) phải trùng `POSTGRES_PASSWORD` trong `.env`; hai tệp mẫu đã khớp nhau. Để có dữ liệu trên cơ sở dữ liệu trống, chạy `node --env-file=.env scripts/import-public-content.cjs prisma/public-library.json.gz --if-empty` trong thư mục `backend`, hoặc `npm run seed:demo --prefix backend` để sinh dữ liệu mẫu tổng hợp.
 
 ## Kiểm thử
 
@@ -126,7 +126,8 @@ Xem `experiments/das3h-production/README.md`, `experiments/kt-benchmark/README.m
 
 Khi đăng ký bằng email và khi đặt lại mật khẩu, hệ thống gửi mã 6 chữ số. Mã có hiệu lực 10 phút, dùng một lần; đăng nhập thông thường vẫn dùng email và mật khẩu.
 
-- **Bản ZIP nộp kèm khóa luận:** `.env.example` đã cấu hình Gmail SMTP (`smtp.gmail.com`, cổng 465, TLS) kèm mật khẩu ứng dụng, nên mã được gửi tới hộp thư thật của email đăng ký. Máy chạy cần Internet và kết nối được tới `smtp.gmail.com:465`. Nếu chưa thấy thư, kiểm tra mục thư rác.
-- **Bản trên GitHub:** `SMTP_PASS` để trống vì là thông tin bí mật. Khi thiếu mật khẩu, hệ thống tự gửi mã vào hộp thư thử nghiệm Mailpit: mở **http://localhost:8025**, đọc mã trong email mới nhất rồi nhập vào trang đăng ký. Điền mật khẩu ứng dụng Gmail của tài khoản `SMTP_USER` vào `SMTP_PASS` nếu muốn gửi tới hộp thư thật.
+- `.env.example` đã cấu hình sẵn Gmail SMTP (`smtp.gmail.com`, cổng 465, TLS) với tài khoản gửi `SMTP_USER`, chỉ để trống `SMTP_PASS` vì đây là thông tin bí mật.
+- Để trống `SMTP_PASS`: mã được gửi vào hộp thư thử nghiệm Mailpit tại **http://localhost:8025**. Mọi chức năng vẫn hoạt động bình thường.
+- Điền mật khẩu ứng dụng Gmail của `SMTP_USER` vào `SMTP_PASS` trong `.env`: mã được gửi tới hộp thư thật của email đăng ký. Máy chạy cần kết nối được tới `smtp.gmail.com:465`.
 
 Sau khi sửa `.env`, chạy lại `docker compose up -d`.

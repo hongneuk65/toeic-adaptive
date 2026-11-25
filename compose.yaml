@@ -26,7 +26,7 @@ services:
     build: {context: ., dockerfile: backend/Dockerfile}
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-toeic}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-toeic}?schema=public
-    # Tạo bảng, rồi nạp thư viện học thật nếu có prisma/public-library.json.gz (bản ZIP nộp kèm khóa luận),
+    # Tạo bảng, rồi nạp thư viện học thật từ prisma/public-library.json.gz (có sẵn trong kho mã),
     # nếu không thì nạp dữ liệu mẫu tổng hợp. Chỉ nạp khi cơ sở dữ liệu chưa có nội dung, nên chạy lại không nạp trùng.
     command:
       - sh

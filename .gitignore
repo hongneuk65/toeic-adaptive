@@ -29,7 +29,6 @@ ednet_santa_mapping_clean/data/
 ednet_santa_mapping_clean/outputs/
 
 # Local datasets and private release assets (provision separately for deployment).
-/backend/prisma/public-library.json.gz
 /deploy/media-release-manifest.json
 /experiments/kt-benchmark/results/*
 !/experiments/kt-benchmark/results/seed42.json
