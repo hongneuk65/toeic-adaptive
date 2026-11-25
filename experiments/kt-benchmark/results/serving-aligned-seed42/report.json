@@ -1,0 +1,67 @@
+{
+  "status": "fitting",
+  "seed": 42,
+  "counts": {
+    "train": {
+      "learners": 2100,
+      "events": 281250
+    },
+    "val": {
+      "learners": 450,
+      "events": 66647
+    },
+    "test": {
+      "learners": 450,
+      "events": 65847
+    }
+  },
+  "sourceHashes": {
+    "cohort": "5b72a4df9bb14f0bb8204455683fe447c99b6f3e60d9fd72d12f7c915db92849",
+    "manifest": "9c8e27977f5d2f8e48e0ccf2bc973a43c30cd0e6f379eeaea3cbaffeed2570c8",
+    "projection": "d19ecbf41c79ee18818ecdd50764cf0a2f3bf7bdaa3eb632c6c3eac95b50fdb7",
+    "catalog": "137d2936b746c98e1586ef134bf9f9bc4b5a878c96b88e630b2241fe9f15d3cd"
+  },
+  "codeHashes": {
+    "runner": "ab9c2e334516a8b72713d542394e1984d0cf446f6016a7e6201657ab6103f515",
+    "encoder": "e46804091277657355d73b2fbf64913d71c952eea1ea4216cd033e37268876d6"
+  },
+  "referenceVersion": "own-das3h-00d43658677e8319",
+  "referenceSha256": "55f7f1398baf55474289c77c465246e95a713eee554299c1866403651f6388a6",
+  "protocol": "learner-disjoint 70/15/15; strict pre-submit features; no fitted learner IDs in new fits",
+  "fit": {
+    "solver": "liblinear",
+    "penalty": "l2",
+    "maxIter": 1000,
+    "tolerance": 1e-05,
+    "C": [
+      0.01,
+      0.1,
+      1.0
+    ]
+  },
+  "models": {
+    "item_only": {
+      "selectedC": 1.0,
+      "trials": [
+        {
+          "C": 0.01,
+          "validationLogLoss": 0.6195381672389917,
+          "converged": true,
+          "iterations": 7
+        },
+        {
+          "C": 0.1,
+          "validationLogLoss": 0.5949236645937228,
+          "converged": true,
+          "iterations": 8
+        },
+        {
+          "C": 1.0,
+          "validationLogLoss": 0.5842948749966568,
+          "converged": true,
+          "iterations": 11
+        }
+      ]
+    }
+  }
+}

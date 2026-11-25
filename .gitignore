@@ -25,14 +25,16 @@ deploy/.ssh-deployment/
 *.aof
 *.rdb
 baocao/
-ednet_santa_mapping_clean/
+ednet_santa_mapping_clean/data/
+ednet_santa_mapping_clean/outputs/
 
 # Local datasets and private release assets (provision separately for deployment).
 /backend/prisma/public-library.json.gz
 /deploy/media-release-manifest.json
-/docs/ednet-pilot-source-provenance.json
-/experiments/kt-benchmark/results/
-/experiments/exrec-sandbox/results/
+/experiments/kt-benchmark/results/*
+!/experiments/kt-benchmark/results/seed42.json
+!/experiments/kt-benchmark/results/serving-aligned-seed42/
+!/experiments/kt-benchmark/results/serving-aligned-scaled-seed42/
 /.report-qa/
 /backend/public/
 /backend/demo-assets.manifest.json

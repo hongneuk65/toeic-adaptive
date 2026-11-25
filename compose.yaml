@@ -6,7 +6,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-toeic}
       POSTGRES_USER: ${POSTGRES_USER:-toeic}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-    ports: ["127.0.0.1:5432:5432"]
     volumes: ["postgres_data:/var/lib/postgresql/data"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
@@ -17,7 +16,6 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
-    ports: ["127.0.0.1:6379:6379"]
     volumes: ["redis_data:/data"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -28,13 +26,27 @@ services:
     build: {context: ., dockerfile: backend/Dockerfile}
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-toeic}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-toeic}?schema=public
-    command: ["./node_modules/.bin/prisma", "migrate", "deploy"]
+    # Tạo bảng, rồi nạp thư viện học thật nếu có prisma/public-library.json.gz (bản ZIP nộp kèm khóa luận),
+    # nếu không thì nạp dữ liệu mẫu tổng hợp. Chỉ nạp khi cơ sở dữ liệu chưa có nội dung, nên chạy lại không nạp trùng.
+    command:
+      - sh
+      - -c
+      - >-
+        ./node_modules/.bin/prisma migrate deploy &&
+        if [ -f prisma/public-library.json.gz ];
+        then node scripts/import-public-content.cjs prisma/public-library.json.gz --if-empty;
+        else node scripts/seed-demo-if-empty.cjs;
+        fi
     depends_on:
       postgres: {condition: service_healthy}
   listening-model:
     build: {context: ., dockerfile: backend/Dockerfile}
     volumes: ["listening_models:/app/storage/models"]
-    command: ["/opt/listening-asr/bin/python", "scripts/listening-asr.py", "prepare", "--model", "/app/storage/models/base.en"]
+    # Tải mô hình nhận dạng giọng nói cho Listening. Nếu không tải được, hệ thống vẫn chạy, chỉ tắt chức năng chép lời.
+    command:
+      - sh
+      - -c
+      - /opt/listening-asr/bin/python scripts/listening-asr.py prepare --model /app/storage/models/base.en || echo "Chua tai duoc mo hinh nhan dang giong noi, chuc nang chep loi Listening tam tat."
   backend:
     build: {context: ., dockerfile: backend/Dockerfile}
     restart: unless-stopped
@@ -46,6 +58,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      DAS3H_MODEL_PATH: ${DAS3H_MODEL_PATH-models/das3h-own-v1.json}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -56,12 +69,16 @@ services:
       READING_TUTOR_MAX_CONTEXT_CHARS: ${READING_TUTOR_MAX_CONTEXT_CHARS:-12000}
       READING_AI_TIMEOUT_MS: ${READING_AI_TIMEOUT_MS:-45000}
       LISTENING_ASR_ENABLED: ${LISTENING_ASR_ENABLED:-true}
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
+      # Mặc định gửi email qua Mailpit (hộp thư thử nghiệm tại http://localhost:8025). Đặt SMTP_* trong .env để gửi email thật.
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
-      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_FROM: ${SMTP_FROM:-TOEIC Adaptive <no-reply@toeic-adaptive.local>}
+      # Khi có SMTP_USER mà thiếu SMTP_PASS (bản lấy từ GitHub), mã được gửi vào Mailpit.
+      SMTP_FALLBACK_HOST: ${SMTP_FALLBACK_HOST-mailpit}
+      SMTP_FALLBACK_PORT: ${SMTP_FALLBACK_PORT:-1025}
       OTP_DEV_LOG: ${OTP_DEV_LOG:-false}
       OTP_SECRET: ${OTP_SECRET:-}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
@@ -71,12 +88,17 @@ services:
       migrate: {condition: service_completed_successfully}
       redis: {condition: service_healthy}
       listening-model: {condition: service_completed_successfully}
+      mailpit: {condition: service_started}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 30s
+  mailpit:
+    image: axllent/mailpit:v1.21
+    restart: unless-stopped
+    ports: ["127.0.0.1:${MAILPIT_PORT:-8025}:8025"]
   frontend:
     build: {context: ., dockerfile: frontend/Dockerfile}
     restart: unless-stopped

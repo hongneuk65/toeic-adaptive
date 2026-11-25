@@ -1,0 +1,12 @@
+{
+  "reviewer":"assistant",
+  "review_scope":"correct_choice_text_only_not_image_or_audio",
+  "independent_gold":false,
+  "decisions":[
+    {"question_id":"q1623f226-b38d-4d61-8ec2-bde65e01b0a0","correct_text":"Some product displays are separated by an aisle.","groups":["p1_objects"],"rationale":"Mô tả bố trí không gian các khu trưng bày, không có hành động mua sắm được khẳng định."},
+    {"question_id":"q18645","correct_text":"One of the men is using oars.","groups":["p1_activity"],"rationale":"Thao tác sử dụng mái chèo. Không tự suy ra một phương tiện cụ thể ngoài câu mô tả."},
+    {"question_id":"q18662","correct_text":"A man is serving some food.","groups":["p1_activity"],"rationale":"Hành động phục vụ đồ ăn thuộc nhóm sinh hoạt/thao tác/giao tiếp rộng."},
+    {"question_id":"q18666","correct_text":"They are working in a laboratory.","groups":["p1_activity"],"rationale":"Nêu bối cảnh làm việc; chưa nói đến sửa chữa, chăm sóc hoặc vận hành thiết bị nên không gán nhóm thiết bị."},
+    {"question_id":"q18684","correct_text":"He is copying a document.","groups":["p1_activity"],"rationale":"Thao tác với tài liệu, không đủ để khẳng định dùng máy photocopy."}
+  ]
+}

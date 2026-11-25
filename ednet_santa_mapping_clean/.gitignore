@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.env
+token.txt
+*.log
+data/interaction_cache/
+outputs/das3h/private/
+outputs/das3h_comparison/private/
+notebooks/.jupyter*

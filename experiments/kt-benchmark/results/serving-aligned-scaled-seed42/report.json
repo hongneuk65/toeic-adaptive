@@ -1,0 +1,302 @@
+{
+  "status": "complete",
+  "seed": 42,
+  "counts": {
+    "train": {
+      "learners": 2100,
+      "events": 281250
+    },
+    "val": {
+      "learners": 450,
+      "events": 66647
+    },
+    "test": {
+      "learners": 450,
+      "events": 65847
+    }
+  },
+  "sourceHashes": {
+    "cohort": "5b72a4df9bb14f0bb8204455683fe447c99b6f3e60d9fd72d12f7c915db92849",
+    "manifest": "9c8e27977f5d2f8e48e0ccf2bc973a43c30cd0e6f379eeaea3cbaffeed2570c8",
+    "projection": "d19ecbf41c79ee18818ecdd50764cf0a2f3bf7bdaa3eb632c6c3eac95b50fdb7",
+    "catalog": "137d2936b746c98e1586ef134bf9f9bc4b5a878c96b88e630b2241fe9f15d3cd"
+  },
+  "codeHashes": {
+    "runner": "109bb19248922bf3472014fef50daaf93525e05e88dc670ff6d3ec694225fd20",
+    "encoder": "e46804091277657355d73b2fbf64913d71c952eea1ea4216cd033e37268876d6"
+  },
+  "referenceVersion": "own-das3h-00d43658677e8319",
+  "referenceSha256": "55f7f1398baf55474289c77c465246e95a713eee554299c1866403651f6388a6",
+  "protocol": "learner-disjoint 70/15/15; strict pre-submit features; no fitted learner IDs in new fits",
+  "fit": {
+    "solver": "liblinear",
+    "penalty": "l2",
+    "maxIter": 1000,
+    "tolerance": 1e-05,
+    "C": [
+      0.01,
+      0.1,
+      1.0
+    ],
+    "scale": "divide each column by max(1, max_abs_train / 10)"
+  },
+  "models": {
+    "item_only": {
+      "selectedC": 1.0,
+      "trials": [
+        {
+          "C": 0.01,
+          "validationLogLoss": 0.6195381672389917,
+          "converged": true,
+          "iterations": 7
+        },
+        {
+          "C": 0.1,
+          "validationLogLoss": 0.5949236645937228,
+          "converged": true,
+          "iterations": 8
+        },
+        {
+          "C": 1.0,
+          "validationLogLoss": 0.5842948749966568,
+          "converged": true,
+          "iterations": 11
+        }
+      ],
+      "test": {
+        "auc": 0.695835996776862,
+        "log_loss": 0.5814915011267554,
+        "brier": 0.19851086603809764,
+        "accuracy": 0.6955214360563123,
+        "events": 65847
+      },
+      "paired": {
+        "deltaLogLossCandidateMinusDas3h": 0.0017663622928505603,
+        "ci95": [
+          -0.0009077869152670906,
+          0.003921517383308675
+        ],
+        "repeats": 1000,
+        "unit": "paired learner cluster",
+        "seed": 42
+      }
+    },
+    "afm_item": {
+      "selectedC": 1.0,
+      "trials": [
+        {
+          "C": 0.01,
+          "validationLogLoss": 0.6085563158555124,
+          "converged": true,
+          "iterations": 11
+        },
+        {
+          "C": 0.1,
+          "validationLogLoss": 0.5882673365793291,
+          "converged": true,
+          "iterations": 26
+        },
+        {
+          "C": 1.0,
+          "validationLogLoss": 0.5801527796854621,
+          "converged": true,
+          "iterations": 63
+        }
+      ],
+      "test": {
+        "auc": 0.6949892393475028,
+        "log_loss": 0.5819765998320391,
+        "brier": 0.1986752034108857,
+        "accuracy": 0.6955973696599693,
+        "events": 65847
+      },
+      "paired": {
+        "deltaLogLossCandidateMinusDas3h": 0.0022514609981344833,
+        "ci95": [
+          -0.0019536409931220516,
+          0.005821705610406102
+        ],
+        "repeats": 1000,
+        "unit": "paired learner cluster",
+        "seed": 42
+      }
+    },
+    "pfa_item": {
+      "selectedC": 1.0,
+      "trials": [
+        {
+          "C": 0.01,
+          "validationLogLoss": 0.608481679045329,
+          "converged": true,
+          "iterations": 12
+        },
+        {
+          "C": 0.1,
+          "validationLogLoss": 0.5889391474293796,
+          "converged": true,
+          "iterations": 35
+        },
+        {
+          "C": 1.0,
+          "validationLogLoss": 0.5813194207457297,
+          "converged": true,
+          "iterations": 96
+        }
+      ],
+      "test": {
+        "auc": 0.6961323978001015,
+        "log_loss": 0.5817769672863198,
+        "brier": 0.1985378699323244,
+        "accuracy": 0.6954910626148496,
+        "events": 65847
+      },
+      "paired": {
+        "deltaLogLossCandidateMinusDas3h": 0.00205182845241497,
+        "ci95": [
+          -0.003080077460410021,
+          0.006678798887283653
+        ],
+        "repeats": 1000,
+        "unit": "paired learner cluster",
+        "seed": 42
+      }
+    },
+    "log_pfa_item": {
+      "selectedC": 1.0,
+      "trials": [
+        {
+          "C": 0.01,
+          "validationLogLoss": 0.6036185494593471,
+          "converged": true,
+          "iterations": 13
+        },
+        {
+          "C": 0.1,
+          "validationLogLoss": 0.5826341434835094,
+          "converged": true,
+          "iterations": 23
+        },
+        {
+          "C": 1.0,
+          "validationLogLoss": 0.574142453884026,
+          "converged": true,
+          "iterations": 44
+        }
+      ],
+      "test": {
+        "auc": 0.7022786187566965,
+        "log_loss": 0.5774206098849219,
+        "brier": 0.19706585108776623,
+        "accuracy": 0.698528406761128,
+        "events": 65847
+      },
+      "paired": {
+        "deltaLogLossCandidateMinusDas3h": -0.002304528948982825,
+        "ci95": [
+          -0.005972213801057041,
+          0.0002522409929345565
+        ],
+        "repeats": 1000,
+        "unit": "paired learner cluster",
+        "seed": 42
+      }
+    },
+    "das3h_all_history_only": {
+      "selectedC": 1.0,
+      "trials": [
+        {
+          "C": 0.01,
+          "validationLogLoss": 0.6051102407298814,
+          "converged": true,
+          "iterations": 12
+        },
+        {
+          "C": 0.1,
+          "validationLogLoss": 0.5836345700101995,
+          "converged": true,
+          "iterations": 24
+        },
+        {
+          "C": 1.0,
+          "validationLogLoss": 0.5750242110237761,
+          "converged": true,
+          "iterations": 62
+        }
+      ],
+      "test": {
+        "auc": 0.700542659295105,
+        "log_loss": 0.5784489708866606,
+        "brier": 0.19743165557423714,
+        "accuracy": 0.6979513113733351,
+        "events": 65847
+      },
+      "paired": {
+        "deltaLogLossCandidateMinusDas3h": -0.0012761679472441509,
+        "ci95": [
+          -0.005137454498720775,
+          0.0016534096313900856
+        ],
+        "repeats": 1000,
+        "unit": "paired learner cluster",
+        "seed": 42
+      }
+    },
+    "das3h_no_learner_id": {
+      "selectedC": 1.0,
+      "trials": [
+        {
+          "C": 0.01,
+          "validationLogLoss": 0.6031479187584311,
+          "converged": true,
+          "iterations": 14
+        },
+        {
+          "C": 0.1,
+          "validationLogLoss": 0.5823217498242736,
+          "converged": true,
+          "iterations": 32
+        },
+        {
+          "C": 1.0,
+          "validationLogLoss": 0.5742331789825165,
+          "converged": true,
+          "iterations": 77
+        }
+      ],
+      "test": {
+        "auc": 0.7017724660115072,
+        "log_loss": 0.578113487002362,
+        "brier": 0.1971515874260167,
+        "accuracy": 0.6986347138062479,
+        "events": 65847
+      },
+      "paired": {
+        "deltaLogLossCandidateMinusDas3h": -0.0016116518315426854,
+        "ci95": [
+          -0.005621466733185579,
+          0.0011377039671064608
+        ],
+        "repeats": 1000,
+        "unit": "paired learner cluster",
+        "seed": 42
+      }
+    }
+  },
+  "currentDas3h": {
+    "auc": 0.7037010674893879,
+    "log_loss": 0.5797251388339046,
+    "brier": 0.19789494685294673,
+    "accuracy": 0.6953391954075356,
+    "events": 65847
+  },
+  "windowAblation": {
+    "deltaLogLossCandidateMinusDas3h": 0.0003354838842985347,
+    "ci95": [
+      -0.0007467989844852809,
+      0.00131952165640158
+    ],
+    "repeats": 1000,
+    "unit": "paired learner cluster",
+    "seed": 42
+  }
+}

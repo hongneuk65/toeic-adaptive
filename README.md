@@ -1,80 +1,132 @@
 # TOEIC Adaptive
 
-Ứng dụng luyện TOEIC: thi thử, lý thuyết, flashcard, theo dõi kỹ năng DAS3H và gia sư AI/RAG.
+Hệ thống học tập thích ứng cho luyện thi TOEIC, là phần mã nguồn của khóa luận *Xây dựng hệ thống học tập thích ứng dựa trên dữ liệu luyện tập cho luyện thi TOEIC* (Nguyễn Văn Hồng, MSV 11236114, Khoa Công nghệ thông tin, Đại học Kinh tế Quốc dân).
 
-Trang **Gợi ý học tiếp** có kế hoạch luyện theo kỹ năng, mốc ôn và gợi ý kiến thức nền. Xem [thiết kế và kiểm tra kế hoạch học](docs/adaptive-learning-plan.md).
+Chức năng chính: thi thử và luyện tập theo Part, chọn câu hỏi thích ứng bằng mô hình DAS3H, ôn từ vựng với lịch ôn HLR, gia sư AI có truy hồi tài liệu (RAG), luyện nghe, luyện đọc và trang quản trị.
 
-Khi trả lời sai trong luyện thích ứng, có thể mở [hướng dẫn củng cố từng bước](docs/adaptive-practice-support.md), ôn lý thuyết và luyện thêm cùng kỹ năng.
+## Chạy bằng Docker
 
-Đối chứng nghiên cứu pyBKT và pyKT DKT được tách tại [KT benchmark](experiments/kt-benchmark/README.md), dùng cohort và split học viên tương ứng với DAS3H; không tự thay model đang phục vụ.
+Chỉ cần cài [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows, macOS) hoặc Docker Engine kèm Docker Compose v2 (Linux). Không cần cài Node.js, PostgreSQL hay Redis. Máy cần khoảng 8 GB RAM, 10 GB ổ đĩa trống và có Internet ở lần chạy đầu.
 
-Listening theo từng đoạn audio/video/YouTube tại `/listening`; xem [hướng dẫn Listening](docs/listening.md). Chạy `npm run seed:listening --prefix backend` để có audio demo ổn định. Kết quả Listening lưu riêng, không cập nhật DAS3H.
+1. Mở Docker Desktop và chờ đến khi Docker báo đang chạy.
+2. Mở terminal tại thư mục chứa tệp `compose.yaml` (thư mục gốc của repo, hoặc thư mục `Source` nếu dùng bản ZIP nộp).
+3. Tạo tệp cấu hình từ tệp mẫu. Trong bản ZIP nộp kèm khóa luận, tệp mẫu đã có sẵn tài khoản Gmail gửi mã xác nhận nên dùng được ngay. Bản trên GitHub để trống `SMTP_PASS`, xem mục Email xác nhận ở cuối trang.
 
-## Cấu trúc
+   ```bash
+   cp .env.example .env          # Windows PowerShell: Copy-Item .env.example .env
+   ```
 
-```text
-backend/             NestJS API, BullMQ worker, Prisma schema/migrations/seeds
-frontend/            React + Vite + Tailwind
-deploy/              Nginx reverse proxy, hỗ trợ SPA và SSE
-docs/                Hướng dẫn vận hành và tài liệu dự án
-.github/workflows/   CI kiểm tra lint, test, build và Docker images
-compose.yaml         PostgreSQL, Redis, migration, API và web
+4. Build và khởi động toàn bộ hệ thống:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   Lần đầu mất khoảng 10 đến 20 phút để tải image nền, cài thư viện và build. Các lần sau khởi động trong vài chục giây.
+
+5. Mở trình duyệt tại **http://localhost:8080** và chọn Đăng ký. Nhập email và mật khẩu, hệ thống gửi mã xác nhận 6 chữ số tới email đó. Với bản ZIP nộp kèm khóa luận, mã được gửi qua Gmail tới hộp thư thật của địa chỉ đã đăng ký (kiểm tra cả thư rác). Với bản lấy từ GitHub, mã được gửi vào hộp thư thử nghiệm Mailpit tại **http://localhost:8025**. Nhập mã để xác nhận là đăng nhập vào hệ thống.
+
+Lệnh `docker compose up` tự chạy lần lượt các bước sau, không cần làm tay:
+
+| Dịch vụ | Việc thực hiện |
+|---|---|
+| `postgres`, `redis` | Cơ sở dữ liệu PostgreSQL 16 và hàng đợi Redis 7 |
+| `migrate` | Tạo 40 bảng bằng Prisma migration, sau đó nạp thư viện học thật nếu có tệp `backend/prisma/public-library.json.gz`, nếu không có thì nạp dữ liệu mẫu tổng hợp (chỉ nạp khi cơ sở dữ liệu còn trống) |
+| `listening-model` | Tải mô hình nhận dạng giọng nói cho phần Listening |
+| `backend` | API NestJS ở cổng nội bộ 3000, dùng mô hình DAS3H đã huấn luyện `backend/models/das3h-own-v1.json` |
+| `mailpit` | Hộp thư thử nghiệm tại cổng 8025, nhận mã xác nhận khi `.env` chưa có mật khẩu Gmail (`SMTP_PASS`) |
+| `frontend` | Giao diện React phục vụ qua Nginx ở cổng 8080, chuyển `/api` về backend |
+
+Kiểm tra trạng thái:
+
+```bash
+docker compose ps                       # postgres, redis, backend, frontend ở trạng thái running/healthy
+curl http://localhost:8080/api/health/ready
 ```
 
-Hai ứng dụng giữ lockfile riêng; lệnh ở gốc điều phối chúng bằng `npm --prefix`.
-Các thư mục audio và `DE_THI.txt` là tài liệu nguồn, chưa phải tài nguyên được ứng dụng phục vụ; không đưa vào Docker image.
+Dừng hệ thống: `docker compose down`. Xóa cả dữ liệu để chạy lại từ đầu: `docker compose down -v`.
 
-## Chạy local
+### Dữ liệu học
 
-Yêu cầu Node **22.22.3+**, npm và PostgreSQL/Redis (hoặc Docker Desktop).
+- **Bản ZIP nộp kèm khóa luận** có tệp `backend/prisma/public-library.json.gz`. Ở lần chạy đầu, hệ thống tự nạp 5.049 câu hỏi, 114 bài lý thuyết, 196 bài đọc, 854 thẻ từ vựng và dữ liệu Listening. Audio và hình ảnh của đề thi (khoảng 658 MB) không kèm theo vì vượt giới hạn dung lượng nộp, nên các câu Part 1 đến 4 vẫn hiển thị nhưng không phát được âm thanh. Từ điển tra nghĩa nhanh cũng không kèm theo.
+- **Bản trên GitHub** không có tệp dữ liệu này vì nội dung câu hỏi được thu thập từ nguồn có bản quyền. Khi đó hệ thống tự nạp dữ liệu mẫu tổng hợp (danh mục kỹ năng, bài lý thuyết, 300 câu hỏi mẫu và một bài nghe mẫu) để mọi chức năng đều dùng thử được. Để có thư viện thật, chép tệp `public-library.json.gz` từ bản ZIP vào `backend/prisma/` rồi chạy `docker compose down -v` và `docker compose up -d --build`.
 
-```powershell
-Copy-Item .env.example .env
-Copy-Item backend/.env.example backend/.env
-Copy-Item frontend/.env.example frontend/.env
-npm run setup
-npm run infra:up
+### Tài khoản quản trị
+
+Tài khoản mới đăng ký có vai trò người học. Để xem trang quản trị, nâng quyền một tài khoản đã đăng ký (thay email cho đúng), rồi đăng xuất và đăng nhập lại:
+
+```bash
+docker compose exec postgres psql -U toeic -d toeic -c "UPDATE \"User\" SET role='ADMIN' WHERE email='ban@example.com';"
+```
+
+### Cấu hình tùy chọn trong `.env`
+
+| Biến | Tác dụng |
+|---|---|
+| `GEMINI_API_KEY` | Bật gia sư AI, giải thích lỗi sai bằng AI và embedding cho RAG. Để trống thì các chức năng này không hoạt động, phần còn lại của hệ thống vẫn chạy |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Tài khoản gửi mã xác nhận. Mặc định là Gmail (`smtp.gmail.com`, cổng 465, `SMTP_SECURE=true`, mật khẩu ứng dụng). Để trống `SMTP_HOST` thì mã được gửi vào Mailpit |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | Đăng nhập bằng GitHub |
+| `MAILPIT_PORT` | Đổi cổng của Mailpit khi cổng 8025 đã bị dùng |
+| `WEB_PORT` | Đổi cổng web khi cổng 8080 đã bị chương trình khác dùng, đồng thời sửa `FRONTEND_URL` theo cùng cổng. PostgreSQL và Redis không mở cổng ra máy nên không trùng với cơ sở dữ liệu có sẵn |
+
+Sau khi sửa `.env`, chạy lại `docker compose up -d`.
+
+## Phát triển không dùng Docker cho ứng dụng
+
+Yêu cầu Node.js 22.22.3 trở lên. PostgreSQL và Redis vẫn chạy bằng Docker:
+
+```bash
+cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+docker compose -f compose.yaml -f compose.dev.yaml up -d postgres redis mailpit
+npm run setup                   # cài thư viện backend, frontend và sinh Prisma client
 npm run db:migrate
+npm run dev:backend             # API: http://localhost:3000
+npm run dev:frontend            # Web: http://localhost:5173
 ```
 
-Hạ tầng local của workspace dùng lại hai container `toeic-postgres` (5432) và `toeic-redis` (6379). `infra:up` chỉ khởi động container có sẵn, không tạo container hoặc volume mới; nếu thiếu container, lệnh sẽ báo lỗi. Compose dành cho triển khai riêng, không chạy song song với hạ tầng local trên cùng cổng.
+Tệp `compose.dev.yaml` mở cổng 5432 và 6379 cho PostgreSQL, Redis (đổi bằng `POSTGRES_HOST_PORT`, `REDIS_HOST_PORT` trong `.env`). Email chứa mã xác nhận khi đăng ký xem tại http://localhost:8025. Mật khẩu PostgreSQL trong `backend/.env` (biến `DATABASE_URL`) phải trùng `POSTGRES_PASSWORD` trong `.env`; hai tệp mẫu đã khớp nhau. Để có dữ liệu trên cơ sở dữ liệu trống, chạy `node --env-file=.env scripts/import-public-content.cjs prisma/public-library.json.gz --if-empty` trong thư mục `backend` (cần tệp dữ liệu từ bản ZIP), hoặc `npm run seed:demo --prefix backend` để sinh dữ liệu mẫu tổng hợp.
 
-Nếu đã có `.env`, giữ cấu hình hiện tại. `backend/.env` cần trỏ đúng database và thông tin đăng nhập của PostgreSQL hiện có. Chạy hai terminal:
+## Kiểm thử
 
-```powershell
-npm run dev:backend
+```bash
+npm run check                   # lint, kiểm thử đơn vị backend và frontend, build
+npm run test:browser --prefix frontend
 ```
 
-```powershell
-npm run dev:frontend
-```
+CI trên GitHub Actions chạy cùng các bước này cho mỗi lần đẩy lên nhánh `main`.
 
-Web: http://localhost:5173. Vite chuyển `/api` đến API ở cổng 3000.
+## Cấu trúc thư mục
 
-Database mới cần dữ liệu. Chỉ chạy `npm run seed:demo --prefix backend` trên DB demo: các seed hiện tại không hoàn toàn idempotent. Câu hỏi bulk là dữ liệu tổng hợp, URL audio/ảnh là placeholder.
+| Thư mục | Nội dung | Mục trong báo cáo |
+|---|---|---|
+| `backend/` | API NestJS, Prisma (`prisma/schema.prisma`, `prisma/migrations/`), suy luận DAS3H (`src/das3h/`), lịch ôn HLR (`src/flashcard/`), gia sư RAG (`src/rag/`), xác thực (`src/auth/`) | Chương 3 |
+| `backend/models/das3h-own-v1.json` | Bộ hệ số DAS3H đã huấn luyện, dùng khi phục vụ | 4.1.5 |
+| `frontend/` | Giao diện React + Vite | 4.2 |
+| `ednet_santa_mapping_clean/` | Quy trình xây dựng bộ nhãn OWN: nối EdNet với Santa, gán nhãn theo ngưỡng, gom nhóm | 4.1.2 |
+| `experiments/das3h-production/` | Huấn luyện DAS3H trên EdNet KT4 | 4.1.1, 4.1.3 |
+| `experiments/kt-benchmark/` | So sánh DAS3H với item-only, Log-PFA, BKT, DKT; `results/` chứa kết quả đã báo cáo; `bang_chung_so_sanh_mo_hinh.ipynb` (và bản `.html`) tái lập Bảng 4.6, 4.7 | 4.1.4 |
+| `experiments/hlr/` | Huấn luyện trọng số lịch ôn HLR | |
+| `docs/` | Tài liệu kiến trúc, triển khai và từng chức năng | Phụ lục A |
+| `compose.yaml`, `deploy/` | Chạy toàn bộ hệ thống bằng Docker Compose, cấu hình Nginx | Phụ lục A |
+| `.github/workflows/` | CI: lint, kiểm thử, build | |
 
-## Kiểm tra và deploy
+Không kèm theo: `node_modules`, dữ liệu EdNet gốc, nội dung câu hỏi gốc thu thập từ Santa, tệp `.env` và khóa API. EdNet tải tại https://github.com/riiid/ednet (giấy phép CC BY-NC 4.0); nội dung Santa chỉ dùng cho mục đích nghiên cứu.
 
-```powershell
-npm run check
-docker compose --env-file .env.example config --quiet
-```
+## Tái lập thực nghiệm
 
-Xem [hướng dẫn deploy](docs/deployment.md), [kiến trúc](docs/architecture.md), [kết quả kiểm tra trước đây](docs/verification.md) và [RAG](docs/rag-performance.md).
+Xem `experiments/das3h-production/README.md`, `experiments/kt-benchmark/README.md` và `ednet_santa_mapping_clean/README.md`. Các lệnh cần dữ liệu EdNet KT4 đặt theo hướng dẫn trong từng README.
 
-Bản web [TOEIC Compass](https://toeic-compass.up.railway.app) tự động phát hành từ nhánh `main` của GitHub qua Railway sau khi CI đạt. Chỉnh sửa hoặc commit ở máy chưa cập nhật web; cần push lên `main`. Cấu hình production và dữ liệu thư viện được mô tả trong [hướng dẫn production](docs/production-toeic-compass.md). Key và dữ liệu người học chỉ lưu phía server.
+## Tài liệu khác
 
+[Kiến trúc](docs/architecture.md), [tổng quan hệ thống](docs/system-overview.md), [triển khai](docs/deployment.md), [quản trị](docs/admin.md), [Listening](docs/listening.md), [Reading](docs/reading.md), [phòng thi](docs/exam-room.md), [lịch ôn HLR](docs/flashcard-hlr-retrieval.md), [gia sư AI](docs/contextual-ai-tutor.md).
 
-## Reading
+## Email xác nhận
 
-Gợi ý hiện có trong từng thư viện lý thuyết, từ vựng, nghe và đọc; chế độ ôn từ vựng hiển thị đường cong ghi nhớ. Xem [cách phối hợp lịch ôn với DAS3H và kế hoạch nghiên cứu](docs/integrated-learning.md).
+Khi đăng ký bằng email và khi đặt lại mật khẩu, hệ thống gửi mã 6 chữ số. Mã có hiệu lực 10 phút, dùng một lần; đăng nhập thông thường vẫn dùng email và mật khẩu.
 
-Các phần thích ứng trên nhánh nghiên cứu: [kế hoạch chọn kỹ năng](docs/adaptive-learning-plan.md), [hỗ trợ sau lỗi sai](docs/adaptive-practice-support.md), [đối chứng KT](experiments/kt-benchmark/README.md), [sinh câu hỏi từ nguồn](docs/reading-source-generation.md) và [thực nghiệm lập kế hoạch theo hướng ExRec](experiments/exrec-sandbox/README.md).
+- **Bản ZIP nộp kèm khóa luận:** `.env.example` đã cấu hình Gmail SMTP (`smtp.gmail.com`, cổng 465, TLS) kèm mật khẩu ứng dụng, nên mã được gửi tới hộp thư thật của email đăng ký. Máy chạy cần Internet và kết nối được tới `smtp.gmail.com:465`. Nếu chưa thấy thư, kiểm tra mục thư rác.
+- **Bản trên GitHub:** `SMTP_PASS` để trống vì là thông tin bí mật. Khi thiếu mật khẩu, hệ thống tự gửi mã vào hộp thư thử nghiệm Mailpit: mở **http://localhost:8025**, đọc mã trong email mới nhất rồi nhập vào trang đăng ký. Điền mật khẩu ứng dụng Gmail của tài khoản `SMTP_USER` vào `SMTP_PASS` nếu muốn gửi tới hộp thư thật.
 
-Module Reading có thư viện 25 bài mẫu, bài cá nhân AI, lịch sử theo phiên bản và từ vựng riêng. Sau migration, chạy `npm run seed:reading --prefix backend`. Xem [cấu hình, kiểm thử và hướng dẫn demo Reading](docs/reading.md).
-
-## Email xác nhận trong bản nộp
-
-Sau khi sao chép `.env.example` thành `.env`, bản nộp sử dụng Gmail SMTP để gửi OTP tới email thật khi đăng ký và đặt lại mật khẩu. Đăng nhập thông thường vẫn dùng email và mật khẩu. Máy cần truy cập Internet và kết nối được smtp.gmail.com:465. Mailpit, nếu còn chạy, chỉ là công cụ thử nghiệm và không nhận OTP trong cấu hình mặc định này. Nếu tài khoản gửi thư bị giới hạn hoặc mật khẩu ứng dụng bị thu hồi, cần cập nhật SMTP trong `.env`.
-
-Trước khi chạy, điền SMTP_PASS trong tệp .env bằng mật khẩu ứng dụng Gmail được cấp riêng. Tệp mẫu không chứa mật khẩu. Không có SMTP_PASS hợp lệ thì không gửi được OTP thật.
+Sau khi sửa `.env`, chạy lại `docker compose up -d`.

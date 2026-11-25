@@ -10,4 +10,4 @@ RAG đọc KnowledgeChunk/TheoryLesson, xếp hạng từ khóa và ghép ngữ 
 
 Các gói có lockfile riêng nhằm giữ nguyên cây dependency hiện có. Không có shared package vì chưa có phần mã dùng chung thực sự giữa client/server. Schema và migrations nằm cùng backend; thay đổi schema phải đi kèm migration, không dùng `db push` khi deploy.
 
-Tài liệu lịch sử: `project-notes.md`, `verification.md`, `rag-performance.md`. Chúng phản ánh thời điểm ghi nhận, không tự chứng minh trạng thái runtime hiện tại.
+Tài liệu lịch sử: `verification.md`, `rag-performance.md`. Chúng phản ánh thời điểm ghi nhận, không tự chứng minh trạng thái runtime hiện tại.

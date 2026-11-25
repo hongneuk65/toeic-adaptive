@@ -24,8 +24,6 @@ Lịch 1/3/7 ngày và các trọng số là heuristic minh bạch, không phả
 
 ## Kiểm tra
 
-Phần [ExRec sandbox](../experiments/exrec-sandbox/README.md) đã có bộ lập kế hoạch BKT hai bước và so sánh mô phỏng 27 cấu hình. Đây là thực nghiệm riêng, chưa phải ExRec MVE hay RL phục vụ người học; không thay policy đang chạy.
-
 - `npm run check` từ gốc: lint, toàn bộ unit tests và build cả hai ứng dụng.
 - `npm run test:browser --prefix frontend -- learning-plan.spec.ts recommendation-topics.spec.ts`: desktop/mobile; lý do, ngày ôn, nền tảng, liên kết, trạng thái trống, giữ phiên học khi refresh và luồng chủ đề cũ.
 - `node test/recommendation-smoke.cjs` từ backend sau build: đọc PostgreSQL local và mở câu hỏi cho ba mục đầu; không ghi dữ liệu người học, không in danh tính.

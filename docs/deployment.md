@@ -10,7 +10,7 @@
 
 Migration là service riêng: backend chỉ khởi động sau khi migration thành công và Redis sẵn sàng. Web chờ readiness của backend. Readiness kiểm tra PostgreSQL và Redis; `/health` chỉ kiểm tra API còn đáp ứng.
 
-Database mới chưa có nội dung. Để tạo dữ liệu demo, chạy `docker compose exec backend npm run seed:demo`. Chỉ dùng trên database demo, không chạy seed này tự động khi deploy vì một số seed tạo thêm bản ghi mỗi lần chạy. Audio/ảnh của seed bulk là placeholder và cần thay bằng tài nguyên thật để demo Listening đầy đủ.
+Khi có tệp `backend/prisma/public-library.json.gz`, dịch vụ `migrate` tự nạp thư viện học vào database mới (chỉ khi database còn trống). Nếu không có tệp này, database mới chưa có nội dung; để tạo dữ liệu demo tổng hợp, chạy `docker compose exec backend npm run seed:demo`. Chỉ dùng trên database demo, không chạy seed này tự động khi deploy vì một số seed tạo thêm bản ghi mỗi lần chạy. Audio/ảnh của seed bulk là placeholder và cần thay bằng tài nguyên thật để demo Listening đầy đủ.
 
 ## Cập nhật
 

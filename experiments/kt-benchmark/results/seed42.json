@@ -1,0 +1,355 @@
+{
+  "status": "complete",
+  "seed": 42,
+  "sourceHashes": {
+    "cohort": "5b72a4df9bb14f0bb8204455683fe447c99b6f3e60d9fd72d12f7c915db92849",
+    "manifest": "9c8e27977f5d2f8e48e0ccf2bc973a43c30cd0e6f379eeaea3cbaffeed2570c8",
+    "projection": "d19ecbf41c79ee18818ecdd50764cf0a2f3bf7bdaa3eb632c6c3eac95b50fdb7",
+    "catalog": "137d2936b746c98e1586ef134bf9f9bc4b5a878c96b88e630b2241fe9f15d3cd"
+  },
+  "counts": {
+    "train": {
+      "learners": 2100,
+      "events": 281250
+    },
+    "val": {
+      "learners": 450,
+      "events": 66647
+    },
+    "test": {
+      "learners": 450,
+      "events": 65847
+    }
+  },
+  "das3hArtifactHash": "55f7f1398baf55474289c77c465246e95a713eee554299c1866403651f6388a6",
+  "das3hReproduced": true,
+  "fixedModelHashes": {
+    "bktParameters": "1723a0866e5e0dd759de49e843146f7d2febf338a6339903dbf51b430434100b",
+    "dktCheckpoint": "bb1610f1c3c84671c9a02249753b49406389745930fb70e3b56e2bbab3a54c69"
+  },
+  "results": {
+    "own_das3h": {
+      "auc": 0.7037010674893879,
+      "log_loss": 0.5797251388339046,
+      "brier": 0.19789494685294673,
+      "accuracy": 0.6953391954075356,
+      "events": 65847
+    },
+    "bkt": {
+      "auc": 0.5952109372056943,
+      "log_loss": 0.6236427511114201,
+      "brier": 0.21660709927438102,
+      "accuracy": 0.6668185338739806,
+      "events": 65847
+    },
+    "dkt": {
+      "auc": 0.6083194228032003,
+      "log_loss": 0.6211035776833645,
+      "brier": 0.2153900377208723,
+      "accuracy": 0.668382766109314,
+      "events": 65847
+    }
+  },
+  "descriptiveSubgroups": {
+    "tagged": {
+      "own_das3h": {
+        "auc": 0.7032648156777707,
+        "log_loss": 0.5787678330776312,
+        "brier": 0.19749584205644968,
+        "accuracy": 0.6964393187696212,
+        "events": 61477
+      },
+      "bkt": {
+        "auc": 0.5968200081616496,
+        "log_loss": 0.6216910443989747,
+        "brier": 0.21570624976128336,
+        "accuracy": 0.6689981619142118,
+        "events": 61477
+      },
+      "dkt": {
+        "auc": 0.6073511172116174,
+        "log_loss": 0.6200225897151067,
+        "brier": 0.21486931772778073,
+        "accuracy": 0.6698765391935195,
+        "events": 61477
+      }
+    },
+    "untagged": {
+      "own_das3h": {
+        "auc": 0.7081542690375999,
+        "log_loss": 0.5931924811630648,
+        "brier": 0.20350953851753492,
+        "accuracy": 0.679862700228833,
+        "events": 4370
+      },
+      "bkt": {
+        "auc": 0.5681610560608118,
+        "log_loss": 0.6510992896837339,
+        "brier": 0.22928021724159017,
+        "accuracy": 0.6361556064073226,
+        "events": 4370
+      },
+      "dkt": {
+        "auc": 0.6147308945296592,
+        "log_loss": 0.6363108768423105,
+        "brier": 0.22271550751842145,
+        "accuracy": 0.6473684210526316,
+        "events": 4370
+      }
+    },
+    "part_1": {
+      "own_das3h": {
+        "auc": 0.725449309610351,
+        "log_loss": 0.4878991761678525,
+        "brier": 0.15872968863869374,
+        "accuracy": 0.7791279485346676,
+        "events": 5596
+      },
+      "bkt": {
+        "auc": 0.6067756736994924,
+        "log_loss": 0.5359301510472679,
+        "brier": 0.17684394964006878,
+        "accuracy": 0.7630450321658327,
+        "events": 5596
+      },
+      "dkt": {
+        "auc": 0.6063535628627239,
+        "log_loss": 0.5390618946692256,
+        "brier": 0.17793899767020638,
+        "accuracy": 0.7612580414581844,
+        "events": 5596
+      }
+    },
+    "part_2": {
+      "own_das3h": {
+        "auc": 0.6809637314156944,
+        "log_loss": 0.5626641638892812,
+        "brier": 0.19008005207193057,
+        "accuracy": 0.7158633746154452,
+        "events": 12677
+      },
+      "bkt": {
+        "auc": 0.564050513340195,
+        "log_loss": 0.5974780902731331,
+        "brier": 0.20401176148276504,
+        "accuracy": 0.7101049144119271,
+        "events": 12677
+      },
+      "dkt": {
+        "auc": 0.5825803336220069,
+        "log_loss": 0.5944884625307845,
+        "brier": 0.2029079201547458,
+        "accuracy": 0.7086061370986827,
+        "events": 12677
+      }
+    },
+    "part_3": {
+      "own_das3h": {
+        "auc": 0.734233377718205,
+        "log_loss": 0.504726350111261,
+        "brier": 0.1664552706759677,
+        "accuracy": 0.7560321715817694,
+        "events": 4476
+      },
+      "bkt": {
+        "auc": 0.5828971364344477,
+        "log_loss": 0.5642461338344759,
+        "brier": 0.18886590794392336,
+        "accuracy": 0.7408400357462019,
+        "events": 4476
+      },
+      "dkt": {
+        "auc": 0.5781086166044507,
+        "log_loss": 0.5662699192947468,
+        "brier": 0.1894445610413578,
+        "accuracy": 0.7388293118856122,
+        "events": 4476
+      }
+    },
+    "part_4": {
+      "own_das3h": {
+        "auc": 0.7286840855271599,
+        "log_loss": 0.5180997602493075,
+        "brier": 0.1709497528233659,
+        "accuracy": 0.7554449284380834,
+        "events": 4821
+      },
+      "bkt": {
+        "auc": 0.5589194299691772,
+        "log_loss": 0.5843780698994733,
+        "brier": 0.1975529947360572,
+        "accuracy": 0.7268201617921594,
+        "events": 4821
+      },
+      "dkt": {
+        "auc": 0.5518478935452444,
+        "log_loss": 0.5852511382983019,
+        "brier": 0.19777799129105336,
+        "accuracy": 0.725368180875337,
+        "events": 4821
+      }
+    },
+    "part_5": {
+      "own_das3h": {
+        "auc": 0.6746077930271478,
+        "log_loss": 0.6275304548421246,
+        "brier": 0.2186328062102814,
+        "accuracy": 0.6490980743968473,
+        "events": 31211
+      },
+      "bkt": {
+        "auc": 0.5594372582317209,
+        "log_loss": 0.6645078806712175,
+        "brier": 0.2358234328667226,
+        "accuracy": 0.609240331934254,
+        "events": 31211
+      },
+      "dkt": {
+        "auc": 0.586313295036926,
+        "log_loss": 0.658793987768084,
+        "brier": 0.23319487891658092,
+        "accuracy": 0.6145910095799558,
+        "events": 31211
+      }
+    },
+    "part_6": {
+      "own_das3h": {
+        "auc": 0.72308900925871,
+        "log_loss": 0.5639119378444903,
+        "brier": 0.19070447165396312,
+        "accuracy": 0.7156881616939365,
+        "events": 5195
+      },
+      "bkt": {
+        "auc": 0.5485665210275712,
+        "log_loss": 0.6303283263556712,
+        "brier": 0.21936257448390728,
+        "accuracy": 0.6725697786333013,
+        "events": 5195
+      },
+      "dkt": {
+        "auc": 0.5556427510285958,
+        "log_loss": 0.6317572150183455,
+        "brier": 0.2198378707581124,
+        "accuracy": 0.668334937439846,
+        "events": 5195
+      }
+    },
+    "part_7": {
+      "own_das3h": {
+        "auc": 0.7026716480272619,
+        "log_loss": 0.5546200913398267,
+        "brier": 0.186655057674762,
+        "accuracy": 0.7204703367183325,
+        "events": 1871
+      },
+      "bkt": {
+        "auc": 0.5717732395665456,
+        "log_loss": 0.60627785553453,
+        "brier": 0.2081300343081876,
+        "accuracy": 0.6985569214323891,
+        "events": 1871
+      },
+      "dkt": {
+        "auc": 0.5540529174602659,
+        "log_loss": 0.6120624782979114,
+        "brier": 0.21006564583271156,
+        "accuracy": 0.7001603420630679,
+        "events": 1871
+      }
+    }
+  },
+  "pairedLogLoss": {
+    "bkt": {
+      "deltaLogLossCandidateMinusDas3h": 0.04391761227751537,
+      "ci95": [
+        0.03614166797021255,
+        0.04955698319925897
+      ],
+      "repeats": 1000,
+      "unit": "paired learner cluster",
+      "seed": 42
+    },
+    "dkt": {
+      "deltaLogLossCandidateMinusDas3h": 0.041378438849459846,
+      "ci95": [
+        0.033196267072688336,
+        0.04732865667650583
+      ],
+      "repeats": 1000,
+      "unit": "paired learner cluster",
+      "seed": 42
+    }
+  },
+  "modelDetails": {
+    "bkt": {
+      "environment": {
+        "python": "3.12.10",
+        "numpy": "1.26.4",
+        "pyBKT": "1.4.3"
+      },
+      "config": {
+        "model": "bkt",
+        "seed": 42,
+        "bkt_restarts": 2,
+        "bkt_iterations": 40,
+        "epochs": 15,
+        "patience": 4,
+        "hidden": 64,
+        "batch_size": 32,
+        "window": 192,
+        "context": 64,
+        "threads": 2
+      },
+      "selectedEpoch": null,
+      "fitReachedLimit": 44,
+      "seconds": 1130.9429742000002,
+      "methodHashes": {
+        "common.py": "3bc825aae11b9433f9d029529676c16301b29e38a7a79c513cc6ea8581752d50",
+        "bkt.py": "ef2551a9067b721d0156ae4d2a91933dfe1cfb4a0a25f32f551eeaba25d49ba2"
+      },
+      "fittedConcepts": 93
+    },
+    "dkt": {
+      "environment": {
+        "python": "3.12.10",
+        "numpy": "1.26.4",
+        "pykt-toolkit": "0.0.38"
+      },
+      "config": {
+        "model": "dkt",
+        "seed": 42,
+        "bkt_restarts": 2,
+        "bkt_iterations": 40,
+        "epochs": 15,
+        "patience": 4,
+        "hidden": 64,
+        "batch_size": 32,
+        "window": 192,
+        "context": 64,
+        "threads": 2
+      },
+      "selectedEpoch": 10,
+      "fitReachedLimit": 0,
+      "seconds": 523.4664701000002,
+      "methodHashes": {
+        "common.py": "3bc825aae11b9433f9d029529676c16301b29e38a7a79c513cc6ea8581752d50",
+        "dkt.py": "a298165f1f10d71416d7d2effcbfd97ddc41f1114415b06f0532c02864ab914a"
+      },
+      "torchVersion": "2.14.0+cpu",
+      "upstreamDktSourceHash": "d6bc51dd70084301619560240a4ba49920e0278448984196fe886dd3993baae6"
+    }
+  },
+  "decision": "Research comparison only; production DAS3H is unchanged. A single seed and predictive metrics do not establish learning benefit.",
+  "limitations": [
+    "same previously studied cohort and held-out test; not a new external replication",
+    "BKT sequential fitting approximation within tied training timestamps",
+    "DKT truncated context and bounded validation-selected training budget",
+    "missing-concept shared bucket for BKT/DKT; DAS3H retains item-only features there",
+    "model families have different input representations and tuning budgets",
+    "BKT: 44/93 fits reached the 40-iteration budget; convergence is not established for these fits",
+    "elapsed training times include preparation/evaluation and concurrent CPU contention; not inference latency benchmarks",
+    "bootstrap intervals condition on the selected fits and do not include model-training randomness"
+  ],
+  "comparisonArtifactHash": "d18a7adcf3abc465af459265f3f5d2c9fcc7835ecbd0310c4d219948f6a2f187"
+}
