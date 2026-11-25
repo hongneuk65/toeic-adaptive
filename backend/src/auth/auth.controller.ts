@@ -6,7 +6,7 @@ import { LoginDto } from './dto/login.dto';
 import { OnboardingDto } from './dto/onboarding.dto';
 import { RequestBudgetGuard } from '../common/request-budget.guard';
 import { EmailOtpService } from './email-otp.service';
-import { RequestEmailOtpDto, VerifyEmailOtpDto } from './dto/email-otp.dto';
+import { EmailOnlyDto, ResetPasswordDto, VerifyEmailCodeDto } from './dto/email-otp.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -43,20 +43,33 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  /** enabled=false nghĩa là máy chủ chưa gửi được email: đăng ký không cần bước nhập mã. */
   @Get('otp/config')
   otpConfig() {
     return { enabled: this.emailOtp.enabled };
   }
 
-  @Post('otp/request')
+  @Post('register/verify')
   @UseGuards(RequestBudgetGuard)
-  requestOtp(@Body() dto: RequestEmailOtpDto) {
-    return this.emailOtp.request(dto.email);
+  verifyRegistration(@Body() dto: VerifyEmailCodeDto) {
+    return this.authService.verifyRegistration(dto.email, dto.code);
   }
 
-  @Post('otp/verify')
+  @Post('register/resend')
   @UseGuards(RequestBudgetGuard)
-  verifyOtp(@Body() dto: VerifyEmailOtpDto) {
-    return this.emailOtp.verify(dto.email, dto.code);
+  resendRegistration(@Body() dto: EmailOnlyDto) {
+    return this.authService.resendRegistration(dto.email);
+  }
+
+  @Post('password/forgot')
+  @UseGuards(RequestBudgetGuard)
+  forgotPassword(@Body() dto: EmailOnlyDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('password/reset')
+  @UseGuards(RequestBudgetGuard)
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.email, dto.code, dto.password);
   }
 }

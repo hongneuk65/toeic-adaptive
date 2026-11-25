@@ -16,6 +16,7 @@ const { Queue } = require('bullmq');
 const { PrismaService } = require('../dist/prisma/prisma.service');
 const { AuthController } = require('../dist/auth/auth.controller');
 const { AuthService } = require('../dist/auth/auth.service');
+const { EmailOtpService } = require('../dist/auth/email-otp.service');
 const { JwtStrategy } = require('../dist/auth/jwt.strategy');
 const { RolesGuard } = require('../dist/auth/roles.guard');
 const { ExamController } = require('../dist/exam/exam.controller');
@@ -93,11 +94,13 @@ async function main() {
     chatWithTutor: (userId, dto) => chat.handleUserMessage({ userId, ...dto }),
     streamChatWithTutor: (userId, dto, signal) => chat.streamUserMessage({ userId, ...dto, signal }),
   };
+  // Không cấu hình gửi email: đăng ký không cần bước nhập mã.
+  const emailOtp = new EmailOtpService(db, { enabled: false });
   const module = await Test.createTestingModule({
     controllers: [AuthController, ExamController, RagController, FlashcardController],
     providers: [
       { provide: PrismaService, useValue: db }, { provide: JwtService, useValue: jwt },
-      { provide: AuthService, useValue: new AuthService(db, jwt) },
+      { provide: AuthService, useValue: new AuthService(db, jwt, emailOtp) }, { provide: EmailOtpService, useValue: emailOtp },
       { provide: JwtStrategy, useValue: new JwtStrategy(db) }, RolesGuard, RequestBudgetGuard,
       { provide: ExamService, useValue: examService }, { provide: RagService, useValue: rag },
       { provide: getQueueToken('request-budget'), useValue: budgetQueue },
@@ -119,11 +122,13 @@ async function main() {
   await request('/auth/me', { status: 401 });
   await request('/auth/register', { method: 'POST', body: { email: 'bad', password: 'x' }, status: 400 });
   const account = { email: 'http@example.test', password: 'StrongPass123!' };
-  const user = await request('/auth/register', { method: 'POST', body: account, status: 201 });
+  const registered = await request('/auth/register', { method: 'POST', body: account, status: 201 });
+  assert.deepEqual(registered, { email: account.email, verificationRequired: false });
   await request('/auth/register', { method: 'POST', body: account, status: 409 });
   await request('/auth/login', { method: 'POST', body: { ...account, password: 'wrong-password' }, status: 401 });
   const { accessToken: token } = await request('/auth/login', { method: 'POST', body: account, status: 201 });
-  assert.equal((await request('/auth/me', { token })).id, user.id);
+  const user = await request('/auth/me', { token });
+  assert.equal(user.email, account.email);
   const expired = jwt.sign({ sub: user.id }, { expiresIn: -1 });
   await request('/exam/catalog', { token: expired, status: 401 });
   const other = await db.user.create({ data: { email: 'other@example.test', passwordHash: 'unused' } });

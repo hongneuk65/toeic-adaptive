@@ -63,15 +63,21 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
     'Gợi ý cách học ở trang này cho mình',
   ];
 
+  // Chỉ xóa nội dung đang gõ khi người học chuyển sang câu hoặc nội dung khác,
+  // không xóa khi ngữ cảnh của cùng màn hình vừa được nạp xong.
+  const subjectKey = initialQuestionId ? `question:${initialQuestionId}` : screen ? `${screen.kind}:${screen.resourceId}` : 'general';
+  const lastSubject = useRef<string | null>(null);
   useEffect(() => {
     if (isOpen) {
       let active = true;
       const controller = new AbortController();
+      const subjectChanged = lastSubject.current !== null && lastSubject.current !== 'general' && lastSubject.current !== subjectKey;
+      lastSubject.current = subjectKey;
       void Promise.resolve().then(() => {
         if (!active) return;
         setLoadingHistory(true);
         setMessages([]);
-        setInput('');
+        if (subjectChanged) setInput('');
         setSending(false);
         return api<ChatMessage[]>(historyPath, { signal: controller.signal })
           .then((data) => {
@@ -90,7 +96,7 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({
         sendControllerRef.current = null;
       };
     }
-  }, [isOpen, historyPath, location.pathname]);
+  }, [isOpen, historyPath, location.pathname, subjectKey]);
 
   useEffect(() => {
     if (!isOpen || !followMessagesRef.current) return;

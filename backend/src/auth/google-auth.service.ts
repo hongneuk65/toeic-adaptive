@@ -45,7 +45,7 @@ export class GoogleAuthService {
         user = existing;
       } else {
         try {
-          user = await this.prisma.user.create({ data: { email, googleSubject: subject, passwordHash: `!google-only:${randomBytes(32).toString('hex')}` } });
+          user = await this.prisma.user.create({ data: { email, googleSubject: subject, emailVerifiedAt: new Date(), passwordHash: `!google-only:${randomBytes(32).toString('hex')}` } });
         } catch (error) {
           if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error;
           user = await this.prisma.user.findUnique({ where: { googleSubject: subject } });

@@ -3,51 +3,81 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api, getErrorMessage } from '../lib/api';
 import { GoogleSignIn } from '../components/GoogleSignIn';
+import { EmailCodeStep } from '../components/EmailCodeStep';
+import { useAuth } from '../auth/useAuth';
+import { learningReturnTo } from '../auth/return-to';
+
+type RegisterResponse =
+  | { email: string; verificationRequired: false }
+  | { email: string; verificationRequired: true; expiresInSeconds?: number; resendAfterSeconds?: number; sendError?: string };
+
+type Pending = { email: string; notice: string | null; error: string | null; cooldown: number };
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pending, setPending] = useState<Pending | null>(null);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    // 1. Kiểm tra mật khẩu khớp nhau ở client
     if (password !== confirmPassword) {
-      setError('Mật khẩu nhập lại không khớp!');
+      setError('Mật khẩu nhập lại không khớp.');
       return;
     }
-
     if (password.length < 6) {
       setError('Mật khẩu phải có ít nhất 6 ký tự.');
       return;
     }
-
     setLoading(true);
-
     try {
-      // 2. Gọi đúng API POST /auth/register với Axios instance dùng chung
-      await api('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: email.trim(),
-          password,
-        }),
+      const res = await api<RegisterResponse>('/auth/register', { method: 'POST', data: { email: email.trim(), password } });
+      if (!res.verificationRequired) {
+        navigate('/login', { state: { registered: true } });
+        return;
+      }
+      setPending({
+        email: res.email,
+        notice: res.sendError ? null : `Đã gửi mã xác nhận gồm 6 chữ số tới ${res.email}. Mã có hiệu lực ${Math.round((res.expiresInSeconds ?? 600) / 60)} phút.`,
+        error: res.sendError ?? null,
+        cooldown: res.sendError ? 0 : res.resendAfterSeconds ?? 60,
       });
-
-      // Đăng ký thành công -> Chuyển về trang đăng nhập kèm thông báo
-      navigate('/login', { state: { registered: true } });
     } catch (err) {
       setError(getErrorMessage(err, 'Đăng ký thất bại. Email có thể đã được sử dụng.'));
     } finally {
       setLoading(false);
     }
   };
+
+  const verify = async (code: string) => {
+    const res = await api<{ accessToken: string }>('/auth/register/verify', { method: 'POST', data: { email: pending!.email, code } });
+    const user = await login(res.accessToken);
+    navigate(user.role === 'ADMIN' ? '/admin' : learningReturnTo(undefined), { replace: true });
+  };
+
+  if (pending) {
+    return (
+      <AuthShell title="Xác nhận email" description={`Nhập mã đã gửi tới ${pending.email} để hoàn tất đăng ký.`} footer={<>Đã có tài khoản? <Link className="font-semibold text-accent-coral hover:underline" to="/login">Đăng nhập</Link></>}>
+        <EmailCodeStep
+          email={pending.email}
+          initialNotice={pending.notice}
+          initialError={pending.error}
+          initialCooldown={pending.cooldown}
+          submitLabel="Xác nhận và bắt đầu học"
+          busyLabel="Đang xác nhận..."
+          onSubmit={verify}
+          onResend={() => api<{ resendAfterSeconds: number }>('/auth/register/resend', { method: 'POST', data: { email: pending.email } })}
+          onChangeEmail={() => { setPending(null); setPassword(''); setConfirmPassword(''); }}
+        />
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell title="Tạo tài khoản" description="Tạo tài khoản học TOEIC." footer={<>Đã có tài khoản? <Link className="font-semibold text-accent-coral hover:underline" to="/login">Đăng nhập</Link></>}>

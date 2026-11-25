@@ -12,6 +12,7 @@ import { ProtectedRoute } from './auth/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { GithubCallbackPage } from './pages/GithubCallbackPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { DashboardPage } from './pages/DashboardPage';
 const CurriculumPage = lazy(() => import('./pages/CurriculumPage').then(module => ({ default: module.CurriculumPage })));
 const RecommendationsPage = lazy(() => import('./pages/RecommendationsPage').then(module => ({ default: module.RecommendationsPage })));
@@ -191,6 +192,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/login/github" element={<GithubCallbackPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route path="/admin/*" element={<RouteErrorBoundary><Suspense fallback={<div className="p-8" role="status">Đang mở trang quản trị…</div>}><AdminPage /></Suspense></RouteErrorBoundary>} />

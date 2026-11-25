@@ -32,21 +32,22 @@ export class MailService {
     return this.transporter;
   }
 
-  async sendLoginCode(email: string, code: string, minutes: number) {
+  async sendCode(email: string, code: string, minutes: number, purpose: 'REGISTER' | 'RESET_PASSWORD') {
+    const action = purpose === 'REGISTER' ? 'xác nhận email đăng ký' : 'đặt lại mật khẩu';
     if (this.smtpConfigured) {
       await this.transport().sendMail({
         from: process.env.SMTP_FROM,
         to: email,
-        subject: `Mã đăng nhập TOEIC Adaptive: ${code}`,
-        text: `Mã đăng nhập của bạn là ${code}. Mã có hiệu lực trong ${minutes} phút và chỉ dùng được một lần.\n\nNếu bạn không yêu cầu mã này, hãy bỏ qua email.`,
-        html: `<p>Mã đăng nhập TOEIC Adaptive của bạn:</p><p style="font-size:28px;font-weight:700;letter-spacing:6px">${code}</p><p>Mã có hiệu lực trong ${minutes} phút và chỉ dùng được một lần.</p><p>Nếu bạn không yêu cầu mã này, hãy bỏ qua email.</p>`,
+        subject: `Mã ${action} TOEIC Adaptive: ${code}`,
+        text: `Mã ${action} của bạn là ${code}. Mã có hiệu lực trong ${minutes} phút và chỉ dùng được một lần.\n\nNếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.`,
+        html: `<p>Mã ${action} TOEIC Adaptive của bạn:</p><p style="font-size:28px;font-weight:700;letter-spacing:6px">${code}</p><p>Mã có hiệu lực trong ${minutes} phút và chỉ dùng được một lần.</p><p>Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p>`,
       });
       return;
     }
     if (this.devLog) {
-      this.logger.warn(`[OTP_DEV_LOG] Mã đăng nhập cho ${email}: ${code} (chỉ dùng khi thử trên máy cá nhân)`);
+      this.logger.warn(`[OTP_DEV_LOG] Mã ${action} cho ${email}: ${code} (chỉ dùng khi thử trên máy cá nhân)`);
       return;
     }
-    throw new ServiceUnavailableException('Đăng nhập bằng mã email chưa được bật.');
+    throw new ServiceUnavailableException('Chức năng gửi mã qua email chưa được bật.');
   }
 }

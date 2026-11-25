@@ -90,7 +90,7 @@ export class GithubAuthService {
         return { linkRequired: true, email: existing.email, linkToken, hasPassword: !existing.passwordHash.startsWith('!') };
       }
       try {
-        user = await this.prisma.user.create({ data: { email, githubId, passwordHash: `!github-only:${randomBytes(32).toString('hex')}` } });
+        user = await this.prisma.user.create({ data: { email, githubId, emailVerifiedAt: new Date(), passwordHash: `!github-only:${randomBytes(32).toString('hex')}` } });
       } catch (error) {
         if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error;
         user = await this.prisma.user.findUnique({ where: { githubId } });

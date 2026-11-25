@@ -49,7 +49,7 @@ describe('Google sign-in identity and account linking', () => {
   });
   it('creates a learner with a non-password sentinel and returns the existing app JWT format', async () => {
     expect(await service.login({ credential: 'token' }, nonce)).toEqual({ accessToken: 'app-session' });
-    expect(db.user.create).toHaveBeenCalledWith({ data: { email: 'learner@gmail.com', googleSubject: 'stable-google-subject', passwordHash: expect.stringMatching(/^!google-only:/) } });
+    expect(db.user.create).toHaveBeenCalledWith({ data: { email: 'learner@gmail.com', googleSubject: 'stable-google-subject', emailVerifiedAt: expect.any(Date), passwordHash: expect.stringMatching(/^!google-only:/) } });
     expect(signAsync).toHaveBeenCalledWith({ sub: 42, email: user.email, role: Role.USER });
   });
   it('uses stable Google subject instead of merging a changed email into another user', async () => {
