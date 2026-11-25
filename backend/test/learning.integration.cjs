@@ -420,9 +420,9 @@ async function testExistingRagTables() {
   await db.$executeRaw`INSERT INTO "KnowledgeChunk" ("part", "category", "title", "content", "keywords", "updatedAt") VALUES (5, 'test', 'keep', 'keep', ARRAY[]::TEXT[], NOW())`;
   const user = await db.user.create({ data: { email: 'legacy@example.test', passwordHash: 'not-a-login' }, select: { id: true } });
   await db.aiChatMessage.create({ data: { userId: user.id, role: 'user', content: 'keep chat' } });
-  const q = await db.question.create({ data: {
-    part: 5, content: 'legacy', optionA: 'a', optionB: 'b', optionC: 'c', optionD: 'd', correctAnswer: 'A', itemDifficulty: 0,
-  }, select: {id: true} });
+  // Raw insert: the Prisma client would also write columns added by later migrations (e.g. Question.status).
+  const [q] = await db.$queryRaw`INSERT INTO "Question" ("part", "content", "optionA", "optionB", "optionC", "optionD", "correctAnswer", "itemDifficulty", "updatedAt")
+    VALUES (5, 'legacy', 'a', 'b', 'c', 'd', 'A', 0, NOW()) RETURNING "id"`;
   await db.$executeRaw`INSERT INTO "ExamAttempt" ("userId", "examType", "submittedAt", "updatedAt") VALUES (${user.id}, 'PART_5', NOW(), NOW()), (${user.id}, 'PART_5', NULL, NOW())`;
   await db.$executeRaw`INSERT INTO "ExamAnswer" ("attemptId", "questionId", "selectedAnswer", "isCorrect") SELECT "id", ${q.id}, 'A', true FROM "ExamAttempt"`;
   await applySql(db, sql);
